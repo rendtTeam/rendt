@@ -68,3 +68,4 @@ print('output file send to sender')
 c_rec.close()              
 c_send.close()
 
+# https://stackoverflow.com/questions/27241804/sending-a-file-over-tcp-sockets-in-python
