@@ -1,31 +1,37 @@
-# -*- coding: utf-8 -*-
-
-# Form implementation generated from reading ui file 'DragAndDropScroll.ui'
-#
-# Created by: PyQt5 UI code generator 5.13.0
-#
-# WARNING! All changes made in this file will be lost!
-
 import sys
 import os
 from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtWidgets import QScrollArea, QPushButton, QLabel, QWidget, QVBoxLayout
 
-class scrollingFrame(QtWidgets.QScrollArea):
-    def __init__(self, parent, container):
+class FileButton(QPushButton):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.file_src = ''
+        self.index = -1
+    
+    def setFileSource(self, e):
+        self.file_src = e
+    
+    def setIndex(self, e):
+        self.index = e
+
+    def getIndex(self):
+        return self.index
+    
+    def getFileSource(self):
+        return self.file_src
+
+class ScrollFrame(QScrollArea):
+    def __init__(self, parent):
         super().__init__(parent)
         self.setAcceptDrops(True)
-        self.container = container
         self.form = QtWidgets.QFormLayout()
-        self.parentWidget = self.container
-        self.groupBox = QtWidgets.QGroupBox('')
         self.setFixedHeight(121)
-        self.emptyLayout = QtWidgets.QVBoxLayout(self)
-
-        # self.setCentralWidget(self.container)
+        self.container = parent
+        self.groupBox = QtWidgets.QGroupBox('')
+        self.files = []
     
     def dragEnterEvent(self, e):
-        # self.uploadLabel = self.container.uploadLabel
-        # self.uploadLabel.hide()
         if e.mimeData().hasUrls():
             e.accept()
             print('Accepted')
@@ -37,59 +43,48 @@ class scrollingFrame(QtWidgets.QScrollArea):
                            "color: white")
     
     def dragLeaveEvent(self, e):
-        # self.uploadLabel.show()
         self.setStyleSheet("background: rgb(150, 150, 150);\n"
                            "border: 1px solid rgb(150, 150, 150);\n"
                            "color: white")
 
     def dropEvent(self, e):
-        # self.container.uploadLabel.setStyleSheet("background: rgb(150, 150, 150);\n"
-        #                    "border: 1px solid rgb(150, 150, 150);\n"
-        #                    "color: white")
-        
         self.setStyleSheet("QScrollArea{\n"
-                                "    color: white;\n"
-                                "}\n"
-                                "QLabel{\n"
-                                "    color: white;\n"
-                                "}\n"
-                                "QPushButton {\n"
-                                "    background: rgb(232, 232, 232);\n"
-                                "    color: white;\n"
-                                "    border: 1px solid rgb(227, 227, 227);\n"
-                                "}\n"
-                                "\n"
-                                "QPushButton:hover {\n"
-                                "    background: rgb(255,0,0);\n"
-                                "    border: 1px solid rgb(255,0,0);\n"
-                                "}\n"
-                                "\n"
-                                "QPushButton:pressed {\n"
-                                "    background: rgb(182,0,0);\n"
-                                "    border: 1px solid rgb(182,0,0);\n"
-                                "}\n"
-                                "\n"
-                                "QWidget {\n"
-                                "    background: rgb(120, 120, 120);\n"
-                                "}\n"
-                                "\n"
-                                "")
-
-        # if (self.form.rowCount() == 1 and self.form.takeAt(0).widget().text() == 'Drag & drop files here'):
-        #     self.form.removeRow(0)
-        #     print(self.form.rowCount())
-        #     layout = QtWidgets.QVBoxLayout(self)
-        #     layout.addWidget(self)
+                            "    color: white;\n"
+                            "}\n"
+                            "QLabel{\n"
+                            "    color: white;\n"
+                            "}\n"
+                            "QPushButton {\n"
+                            "    background: rgb(232, 232, 232);\n"
+                            "    color: white;\n"
+                            "    border: 1px solid rgb(227, 227, 227);\n"
+                            "}\n"
+                            "\n"
+                            "QPushButton:hover {\n"
+                            "    background: rgb(255,0,0);\n"
+                            "    border: 1px solid rgb(255,0,0);\n"
+                            "}\n"
+                            "\n"
+                            "QPushButton:pressed {\n"
+                            "    background: rgb(182,0,0);\n"
+                            "    border: 1px solid rgb(182,0,0);\n"
+                            "}\n"
+                            "\n"
+                            "QWidget {\n"
+                            "    background: rgb(120, 120, 120);\n"
+                            "}\n"
+                            "\n"
+                            "")
+        if (self.form.rowCount() == 0):
+            self.container.switchLabel(False)
 
         for url in e.mimeData().urls():
             f, file_src = str(url.toString()).split('///')
             file_dir, file_name = os.path.split(file_src)
             
             print(file_src)
-            # self.container.uploadLabel.setText(self.container.uploadLabel.text() + file_name + '\n')
-            # self.container.uploadLabel.adjustSize()
-            label = QtWidgets.QLabel(file_name)
-            btn = QtWidgets.QPushButton('Remove')
+            label = QLabel(file_name)
+            btn = FileButton('Remove')
 
             font = QtGui.QFont()
             font.setFamily("Arial")
@@ -99,6 +94,10 @@ class scrollingFrame(QtWidgets.QScrollArea):
             label.setFixedWidth(270)
             btn.setFont(font)
             btn.setFixedWidth(50)
+            btn.setFixedHeight(20)
+
+            btn.setFileSource(str(file_src))
+            btn.setIndex(self.form.rowCount())
 
             btn.clicked.connect(self.clickedRemove)
 
@@ -109,119 +108,136 @@ class scrollingFrame(QtWidgets.QScrollArea):
     
     def clickedRemove(self):
         self.form.removeRow(self.sender())
-        # if (self.form.rowCount() == 0):
-        #     self.uploadLabel.show()
 
+        if (self.form.rowCount() == 0):
+            self.container.switchLabel(True)
 
-class Ui_MainWindow(object):
-    def setupUi(self, MainWindow):
-        MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(421, 283)
+    def uploadFiles(self):
+        for i in range(self.form.rowCount() * 2):
+            if (i % 2):
+                self.files.append(self.form.itemAt(i).widget().getFileSource())
+
+class LoadingWindow(QtWidgets.QWidget):
+    def __init__(self, parent = None):
+        super(LoadingWindow, self).__init__(parent)
+        self.loadingLabel = QtWidgets.QLabel(self)
+        self.loadingLabel.setStyleSheet('color: white')
+        self.loadingLabel.setGeometry(QtCore.QRect(135, 100, 144, 17))
+        self.loadingLabel.setText('Loading...')
+        
         font = QtGui.QFont()
         font.setFamily("Rockwell")
-        font.setPointSize(16)
-        MainWindow.setFont(font)
-        MainWindow.setStyleSheet("QPushButton {\n"
-"    background: rgb(232, 232, 232);\n"
-"    border: 1px solid rgb(227, 227, 227);\n"
-"}\n"
-"\n"
-"QPushButton:hover {\n"
-"    background: rgb(200, 200, 200);\n"
-"}\n"
-"\n"
-"QPushButton:pressed {\n"
-"    background: rgb(150, 150, 150);\n"
-"}\n"
-"\n"
-"QWidget {\n"
-"    background: rgb(120, 120, 120);\n"
-"}\n"
-"\n"
-"")
-        # MainWindow.setLayout(QtWidgets.QVBoxLayout())
-        self.centralwidget = QtWidgets.QWidget(MainWindow)
-        self.centralwidget.setObjectName("centralwidget")
-        self.scroll = scrollingFrame(self.centralwidget, self)
+        font.setPointSize(36)
+
+        self.loadingLabel.setFont(font)
+        self.loadingLabel.setObjectName("loadingLabel")
+        self.loadingLabel.adjustSize()
+
+class DDWindow(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.resize(421, 283)
+        self.setStyleSheet("QPushButton {\n"
+                                "    background: rgb(232, 232, 232);\n"
+                                "    border: 1px solid rgb(227, 227, 227);\n"
+                                "}\n"
+                                "\n"
+                                "QPushButton:hover {\n"
+                                "    background: rgb(200, 200, 200);\n"
+                                "}\n"
+                                "\n"
+                                "QPushButton:pressed {\n"
+                                "    background: rgb(150, 150, 150);\n"
+                                "}\n"
+                                "\n"
+                                "QWidget {\n"
+                                "    background: rgb(120, 120, 120);\n"
+                                "}\n"
+                                "\n"
+                                "")
+
+        # Setting up the layout
+        self.layout = QVBoxLayout()
+
+        # Setting up the label and configuring it
+        self.label = QLabel(self)
+        self.label.setText('Drag & Drop')
+        self.label.setGeometry(QtCore.QRect(30, 20, 210, 43))
+
+        font = QtGui.QFont()
+        font.setFamily("Rockwell")
+        font.setPointSize(36)
+
+        self.label.setFont(font)
+        self.label.setStyleSheet("color: white;")
+        self.label.setObjectName("label")
+
+        # Adding Scroll Frame where the Dragging and Dropping will happen
+        self.scroll = ScrollFrame(self)
         self.scroll.setGeometry(QtCore.QRect(30, 70, 361, 121))
         self.scroll.setStyleSheet("background: rgb(150, 150, 150);\n"
-                           "border: 1px solid rgb(150, 150, 150)")
+                                  "border: 1px solid rgb(150, 150, 150);\n")
         self.scroll.setWidgetResizable(True)
-        self.scroll.setObjectName("scroll")
-        self.scrollAreaWidgetContents = QtWidgets.QWidget()
-        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 359, 119))
-        self.scrollAreaWidgetContents.setObjectName("scrollAreaWidgetContents")
-        self.uploadLabel = QtWidgets.QLabel(self.scrollAreaWidgetContents)
+
+        # Setting up the label inside the frame and configuring it
+        self.uploadLabel = QLabel(self.scroll)
         self.uploadLabel.setStyleSheet('color: white')
         self.uploadLabel.setGeometry(QtCore.QRect(100, 50, 144, 17))
         
         font = QtGui.QFont()
         font.setFamily("Rockwell")
         font.setPointSize(14)
+
         self.uploadLabel.setFont(font)
         self.uploadLabel.setObjectName("uploadLabel")
-        self.scroll.setWidget(self.scrollAreaWidgetContents)
-        self.uploadBtn = QtWidgets.QPushButton(self.centralwidget)
+        self.uploadLabel.setText('Drag & Drop files here')
+        self.uploadLabel.adjustSize()
+
+        # Adding the 'Upload' button and configuring it
+        self.uploadBtn = QPushButton(self)
         self.uploadBtn.setGeometry(QtCore.QRect(320, 200, 71, 31))
+        self.uploadBtn.setText('Upload')
+
         font = QtGui.QFont()
         font.setFamily("Rockwell")
         font.setPointSize(12)
+
         self.uploadBtn.setFont(font)
         self.uploadBtn.setStyleSheet("color: white;")
         self.uploadBtn.setObjectName("uploadBtn")
-        self.label = QtWidgets.QLabel(self.centralwidget)
-        self.label.setGeometry(QtCore.QRect(30, 20, 210, 43))
-        font = QtGui.QFont()
-        font.setFamily("Rockwell")
-        font.setPointSize(36)
-        self.label.setFont(font)
-        self.label.setStyleSheet("color: white;")
-        self.label.setObjectName("label")
-        MainWindow.setCentralWidget(self.centralwidget)
-        self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 421, 18))
-        self.menubar.setObjectName("menubar")
-        # self.menuEdit = QtWidgets.QMenu(self.menubar)
-        # self.menuEdit.setObjectName('menuEdit')
-        MainWindow.setMenuBar(self.menubar)
+        self.uploadBtn.clicked.connect(self.startLoadingWindow)
+
+        # Setting up Loading Screen
+        self.loadingWindow = LoadingWindow(self)
+        self.loadingWindow.hide()
+
+        # Adding everything into the layout
+        self.layout.addWidget(self.label)
+        self.layout.addWidget(self.scroll)
+        self.layout.addWidget(self.uploadLabel)
+        self.layout.addWidget(self.uploadBtn)
+        self.layout.addWidget(self.loadingWindow)
+    
+    def startLoadingWindow(self):
+        self.scroll.uploadFiles()
+        self.label.hide()
+        self.scroll.hide()
+        self.uploadLabel.hide()
+        self.uploadBtn.hide()
+        self.loadingWindow.show()
+    
+    def switchLabel(self, flag):
+        if (flag):
+            self.uploadLabel.show()
+        else:
+            self.uploadLabel.hide()
         
-        self.statusbar = QtWidgets.QStatusBar(MainWindow)
-        self.statusbar.setObjectName("statusbar")
-        MainWindow.setStatusBar(self.statusbar)
-
-        # self.actionUndo = QtWidgets.QAction(MainWindow)
-        # self.actionUndo.setObjectName('actionUndo')
-        # self.menuEdit.addAction(self.actionUndo)
-        # self.menubar.addAction(self.menuEdit.menuAction())
-
-        # self.actionUndo.triggered.connect(self.undoLast)
-
-        self.retranslateUi(MainWindow)
-        QtCore.QMetaObject.connectSlotsByName(MainWindow)
-
-    def retranslateUi(self, MainWindow):
-        _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
-        self.uploadLabel.setText(_translate("MainWindow", "Drag & drop files here"))
-        self.uploadBtn.setText(_translate("MainWindow", "Upload"))
-        self.label.setText(_translate("MainWindow", "Drag & Drop"))
-        self.uploadLabel.adjustSize()
-        # self.menuEdit.setTitle(_translate("MainWindow", "Edit"))
-        # self.actionUndo.setText(_translate("MainWindow", "Undo"))
-        # self.actionUndo.setStatusTip(_translate("MainWindow", "Undo last change"))
-        # self.actionUndo.setShortcut(_translate("MainWindow", "Ctrl+Z"))
-
-    def undoLast(self, e):
-        if (str(self.uploadLabel.text()) != 'Drag & drop files here'):
-            current = str(self.uploadLabel.text())
-            self.uploadLabel.setText(current.rsplit('\n', 1)[0])
 
 if __name__ == "__main__":
-    import sys
     QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
     app = QtWidgets.QApplication(sys.argv)
-    MainWindow = QtWidgets.QMainWindow()
-    ui = Ui_MainWindow()
-    ui.setupUi(MainWindow)
-    MainWindow.show()
+
+    window = DDWindow()
+    window.show()
+
     sys.exit(app.exec_())
