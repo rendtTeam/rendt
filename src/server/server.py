@@ -31,15 +31,29 @@ def init_server(port):
         conn, addr = s.accept()
         req_pipe = Messaging(conn, addr)
         req_pipe.read()
-        header, request = req_pipe.jsonheader, req_pipe.request
+        header, request_content = req_pipe.jsonheader, req_pipe.request
 
         if req_pipe.request.get('role') == 'sender':
             print(f'got connection from sender at {addr}')
+            if request_content['request-type'] == 'submit-permission':
+                response_content = {'status': 'success',
+                                    'db-token': 12737
+                                    }
+                req_pipe.write(response_content, 'text/json', close=False)
+            elif request_content['request-type'] == 'executable-upload':
+                if request_content['db-token'] == 12737:
+                    recv_file(conn, f'toexec{request_content["db-token"]}.py')
+                    response_content = {'status': 'success',
+                                        }
+                    req_pipe.write(response_content, 'text/json')
+                else:
+                    response_content = {'status': 'error: invalid token',
+                                        }
+                    req_pipe.write(response_content, 'text/json')
         elif req_pipe.request.get('role') == 'receiver':
             print(f'got connection from receiver at {addr}')
 
-        response_content = {'status': 'success'}
-        req_pipe.write(response_content, 'text/json')
+
 
 
 def recv_file(conn, file_name):

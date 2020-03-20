@@ -27,7 +27,7 @@ class Messaging:
             else:
                 raise RuntimeError('Peer closed.')
 
-    def _write(self):
+    def _write(self, close):
         if self._send_buffer:
             print('sending', repr(self._send_buffer), 'to', self.addr)
             try:
@@ -39,8 +39,9 @@ class Messaging:
             else:
                 self._send_buffer = self._send_buffer[sent:]
                 # Close when the buffer is drained. The response has been sent.
-                if sent and not self._send_buffer:
-                    self.close()
+                if close:
+                    if sent and not self._send_buffer:
+                        self.close()
 
     def _json_encode(self, obj):
         return json.dumps(obj, ensure_ascii=False).encode('utf-8')
@@ -76,10 +77,10 @@ class Messaging:
             if self.request is None:
                 self.process_request()
 
-    def write(self, content, content_type):
+    def write(self, content, content_type, close=True):
         content_bytes = self._json_encode(content)
         self._send_buffer = self._create_message(content_bytes, content_type)
-        self._write()
+        self._write(close)
 
     def process_protoheader(self):
         hdrlen = 2
