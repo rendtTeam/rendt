@@ -14,6 +14,9 @@ BACKLOG = 1024      # size of the queue for pending connections
 sel = None          # selector object
 s = None            # main socket object
 
+jobs = {} # to be replaced by the db
+outputs = {} # to be replaced by the db
+
 def init_server(port):
     global s
     global sel
@@ -26,23 +29,53 @@ def init_server(port):
     print('Server up and running.')
 
     # while True:
-    for i in range(3):
+    for i in range(8):
         print('waiting for connection')
         conn, addr = s.accept()
         req_pipe = Messaging(conn, addr)
         req_pipe.read()
         header, request_content = req_pipe.jsonheader, req_pipe.request
 
-        if req_pipe.request.get('role') == 'sender':
-            print(f'got connection from sender at {addr}')
+        if req_pipe.request.get('role') == 'renter':
+            print(f'got connection from renter at {addr}')
             if request_content['request-type'] == 'submit-permission':
                 response_content = {'status': 'success',
                                     'db-token': 12737
                                     }
-                req_pipe.write(response_content, 'text/json', close=False)
+                req_pipe.write(response_content, 'text/json')
             elif request_content['request-type'] == 'executable-upload':
                 if request_content['db-token'] == 12737:
                     recv_file(conn, f'toexec{request_content["db-token"]}.py')
+                    job_id = 9358403 # some id generator
+                    response_content = {'status': 'success',
+                                        'job-id': job_id
+                                        }
+                    req_pipe.write(response_content, 'text/json')
+                    jobs[job_id] = request_content['db-token']
+                else:
+                    response_content = {'status': 'error: invalid token',
+                                        }
+                    req_pipe.write(response_content, 'text/json')
+            elif request_content['request-type'] == 'output-download-permission':
+                requested_job_id = request_content['job-id']
+
+                # TODO check if availabe
+                if requested_job_id in outputs:
+                    response_content = {'status': 'success',
+                                        'file-size': os.path.getsize(f'output{outputs[requested_job_id]}.txt'),
+                                        'db-token': outputs[requested_job_id]
+                                        }
+                    req_pipe.write(response_content, 'text/json')
+                else:
+                    response_content = {'status': f'error: no files found for this job id {requested_job_id}',
+                                        }
+                    req_pipe.write(response_content, 'text/json')
+            elif request_content['request-type'] == 'output-download':
+                requested_file_path = f'output{request_content["db-token"]}.txt'
+                if os.path.exists(requested_file_path):
+                    send_file(conn, requested_file_path)
+                    print('file sent to receiver')
+
                     response_content = {'status': 'success',
                                         }
                     req_pipe.write(response_content, 'text/json')
@@ -50,9 +83,67 @@ def init_server(port):
                     response_content = {'status': 'error: invalid token',
                                         }
                     req_pipe.write(response_content, 'text/json')
-        elif req_pipe.request.get('role') == 'receiver':
+            else:
+                response_content = {'status': 'error: unable to serve request. unknown request type',
+                                    }
+                req_pipe.write(response_content, 'text/json')
+        elif req_pipe.request.get('role') == 'leaser':
             print(f'got connection from receiver at {addr}')
+            if request_content['request-type'] == 'execute-permission':
+                requested_job_id = request_content['job-id']
 
+                # TODO check if availabe
+                if requested_job_id in jobs:
+                    response_content = {'status': 'success',
+                                        'file-size': os.path.getsize(f'toexec{jobs[requested_job_id]}.py'),
+                                        'db-token': jobs[requested_job_id]
+                                        }
+                    req_pipe.write(response_content, 'text/json')
+                else:
+                    response_content = {'status': f'error: no files found for this job id {requested_job_id}',
+                                        }
+                    req_pipe.write(response_content, 'text/json')
+            elif request_content['request-type'] == 'executable-download':
+                requested_file_path = f'toexec{request_content["db-token"]}.py'
+                if os.path.exists(requested_file_path):
+                    send_file(conn, requested_file_path)
+                    print('file sent to receiver')
+
+                    response_content = {'status': 'success',
+                                        }
+                    req_pipe.write(response_content, 'text/json')
+                else:
+                    response_content = {'status': 'error: invalid token',
+                                        }
+                    req_pipe.write(response_content, 'text/json')
+
+            elif request_content['request-type'] == 'output-upload-permission':
+                if request_content['job-id'] == 9358403:
+
+                    response_content = {'status': 'success',
+                                        'db-token': 37261
+                                        }
+                    req_pipe.write(response_content, 'text/json')
+                else:
+                    response_content = {'status': f'error: incalid job id {request_content["job-id"]}',
+                                        }
+                    req_pipe.write(response_content, 'text/json')
+            elif request_content['request-type'] == 'output-upload':
+                if request_content['db-token'] == 37261:
+                    recv_file(conn, f'output{request_content["db-token"]}.txt')
+
+                    response_content = {'status': 'success',
+                                        }
+                    req_pipe.write(response_content, 'text/json')
+                    outputs[job_id] = request_content['db-token']
+                else:
+                    response_content = {'status': 'error: invalid token',
+                                        }
+                    req_pipe.write(response_content, 'text/json')
+            else:
+                response_content = {'status': 'error: unable to serve request. unknown request type',
+                                    }
+                req_pipe.write(response_content, 'text/json')
 
 
 
@@ -70,14 +161,14 @@ def send_file(conn, file_name):
     m = f.read(l)
     conn.send(m)
     f.close()
-    conn.shutdown(socket.SHUT_WR)
+    # conn.shutdown(socket.SHUT_WR)
 
 def test():
-    # Server receives file from sender
+    # Server receives file from renter
     c_send, addr_send = s.accept()     # Establish connection with client.
-    print ('Got connection from sender:', addr_send)
+    print ('Got connection from renter:', addr_send)
     recv_file(c_send, 'toexec.py')
-    print('file recevied from sender')
+    print('file recevied from renter')
 
 
 
@@ -96,10 +187,10 @@ def test():
 
 
 
-    # Server sends output to sender
-    print('sending output file to sender')
+    # Server sends output to renter
+    print('sending output file to renter')
     send_file(c_send, 'output.txt')
-    print('output file send to sender')
+    print('output file send to renter')
 
 
     # close servers
