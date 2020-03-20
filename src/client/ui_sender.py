@@ -90,7 +90,6 @@ class ScrollFrame(QScrollArea):
             btn.setFixedHeight(20)
 
             btn.setFileSource(str(file_src))
-            btn.setIndex(self.form.rowCount())
 
             btn.clicked.connect(self.clickedRemove)
 
@@ -129,7 +128,7 @@ class LoadingWindow(QtWidgets.QWidget):
 class DDWindow(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle('Rendt Demo')
+        self.setWindowTitle('Rendt Sender Demo')
         self.setWindowIcon(QtGui.QIcon('../../assets/img/rendt_new_logo_square.png'))
         self.resize(421, 283)
         self.setStyleSheet("QPushButton {\n"
