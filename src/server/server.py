@@ -4,28 +4,42 @@
 # * replace selectors with threads for scalability
 
 import socket
+import sys
 import os
 import selectors
+from server_messaging import Messaging
 
 BACKLOG = 1024      # size of the queue for pending connections
 
 sel = None          # selector object
 s = None            # main socket object
 
-def init_server():
+def init_server(port):
     global s
     global sel
 
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sel = selectors.DefaultSelector()
-    port = 12345                # Reserve a port for your service.
+    # port = 12345                # Reserve a port for your service.
     s.bind(('', port))          # Bind to the port
     s.listen(BACKLOG)           # Now wait for client connection.
-    
-
-
-
     print('Server up and running.')
+
+    # while True:
+    for i in range(3):
+        print('waiting for connection')
+        conn, addr = s.accept()
+        req_pipe = Messaging(conn, addr)
+        req_pipe.read()
+        header, request = req_pipe.jsonheader, req_pipe.request
+
+        if req_pipe.request.get('role') == 'sender':
+            print(f'got connection from sender at {addr}')
+        elif req_pipe.request.get('role') == 'receiver':
+            print(f'got connection from receiver at {addr}')
+
+        response_content = {'status': 'success'}
+        req_pipe.write(response_content, 'text/json')
 
 
 def recv_file(conn, file_name):
@@ -83,8 +97,10 @@ def shutdown_server():
     print('Server shut down.')
 
 def main():
-    init_server()
-    test()
+    args = sys.argv[1:]
+    port = int(args[0])
+    init_server(port)
+    # test()
 
 if __name__ == '__main__':
     main()
