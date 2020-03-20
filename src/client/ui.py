@@ -7,16 +7,9 @@ class FileButton(QPushButton):
     def __init__(self, parent):
         super().__init__(parent)
         self.file_src = ''
-        self.index = -1
     
     def setFileSource(self, e):
         self.file_src = e
-    
-    def setIndex(self, e):
-        self.index = e
-
-    def getIndex(self):
-        return self.index
     
     def getFileSource(self):
         return self.file_src
@@ -136,6 +129,8 @@ class LoadingWindow(QtWidgets.QWidget):
 class DDWindow(QWidget):
     def __init__(self):
         super().__init__()
+        self.setWindowTitle('Rendt Demo')
+        self.setWindowIcon(QtGui.QIcon('../../assets/img/rendt_new_logo_square.png'))
         self.resize(421, 283)
         self.setStyleSheet("QPushButton {\n"
                                 "    background: rgb(232, 232, 232);\n"
