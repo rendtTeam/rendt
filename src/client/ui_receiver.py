@@ -1,7 +1,36 @@
 import sys
 import os
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QScrollArea, QPushButton, QLabel, QWidget, QVBoxLayout
+from PyQt5.QtWidgets import QScrollArea, QPushButton, QLabel, QWidget, QVBoxLayout, QFrame
+
+class FilesFrame(QScrollArea):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.setWidgetResizable(True)
+        self.setStyleSheet("QWidget{\n"
+                           "    background: rgb(150, 150, 150);\n"
+                           "    border: 1px solid rgb(150, 150, 150);\n"
+                            "    color: white;\n"
+                            "}\n"
+                            "QLabel{\n"
+                            "    color: white;\n"
+                            "}\n")
+        self.setFixedHeight(121)
+        self.form = QtWidgets.QFormLayout()
+        self.groupBox = QtWidgets.QGroupBox('')
+        self.files = []
+
+    def addFile(self, e):
+        label = QLabel(e)
+
+        font = QtGui.QFont()
+        font.setFamily("Arial")
+        font.setPointSize(12)
+        label.setFont(font)
+
+        self.form.addRow(label)
+        self.groupBox.setLayout(self.form)
+        self.setWidget(self.groupBox)
 
 class WaitingWindow(QtWidgets.QWidget):
     def __init__(self, parent = None):
@@ -47,6 +76,24 @@ class ReceiverWindow(QWidget):
         # Setting up the layout
         self.layout = QVBoxLayout()
 
+        # Setting up the 'Received Files' label
+        self.label = QLabel(self)
+        self.label.setText('Received Files')
+        self.label.setGeometry(QtCore.QRect(30, 20, 210, 43))
+
+        font = QtGui.QFont()
+        font.setFamily("Rockwell")
+        font.setPointSize(36)
+
+        self.label.setFont(font)
+        self.label.setStyleSheet("color: white;")
+        self.label.setObjectName("label")
+        self.label.adjustSize()
+
+        # Setting up files frame
+        self.filesFrame = FilesFrame(self)
+        self.filesFrame.setGeometry(QtCore.QRect(30, 70, 361, 121))
+
         # Adding the 'Accept' button and configuring it
         self.acceptBtn = QPushButton(self)
         self.acceptBtn.setGeometry(QtCore.QRect(320, 200, 71, 31))
@@ -59,8 +106,6 @@ class ReceiverWindow(QWidget):
         self.acceptBtn.setFont(font)
         self.acceptBtn.setStyleSheet("color: white;")
         self.acceptBtn.setObjectName("acceptBtn")
-        self.acceptBtn.clicked.connect(self.startWaitingWindow)
-        self.acceptBtn.hide()
 
         # Setting up Waiting Screen
         self.waitingWindow = WaitingWindow(self)
@@ -68,13 +113,14 @@ class ReceiverWindow(QWidget):
         # Adding everything into the layout
         self.layout.addWidget(self.waitingWindow)
         self.layout.addWidget(self.acceptBtn)
-    
-    def switchLabel(self, flag):
-        if (flag):
-            self.uploadLabel.show()
-        else:
-            self.uploadLabel.hide()
-        
+        self.layout.addWidget(self.filesFrame)
+        self.layout.addWidget(self.label)
+
+        # Hiding the unnecessary parts
+        # self.acceptBtn.hide()
+        # self.label.hide()
+        # self.filesFrame.hide()
+        self.waitingWindow.hide()
 
 if __name__ == "__main__":
     QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
