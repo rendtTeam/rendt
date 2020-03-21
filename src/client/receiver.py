@@ -6,7 +6,7 @@ class Receiver:
     def receiveFromServer(self):
         #receive exec file
         global s
-        s.connect(("18.220.165.22", 12345))
+        s.connect(("18.220.165.22", 23456))
         f = open("sender_job.py", "wb")
         data = None
         while True:

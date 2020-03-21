@@ -5,7 +5,7 @@ class Sender:
     def sendToServer(self,fileName):
         # send exec file
         global s
-        s.connect(("18.220.165.22", 12345))
+        s.connect(("18.220.165.22", 23456))
         f = open(fileName,'rb')
         l = f.read(1024)
         while (l):
