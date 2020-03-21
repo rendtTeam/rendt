@@ -18,7 +18,7 @@ class Sender:
 
     def receiveFromServer(self):
     # receive output
-        f = open("recieved_ouput.txt", "wb")
+        f = open("received_output.txt", "wb")
         data = None
         while True:
             m = s.recv(1024)

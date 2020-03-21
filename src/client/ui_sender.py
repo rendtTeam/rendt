@@ -116,7 +116,7 @@ class ScrollFrame(QScrollArea):
             print(f'File: {f}')
             self.container.sender.sendToServer(f)
         data = ''
-        with open('output.txt') as f:
+        with open('received_output.txt') as f:
             for i, l in enumerate(f):
                 self.container.outputFrame.addLine(l)
 
