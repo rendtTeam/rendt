@@ -1,34 +1,37 @@
-import socket               # Import socket module
+import socket
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.connect(("18.220.165.22", 12345))
+class Sender:
 
-# send exec file
-f = open('exec_test.py','rb')
-l = f.read(1024)
-while (l):
-    s.send(l)
-    l = f.read(1024)
-f.close()
-print ("Done Sending")
-s.shutdown(socket.SHUT_WR)
+    def sendToServer(self,fileName):
+        # send exec file
+        global s
+        s.connect(("18.220.165.22", 12345))
+        f = open(fileName,'rb')
+        l = f.read(1024)
+        while (l):
+            s.send(l)
+            l = f.read(1024)
+        f.close()
+        print ("Done Sending")
+        s.shutdown(socket.SHUT_WR)
+        self.receiveFromServer()
 
-# receive output
-f = open("recieved_ouput.txt", "wb")
-data = None
-while True:
-    m = s.recv(1024)
-    data = m
-    if m:
-        while m:
+    def receiveFromServer(self):
+    # receive output
+        f = open("recieved_ouput.txt", "wb")
+        data = None
+        while True:
             m = s.recv(1024)
-            data += m
-        else:
-            break
-f.write(data)
-f.close()
-print("Done receiving output file")
-
-
-print (s.recv(1024))
-s.close                     # Close the socket when done
+            data = m
+            if m:
+                while m:
+                    m = s.recv(1024)
+                    data += m
+                else:
+                    break
+        f.write(data)
+        f.close()
+        print("Done receiving output file")
+        print (s.recv(1024))
+        s.close                     # Close the socket when done
