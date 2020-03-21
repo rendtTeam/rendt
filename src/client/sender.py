@@ -2,7 +2,6 @@ import socket
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 class Sender:
-
     def sendToServer(self,fileName):
         # send exec file
         global s

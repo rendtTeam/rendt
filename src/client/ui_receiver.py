@@ -3,7 +3,9 @@ import os
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QScrollArea, QPushButton, QLabel, QWidget, QVBoxLayout, QFrame
 
-class FilesFrame(QScrollArea):
+import receiver
+
+class OutputFrame(QScrollArea):
     def __init__(self, parent):
         super().__init__(parent)
         self.setWidgetResizable(True)
@@ -16,21 +18,16 @@ class FilesFrame(QScrollArea):
                             "    color: white;\n"
                             "}\n")
         self.setFixedHeight(121)
+        self.container = parent
         self.form = QtWidgets.QFormLayout()
         self.groupBox = QtWidgets.QGroupBox('')
         self.files = []
-
-    def addFile(self, e):
-        label = QLabel(e)
-
-        font = QtGui.QFont()
-        font.setFamily("Arial")
-        font.setPointSize(12)
-        label.setFont(font)
-
-        self.form.addRow(label)
-        self.groupBox.setLayout(self.form)
-        self.setWidget(self.groupBox)
+    
+    def receiveFiles(self):
+        self.container.receiver.receiveFromServer()
+        self.container.showReceiverWindow()
+        self.container.outputLabel.setText('sender_job.py')
+        
 
 class WaitingWindow(QtWidgets.QWidget):
     def __init__(self, parent = None):
@@ -41,7 +38,7 @@ class WaitingWindow(QtWidgets.QWidget):
         self.waitingLabel.setText('Waiting...')
         
         font = QtGui.QFont()
-        font.setFamily("Rockwell")
+        font.setFamily("Arial")
         font.setPointSize(36)
 
         self.waitingLabel.setFont(font)
@@ -78,11 +75,11 @@ class ReceiverWindow(QWidget):
 
         # Setting up the 'Received Files' label
         self.label = QLabel(self)
-        self.label.setText('Received Files')
+        self.label.setText('Received Output')
         self.label.setGeometry(QtCore.QRect(30, 20, 210, 43))
 
         font = QtGui.QFont()
-        font.setFamily("Rockwell")
+        font.setFamily("Arial")
         font.setPointSize(36)
 
         self.label.setFont(font)
@@ -90,9 +87,19 @@ class ReceiverWindow(QWidget):
         self.label.setObjectName("label")
         self.label.adjustSize()
 
-        # Setting up files frame
-        self.filesFrame = FilesFrame(self)
-        self.filesFrame.setGeometry(QtCore.QRect(30, 70, 361, 121))
+        # Setting up output frame
+        self.outputFrame = OutputFrame(self)
+        self.outputFrame.setGeometry(QtCore.QRect(30, 70, 361, 121))
+
+        # Setting up output label
+        self.outputLabel = QLabel(self.outputFrame)
+        self.outputLabel.setStyleSheet('color: white')
+        
+        font = QtGui.QFont()
+        font.setFamily('Arial')
+        font.setPointSize(12)
+
+        self.outputLabel.setFont(font)
 
         # Adding the 'Accept' button and configuring it
         self.acceptBtn = QPushButton(self)
@@ -100,7 +107,7 @@ class ReceiverWindow(QWidget):
         self.acceptBtn.setText('Accept')
 
         font = QtGui.QFont()
-        font.setFamily("Rockwell")
+        font.setFamily("Arial")
         font.setPointSize(12)
 
         self.acceptBtn.setFont(font)
@@ -113,14 +120,27 @@ class ReceiverWindow(QWidget):
         # Adding everything into the layout
         self.layout.addWidget(self.waitingWindow)
         self.layout.addWidget(self.acceptBtn)
-        self.layout.addWidget(self.filesFrame)
+        self.layout.addWidget(self.outputFrame)
         self.layout.addWidget(self.label)
 
+        # Creating an instance of Receiver class
+        self.receiver = receiver.Receiver()
+        self.acceptBtn.clicked.connect(self.execFile)
+
         # Hiding the unnecessary parts
-        # self.acceptBtn.hide()
-        # self.label.hide()
-        # self.filesFrame.hide()
+        self.acceptBtn.hide()
+        self.label.hide()
+        self.outputFrame.hide()
+        self.outputFrame.receiveFiles()
+    
+    def showReceiverWindow(self):
+        self.acceptBtn.show()
+        self.label.show()
+        self.outputFrame.show()
         self.waitingWindow.hide()
+    
+    def execFile(self):
+        self.receiver.execute()
 
 if __name__ == "__main__":
     QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)

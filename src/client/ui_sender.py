@@ -3,16 +3,19 @@ import os
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QScrollArea, QPushButton, QLabel, QWidget, QVBoxLayout
 
+import sender
+
 class FileButton(QPushButton):
     def __init__(self, parent):
         super().__init__(parent)
         self.file_src = ''
-    
+
     def setFileSource(self, e):
         self.file_src = e
-    
+
     def getFileSource(self):
         return self.file_src
+
 
 class ScrollFrame(QScrollArea):
     def __init__(self, parent):
@@ -23,7 +26,7 @@ class ScrollFrame(QScrollArea):
         self.container = parent
         self.groupBox = QtWidgets.QGroupBox('')
         self.files = []
-    
+
     def dragEnterEvent(self, e):
         if e.mimeData().hasUrls():
             e.accept()
@@ -34,7 +37,7 @@ class ScrollFrame(QScrollArea):
         self.setStyleSheet("background: rgb(30, 136, 229);\n"
                            "border: 1px solid rgb(25, 118, 210);\n"
                            "color: white")
-    
+
     def dragLeaveEvent(self, e):
         self.setStyleSheet("background: rgb(150, 150, 150);\n"
                            "border: 1px solid rgb(150, 150, 150);\n"
@@ -74,7 +77,7 @@ class ScrollFrame(QScrollArea):
         for url in e.mimeData().urls():
             f, file_src = str(url.toString()).split('///')
             file_dir, file_name = os.path.split(file_src)
-            
+
             print(file_src)
             label = QLabel(file_name)
             btn = FileButton('Remove')
@@ -94,10 +97,10 @@ class ScrollFrame(QScrollArea):
             btn.clicked.connect(self.clickedRemove)
 
             self.form.addRow(label, btn)
-        
+
         self.groupBox.setLayout(self.form)
         self.setWidget(self.groupBox)
-    
+
     def clickedRemove(self):
         self.form.removeRow(self.sender())
 
@@ -109,6 +112,45 @@ class ScrollFrame(QScrollArea):
             if (i % 2):
                 self.files.append(self.form.itemAt(i).widget().getFileSource())
 
+        for f in self.files:
+            print(f'File: {f}')
+            self.container.sender.sendToServer(f)
+        data = ''
+        with open('output.txt') as f:
+            for i, l in enumerate(f):
+                self.container.outputFrame.addLine(l)
+
+        self.container.loadingWindow.hide()
+        self.container.outputFrame.show()
+        self.container.outputDetailsLabel.show()
+
+
+class OutputFrame(QScrollArea):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.form = QtWidgets.QFormLayout()
+        self.setFixedHeight(121)
+        self.container = parent
+        self.groupBox = QtWidgets.QGroupBox('')
+        self.files = []
+
+    def addLine(self, e):
+        label = QLabel(e)
+        label.setStyleSheet('color: white')
+
+        font = QtGui.QFont()
+        font.setFamily("Arial")
+        font.setPointSize(12)
+
+        label.setFont(font)
+        label.setFixedHeight(14)
+        label.adjustSize()
+
+        self.form.addRow(label)
+        self.groupBox.setLayout(self.form)
+        self.setWidget(self.groupBox)
+
+
 class LoadingWindow(QtWidgets.QWidget):
     def __init__(self, parent = None):
         super(LoadingWindow, self).__init__(parent)
@@ -118,7 +160,7 @@ class LoadingWindow(QtWidgets.QWidget):
         self.loadingLabel.setText('Loading...')
         
         font = QtGui.QFont()
-        font.setFamily("Rockwell")
+        font.setFamily("Arial")
         font.setPointSize(36)
 
         self.loadingLabel.setFont(font)
@@ -159,7 +201,7 @@ class DDWindow(QWidget):
         self.label.setGeometry(QtCore.QRect(30, 20, 210, 43))
 
         font = QtGui.QFont()
-        font.setFamily("Rockwell")
+        font.setFamily("Arial")
         font.setPointSize(36)
 
         self.label.setFont(font)
@@ -179,7 +221,7 @@ class DDWindow(QWidget):
         self.uploadLabel.setGeometry(QtCore.QRect(100, 50, 144, 17))
         
         font = QtGui.QFont()
-        font.setFamily("Rockwell")
+        font.setFamily("Arial")
         font.setPointSize(14)
 
         self.uploadLabel.setFont(font)
@@ -193,7 +235,7 @@ class DDWindow(QWidget):
         self.uploadBtn.setText('Upload')
 
         font = QtGui.QFont()
-        font.setFamily("Rockwell")
+        font.setFamily("Arial")
         font.setPointSize(12)
 
         self.uploadBtn.setFont(font)
@@ -205,20 +247,48 @@ class DDWindow(QWidget):
         self.loadingWindow = LoadingWindow(self)
         self.loadingWindow.hide()
 
+        # Adding Output Details Label
+        self.outputDetailsLabel = QLabel(self)
+        self.outputDetailsLabel.setText('Received Output')
+        self.outputDetailsLabel.setGeometry(QtCore.QRect(30, 20, 210, 43))
+
+        font = QtGui.QFont()
+        font.setFamily("Arial")
+        font.setPointSize(36)
+
+        self.outputDetailsLabel.setFont(font)
+        self.outputDetailsLabel.setStyleSheet("color: white;")
+        self.outputDetailsLabel.adjustSize()
+        self.outputDetailsLabel.hide()
+
+        # Adding Ouput Frame
+        self.outputFrame = OutputFrame(self)
+        self.outputFrame.setGeometry(QtCore.QRect(30, 70, 361, 121))
+        self.outputFrame.setStyleSheet("background: rgb(150, 150, 150);\n"
+                                  "border: 1px solid rgb(150, 150, 150);\n")
+        self.outputFrame.setWidgetResizable(True)
+        self.outputFrame.hide()
+
         # Adding everything into the layout
         self.layout.addWidget(self.label)
         self.layout.addWidget(self.scroll)
         self.layout.addWidget(self.uploadLabel)
         self.layout.addWidget(self.uploadBtn)
         self.layout.addWidget(self.loadingWindow)
+        self.layout.addWidget(self.outputDetailsLabel)
+        self.layout.addWidget(self.outputFrame)
+
+        # Creating Sender class instance
+        self.sender = sender.Sender()
     
     def startLoadingWindow(self):
-        self.scroll.uploadFiles()
         self.label.hide()
         self.scroll.hide()
         self.uploadLabel.hide()
         self.uploadBtn.hide()
         self.loadingWindow.show()
+        
+        self.scroll.uploadFiles()
     
     def switchLabel(self, flag):
         if (flag):
