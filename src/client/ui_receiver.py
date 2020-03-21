@@ -97,7 +97,7 @@ class ReceiverWindow(QWidget):
         # Adding the 'Accept' button and configuring it
         self.acceptBtn = QPushButton(self)
         self.acceptBtn.setGeometry(QtCore.QRect(320, 200, 71, 31))
-        self.acceptBtn.setText('Receive')
+        self.acceptBtn.setText('Accept')
 
         font = QtGui.QFont()
         font.setFamily("Rockwell")
