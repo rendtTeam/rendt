@@ -1,11 +1,9 @@
-import socket               # Import socket module
+import socket
 import os
 import sys
 from client_messaging import Messaging
 
 server_addr = ('18.220.165.22', 23456)
-
-TEST_JOB_ID = 9358403
 
 def get_available_jobs():
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -170,7 +168,7 @@ def upload_output_to_db(path_to_file, job_id, db_token):
     s.close()
 
 # available_jobs = get_available_jobs()
-# if len(available_jobs):
+# if len(available_jobs) == 0:
 #     print('error: no available jobs.')
 # else:
 #     job_id = available_jobs[0]

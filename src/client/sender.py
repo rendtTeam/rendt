@@ -1,4 +1,4 @@
-import socket               # Import socket module
+import socket
 from client_messaging import Messaging
 import os
 import sys
@@ -159,8 +159,12 @@ def main():
             upload_file_to_db('/Users/m4hmmd/Desktop/senior/base_server_test/sender/exec_test.py', job_id, db_token)
         if arg == 'down-perm':
             job_id = int(input('job-id '))
-            output_db_token, file_size = get_permission_to_download_output(job_id)
-            print('output_db_token, file_size:', output_db_token, file_size)
+            permission = get_permission_to_download_output(job_id)
+            if permission:
+                output_db_token, file_size = permission
+                print('output_db_token, file_size:', output_db_token, file_size)
+            else:
+                print('error: didn\'t receive db token')
         if arg == 'down':
             output_db_token, file_size = int(input('db-token ')), int(input('file-size '))
             download_output_from_db('received_output.txt', output_db_token, file_size)

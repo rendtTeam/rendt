@@ -1,18 +1,21 @@
 # TODO
-# * create a log file, log timestamped actions
 # * surround 'send's with try-except clauses
-# * replace selectors with threads for scalability
+# * introduce threads for scalability
+# * set timeout for issued tokens (permissions)
 
 import socket
 import sys
 import os
+import logging
 import selectors
 import random
+import datetime
 from server_messaging import Messaging
 
 BACKLOG = 1024      # size of the queue for pending connections
 
 s = None            # main socket object
+logger = None
 
 # all following structs to be replaced by the db
 jobs_to_execfile_tokens = {}    # maps job ids to corresponding database tokens (executables)
@@ -39,27 +42,42 @@ def init_server(port):
     # port = 12345                # Reserve a port for your service.
     s.bind(('', port))          # Bind to the port
     s.listen(BACKLOG)           # Now wait for client connection.
-    print('Server up and running.')
+    logger.info('Server up and running.\n')
 
     while True:
-        print('\nwaiting for connection')
+        # logger.info('waiting for connection')
         conn, addr = s.accept()
         req_pipe = Messaging(conn, addr)
         req_pipe.read()
 
-        if 'role' not in req_pipe.request:
-            print(f'got invalid connection at {addr}. ignored.')
-        if req_pipe.request.get('role') == 'renter':
-            print(f'got connection from renter at {addr}')
+        if not req_pipe.jsonheader or not req_pipe.request or 'role' not in req_pipe.request or 'request-type' not in req_pipe.request:
+            logger.warning(f'invalid request from {addr}.')
+        elif req_pipe.request.get('role') == 'renter':
+            # logger.info(f'connection: renter from {addr}')
             serve_renter_request(req_pipe, conn, addr)
         elif req_pipe.request.get('role') == 'leaser':
-            print(f'got connection from receiver at {addr}')
+            # logger.info(f'connection: leaser from {addr}')
             serve_leaser_request(req_pipe, conn, addr)
             
+def configure_logging():
+    logger = logging.getLogger('ServerLogger')
+    logger.setLevel(logging.INFO)
+
+    currentDT = str(datetime.datetime.now()).replace(' ', '_')
+    file_handler = logging.FileHandler('logs/logfile_' + currentDT)
+    format_ = logging.Formatter('%(asctime)s  %(name)-12s  %(levelname)-8s  %(message)s')
+    
+    file_handler.setLevel(logging.INFO)
+    file_handler.setFormatter(format_)
+    logger.addHandler(file_handler)
+
+    logger.info('begin log')
+    return logger
 
 def serve_renter_request(req_pipe, conn, addr):
     header, request_content = req_pipe.jsonheader, req_pipe.request
     if request_content['request-type'] == 'submit-permission':
+        logger.info(f'connection: renter from {addr}; request type: submit-permission')
         job_id = generate_job_id() # some unique id generator
         db_token = generate_db_token()
         execfile_db[db_token] = job_id
@@ -78,19 +96,23 @@ def serve_renter_request(req_pipe, conn, addr):
 
         # tie this job id to its corresponding token so that the file can be accessed knowing job id
         jobs_to_execfile_tokens[job_id] = db_token
+
+        logger.info(f'issued permission to renter {addr[0]} to submit job {job_id} via token {db_token}')
     elif request_content['request-type'] == 'executable-upload':
-        if addr[0] not in user_execfile_tokens or 'db-token' not in request_content:
+        logger.info(f'connection: renter from {addr}; request type: executable-upload')
+        if addr[0] not in user_execfile_tokens or 'db-token' not in request_content or 'job-id' not in request_content:
             response_content = {'status': 'error: no permission to upload',
                                 }
             req_pipe.write(response_content, 'text/json')
+            logger.warning(f'received no token or job id from renter {addr[0]}')
             return
+        
         db_token = request_content['db-token']
         job_id = request_content['job-id']
 
         if db_token in user_execfile_tokens[addr[0]]: # if db_token really belongs to this user
             if execfile_db[db_token] == job_id:
-                recv_file(conn, f'jobs/toexec{job_id}.py')
-                
+                recv_file(conn, f'jobs/toexec{job_id}.py')                
                 # add job to the list of jobs by this user
                 if addr[0] in user_submitted_jobs:
                     user_submitted_jobs[addr[0]].append(job_id)
@@ -102,18 +124,29 @@ def serve_renter_request(req_pipe, conn, addr):
                 response_content = {'status': 'success',
                                     }
                 req_pipe.write(response_content, 'text/json')
+                logger.info(f'received file jobs/toexec{job_id}.py from renter {addr[0]}')
                 return
         
         response_content = {'status': 'error: invalid token',
                             }
         req_pipe.write(response_content, 'text/json')
+
+        logger.warning(f'received invalid token {db_token} for job {job_id} from renter {addr[0]}')
     elif request_content['request-type'] == 'output-download-permission':
+        logger.info(f'connection: renter from {addr}; request type: output-download-permission')
+        if 'job-id' not in request_content:
+            response_content = {'status': 'error: no job id provided',
+                                }
+            req_pipe.write(response_content, 'text/json')
+            return
+        
         requested_job_id = request_content['job-id']
 
         if requested_job_id not in user_submitted_jobs[addr[0]]:
             response_content = {'status': 'error: not your job',
                                 }
             req_pipe.write(response_content, 'text/json')
+            logger.warning(f'couldn\'t issue permission to renter {addr[0]} to download output of job {requested_job_id} via token {jobs_to_output_tokens[requested_job_id]}: invalid token')
             return
         # TODO check if available
         if requested_job_id in finished_jobs and requested_job_id in jobs_to_output_tokens:
@@ -122,25 +155,36 @@ def serve_renter_request(req_pipe, conn, addr):
                                 'db-token': jobs_to_output_tokens[requested_job_id]
                                 }
             req_pipe.write(response_content, 'text/json')
+            logger.info(f'issued permission to renter {addr[0]} to download output of job {requested_job_id} via token {jobs_to_output_tokens[requested_job_id]}')
         else:
             response_content = {'status': f'error: no files found for this job id {requested_job_id}',
                                 }
             req_pipe.write(response_content, 'text/json')
+            logger.warning(f'couldn\'t issue permission to renter {addr[0]} to download output of job {requested_job_id} via token {jobs_to_output_tokens[requested_job_id]}: no files for this job')
     elif request_content['request-type'] == 'output-download':
+        logger.info(f'connection: renter from {addr}; request type: output-download')
+        if 'db-token' not in request_content or request_content['db-token'] not in output_db:
+            response_content = {'status': 'error: no/invalid token provided',
+                                }
+            req_pipe.write(response_content, 'text/json')
+            logger.warning(f'couldn\'t send output file to renter at {addr[0]}: no/invalid token')
+            return
+        
         db_token = request_content['db-token']
         requested_file_path = f'outputs/output{output_db[db_token]}.txt'
         if os.path.exists(requested_file_path):
             send_file(conn, requested_file_path)
-            print('file sent to sender')
-
             response_content = {'status': 'success',
                                 }
             req_pipe.write(response_content, 'text/json')
+            logger.info(f'sent file {requested_file_path} to renter {addr[0]}')
         else:
             response_content = {'status': 'error: invalid token',
                                 }
             req_pipe.write(response_content, 'text/json')
+            logger.warning(f'couldn\'t send file {requested_file_path} to renter {addr[0]}: file doesn\'t exist')
     else:
+        logger.warning(f'connection: renter from {addr}; request type: invalid')
         response_content = {'status': 'error: unable to serve request. unknown request type',
                             }
         req_pipe.write(response_content, 'text/json')
@@ -148,11 +192,22 @@ def serve_renter_request(req_pipe, conn, addr):
 def serve_leaser_request(req_pipe, conn, addr):
     header, request_content = req_pipe.jsonheader, req_pipe.request
     if request_content['request-type'] == 'get-available-jobs':
+        logger.info(f'connection: leaser from {addr}; request type: get-available-jobs')
+        available_jobs = get_available_jobs()
         response_content = {'status': 'success',
                             'jobs': available_jobs,
                             }
         req_pipe.write(response_content, 'text/json')
+        logger.info(f'available jobs sent to leaser at {addr}')
     elif request_content['request-type'] == 'execute-permission':
+        logger.info(f'connection: leaser from {addr}; request type: execute-permission')
+        available_jobs = get_available_jobs()
+        if 'job-id' not in request_content:
+            response_content = {'status': 'error: no job id provided',
+                                }
+            req_pipe.write(response_content, 'text/json')
+            return
+            
         requested_job_id = request_content['job-id']
 
         # TODO check if availabe
@@ -170,31 +225,42 @@ def serve_leaser_request(req_pipe, conn, addr):
                 user_jobs_in_execution[addr[0]].append(requested_job_id)
             else:
                 user_jobs_in_execution[addr[0]] = [requested_job_id]
+            logger.info(f'issued permission to leaser {addr[0]} to download executable of job {requested_job_id} via token {jobs_to_execfile_tokens[requested_job_id]}')
         else:
             response_content = {'status': f'error: no files found for this job id {requested_job_id}',
                                 }
             req_pipe.write(response_content, 'text/json')
+            logger.warning(f'couldn\'t issue permission to leaser {addr[0]} to download output of job {requested_job_id} via token {jobs_to_execfile_tokens[requested_job_id]}: no files for this job')
     elif request_content['request-type'] == 'executable-download':
+        logger.info(f'connection: leaser from {addr}; request type: executable-download')
+        if 'db-token' not in request_content or request_content['db-token'] not in execfile_db:
+            response_content = {'status': 'error: no/invalid token provided',
+                                }
+            req_pipe.write(response_content, 'text/json')
+            logger.warning(f'couldn\'t send executable file to leaser at {addr[0]}: no/invalid token')
+            return
+
         db_token = request_content['db-token']
         requested_file_path = f'jobs/toexec{execfile_db[db_token]}.py'
         if os.path.exists(requested_file_path):
             send_file(conn, requested_file_path)
-            print('file sent to receiver')
-
             response_content = {'status': 'success',
                                 }
             req_pipe.write(response_content, 'text/json')
+            logger.info(f'sent file {requested_file_path} to leaser {addr[0]}')
         else:
             response_content = {'status': 'error: invalid token',
                                 }
             req_pipe.write(response_content, 'text/json')
-
+            logger.warning(f'couldn\'t send file {requested_file_path} to leaser {addr[0]}: file doesn\'t exist')
     elif request_content['request-type'] == 'output-upload-permission':
+        logger.info(f'connection: leaser from {addr}; request type: output-upload-permission')
         job_id = request_content['job-id']
         if addr[0] not in user_jobs_in_execution or job_id not in user_jobs_in_execution[addr[0]]:
             response_content = {'status': 'error: not your job',
                                 }
             req_pipe.write(response_content, 'text/json')
+            logger.warning(f'couldn\'t issue permission to leaser {addr[0]} to upload output of job {job_id}: not their job')
             return
 
         db_token = generate_db_token()
@@ -213,12 +279,15 @@ def serve_leaser_request(req_pipe, conn, addr):
     
         # tie this job id to its corresponding token so that the file can be accessed knowing job id
         jobs_to_output_tokens[job_id] = db_token
+        logger.info(f'issued permission to leaser {addr[0]} to upload output of job {job_id} via token {db_token}')
 
     elif request_content['request-type'] == 'output-upload':
-        if addr[0] not in user_output_tokens or 'db-token' not in request_content:
+        logger.info(f'connection: leaser from {addr}; request type: output-upload')
+        if addr[0] not in user_output_tokens or 'db-token' not in request_content or 'job-id' not in request_content:
             response_content = {'status': 'error: no permission to upload',
                                 }
             req_pipe.write(response_content, 'text/json')
+            logger.warning(f'received no token or job id from leaser {addr[0]}')
             return
         db_token = request_content['db-token']
         job_id = request_content['job-id']
@@ -231,14 +300,17 @@ def serve_leaser_request(req_pipe, conn, addr):
                                     }
                 req_pipe.write(response_content, 'text/json')
                 jobs_to_output_tokens[job_id] = db_token
-
                 jobs_in_execution.remove(job_id)
                 finished_jobs.append(job_id)
+
+                logger.info(f'received file outputs/output{job_id}.txt from renter {addr[0]}')
                 return
         response_content = {'status': 'error: invalid token',
                             }
         req_pipe.write(response_content, 'text/json')
+        logger.warning(f'received invalid token {db_token} for job {job_id} from leaser {addr[0]}')
     else:
+        logger.warning(f'connection: leaser from {addr}; request type: invalid')
         response_content = {'status': 'error: unable to serve request. unknown request type',
                             }
         req_pipe.write(response_content, 'text/json')
@@ -273,6 +345,10 @@ def generate_job_id():
     issued_job_ids.append(job_id)
     return job_id
 
+def get_available_jobs():
+    # TODO pull from DB
+    return available_jobs
+
 def test():
     # Server receives file from renter
     c_send, addr_send = s.accept()     # Establish connection with client.
@@ -302,11 +378,13 @@ def test():
 
 def shutdown_server():
     s.close()
-    print('Server shut down.')
+    logger.critical('Server shut down.')
 
 def main():
     args = sys.argv[1:]
     port = int(args[0])
+    global logger
+    logger = configure_logging()
     init_server(port)
     # test()
 
