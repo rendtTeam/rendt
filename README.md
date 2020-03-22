@@ -1,7 +1,7 @@
 # rendt
 
 The two files `sender.py` and `receiver.py` provide a cli for testing. To use this:
-1. connect to the EC2 instance, go to `/stable_server`, run `python3 server.py 23456`
+1. connect to the EC2 instance, go to `/stable_server`, run `nohup python3 server.py 23456 > nohup.out 2>&1 &`
 2. make sure the port numbers in `sender.py` and `receiver.py` match that of the server (23456 in this case)
 3. run `sender.py` and `receiver.py` in terminal. an infinite command-line interface will be launched, asking for commands. the list of all commands can be found in the source files and in the workflow to be provided below.
 
