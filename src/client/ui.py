@@ -267,11 +267,15 @@ class ScrollFrame(QScrollArea):
             btn.setFileSource(str(file_src))
 
             btn.clicked.connect(self.clickedRemove)
-
+            if(file_src != ""):
+                filelist.append(file_src)
+                print(filelist)
+                file_src = ""
             self.form.addRow(label, btn)
 
         self.groupBox.setLayout(self.form)
         self.setWidget(self.groupBox)
+
 
     def clickedRemove(self):
         self.form.removeRow(self.sender())
@@ -787,10 +791,11 @@ class RenterLeiserWindow(QWidget):
             self.receiverButton.changeClickedEvent(self.showReceiverWindow)
 
 if __name__ == "__main__":
+    filelist = []
     QtWidgets.QApplication.setAttribute(
         QtCore.Qt.AA_EnableHighDpiScaling, True)
     app = QtWidgets.QApplication(sys.argv)
-
+    
     window = RenterLeiserWindow()
     window.show()
 

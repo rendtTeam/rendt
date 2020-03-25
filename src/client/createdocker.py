@@ -18,6 +18,7 @@ def forjava():
     f.close()
 
 def forpython(filelist): 
+    createfilesdir(filelist)
     f = open("Dockerfile", "a")
     f.write('FROM python\n')
     f.write('ADD /files /\n')
@@ -54,4 +55,3 @@ def forc():
     p.write("y\n")
     home_dir = os.system("docker rmi -f rendt")
     p.write("exit")
-
