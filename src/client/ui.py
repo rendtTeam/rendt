@@ -130,6 +130,16 @@ class AvailableJobs(QWidget):
     def __init__(self, parent):
         super().__init__()
 
+        self.backBtn = QPushButton(self)
+        self.backBtn.setText('<')
+        self.backBtn.setStyleSheet( 'background: transparent;\n'
+                                    'color: white;\n'
+                                    'border: 1px solid white;\n')
+        self.backBtn.setFont(QtGui.QFont('Arial', 12))
+        self.backBtn.setFixedHeight(10)
+        self.backBtn.setFixedWidth(10)
+        self.backBtn.clicked.connect(parent.goBack)
+
         self.label = QLabel('Available Jobs: ')
         self.label.setFont(QtGui.QFont('Arial', 20))
         self.label.adjustSize()
@@ -139,6 +149,7 @@ class AvailableJobs(QWidget):
         
         self.layout = QVBoxLayout()
 
+        self.layout.addWidget(self.backBtn)
         self.layout.addWidget(self.label)
         self.layout.addWidget(self.jobsFrame)
         self.layout.setAlignment(QtCore.Qt.AlignTop)
@@ -339,13 +350,15 @@ class ReceiverWindow(QWidget):
     
     def hideWindow(self):
         self.waitingWindow.hide()
-        self.receivedWindow.hide()
         self.taskFinishedWindow.hide()
         self.backBtn.hide()
+        self.hardwareInfoWindow.hide()
+        self.availableJobs.hide()
 
     def showWindow(self):
         self.container.setWindowTitle('Rendt Receiver Demo')
-        self.waitingWindow.show()
+        self.hardwareInfoWindow.show()
+        # self.waitingWindow.show()
     
     def showAvailableJobs(self):
         self.hardwareInfoWindow.hide()
@@ -782,9 +795,6 @@ class SenderWindow(QWidget):
         self.layout.addWidget(self.uploadFinishedWindow)
         self.layout.addWidget(self.backBtn)
         self.layout.addWidget(self.downloadWindow)
-
-        # Creating Sender class instance
-        self.sender = sender.Sender()
     
     def startDownloadWindow(self):
         self.label.hide()
