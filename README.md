@@ -7,7 +7,7 @@ The two files `sender.py` and `receiver.py` provide a cli for testing. To use th
 
 ## Workflow:
 **Sender** does: 
-1. `get-perm` - get permission from the server to upload an executable (currently the path to the executable is fixed but it too can be changed to be prompted as an input). returns: `job_id`, `db_token`
+1. `send-perm` - get permission from the server to upload an executable (currently the path to the executable is fixed but it too can be changed to be prompted as an input). returns: `job_id`, `db_token`
 2. `send-up` - upload the executable file, now that we have permission (and token). enter the `job_id` and `db_token` obtained at the prev step when prompted. returns: none
 **Receiver** does:
 3. `get` - get the list of available to execute jobs on the server. returns: list of `job_id`s
