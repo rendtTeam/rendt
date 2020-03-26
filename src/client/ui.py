@@ -4,8 +4,8 @@ import psutil
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QScrollArea, QPushButton, QLabel, QWidget, QVBoxLayout, QStackedWidget
 
-import sender
-import receiver
+from sender import Sender as sender
+from receiver import Receiver as receiver
 
 class TaskFinishedWindow(QWidget):
     def __init__(self, parent):
