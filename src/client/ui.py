@@ -501,6 +501,7 @@ class ScrollFrame(QScrollArea):
         for f in self.files:
             print(f'File: {f}')
             filelist.append(f)
+            self.form.removeRow(0)
 
 
 class OutputFrame(QScrollArea):
@@ -581,10 +582,25 @@ class UploadFinishedWindow(QWidget):
         self.downloadId.setGeometry(QtCore.QRect(150, 130, 144, 22))
         self.downloadId.adjustSize()
 
+        self.copyBtn = QPushButton(self)
+        self.copyBtn.setStyleSheet( 'background: transparent;\n'
+                                    'color: white;\n'
+                                    'border: 1px solid white;\n')
+        self.copyBtn.setText('Copy')
+        self.copyBtn.setFont(QtGui.QFont('Arial', 12))
+        self.copyBtn.setFixedWidth(50)
+        self.copyBtn.setFixedHeight(20)
+        self.copyBtn.clicked.connect(lambda: self.copyToClipBoard(str(job_id)))
+
         self.layout.addWidget(self.backBtn)
         self.layout.addWidget(self.label)
         self.layout.addWidget(self.downloadId)
+        self.layout.addWidget(self.copyBtn)
         self.setLayout(self.layout)
+
+    def copyToClipBoard(self, e):
+        cb = QtWidgets.QApplication.clipboard()
+        cb.setText(e)
 
 
 class DownloadWindow(QWidget):
