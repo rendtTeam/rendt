@@ -127,7 +127,7 @@ class JobsFrame(QScrollArea):
         self.setWidget(self.groupBox)
 
 class AvailableJobs(QWidget):
-    def __init__(self):
+    def __init__(self, parent):
         super().__init__()
 
         self.label = QLabel('Available Jobs: ')
@@ -135,7 +135,7 @@ class AvailableJobs(QWidget):
         self.label.adjustSize()
         self.label.setFixedHeight(25)
 
-        self.jobsFrame = JobsFrame()
+        self.jobsFrame = JobsFrame(parent)
         
         self.layout = QVBoxLayout()
 
@@ -284,7 +284,7 @@ class ReceiverWindow(QWidget):
         self.hardwareInfoWindow = HardwareInfoWindow(self)
 
         # Adding Available Jobs Window
-        self.availableJobs = AvailableJobs()
+        self.availableJobs = AvailableJobs(self)
         self.availableJobs.hide()
 
         # Adding everything into the layout
