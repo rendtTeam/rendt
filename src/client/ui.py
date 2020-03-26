@@ -4,8 +4,8 @@ import psutil
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QScrollArea, QPushButton, QLabel, QWidget, QVBoxLayout, QStackedWidget
 
-from sender import Sender as sender
-from receiver import Receiver as receiver
+from sender import Sender
+from receiver import Receiver
 
 class TaskFinishedWindow(QWidget):
     def __init__(self, parent):
@@ -268,6 +268,7 @@ class ReceiverWindow(QWidget):
         super().__init__()
         self.container = parent
         self.started = False
+        self.receiver = Receiver()
     
     def startWindow(self):
         self.started = True
@@ -343,25 +344,25 @@ class ReceiverWindow(QWidget):
         job_id = self.sender().jobId
 
         # Getting permission for execution
-        db_token, size = receiver.get_permission_to_execute_task(job_id)
+        db_token, size = self.receiver.get_permission_to_execute_task(job_id)
 
         # Downloading file to be executed
-        receiver.download_file_from_db('sender_job.py', db_token, size)
+        self.receiver.download_file_from_db('sender_job.py', db_token, size)
 
         # Executing downloaded file
-        receiver.execute_job('sender_job.py', f'sender_output.txt')
+        self.receiver.execute_job('sender_job.py', f'sender_output.txt')
 
         # Getting permission to upload output from execution
-        out_db_token = receiver.get_permission_to_upload_output(job_id, 'sender_output.txt')
+        out_db_token = self.receiver.get_permission_to_upload_output(job_id, 'sender_output.txt')
 
         # Uploading execution output
-        receiver.upload_output_to_db('sender_output.txt', job_id, out_db_token)
+        self.receiver.upload_output_to_db('sender_output.txt', job_id, out_db_token)
 
         self.waitingWindow.hide()
         self.taskFinishedWindow.show()
 
     def receiveJobs(self):
-        return receiver.get_available_jobs()
+        return self.receiver.get_available_jobs()
         # # Show received message
         # self.waitingWindow.hide()
         # self.receivedWindow.show()
@@ -685,11 +686,11 @@ class DownloadWindow(QWidget):
     
     def downloadFile(self):
         job_id = int(str(self.jobId.text()))
-        perm = sender.get_permission_to_download_output(job_id)
+        perm = self.container.sender.get_permission_to_download_output(job_id)
 
         if perm:
             out_db_token, file_size = perm
-            sender.download_output_from_db('received_output.txt', out_db_token, file_size)
+            self.container.sender.download_output_from_db('received_output.txt', out_db_token, file_size)
 
         self.label.hide()
         self.jobId.hide()
@@ -843,6 +844,8 @@ class SenderWindow(QWidget):
         self.layout.addWidget(self.uploadFinishedWindow)
         self.layout.addWidget(self.backBtn)
         self.layout.addWidget(self.downloadWindow)
+
+        self.sender = Sender()
     
     def startDownloadWindow(self):
         self.label.hide()
@@ -861,8 +864,8 @@ class SenderWindow(QWidget):
         self.loadingWindow.show()
 
         self.scroll.uploadFiles()
-        job_id, db_token = sender.get_permission_to_submit_task(filelist[0])
-        sender.upload_file_to_db(filelist[0], job_id, db_token)
+        job_id, db_token = self.sender.get_permission_to_submit_task(filelist[0])
+        self.sender.upload_file_to_db(filelist[0], job_id, db_token)
 
         self.loadingWindow.hide()
         self.downloadWindow.hide()
