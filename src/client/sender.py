@@ -6,8 +6,7 @@ import time
 
 server_addr = ('18.220.165.22', 23456)
 class Sender:
-
-    def get_permission_to_submit_task(self,path_to_file):
+    def get_permission_to_submit_task(self, path_to_file):
         global server_addr
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect(server_addr)
@@ -74,7 +73,7 @@ class Sender:
 
         s.close()
 
-    def get_permission_to_download_output(self,job_id):
+    def get_permission_to_download_output(self, job_id):
         global server_addr
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect(server_addr)
@@ -99,7 +98,7 @@ class Sender:
             print('received db token')
             return response['db-token'], response['file-size']
 
-    def download_output_from_db(self,path_to_file, db_token, file_size):
+    def download_output_from_db(self, path_to_file, db_token, file_size):
         global server_addr
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect(server_addr)

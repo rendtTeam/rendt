@@ -1,6 +1,7 @@
 import sys
 import os
 import psutil
+import platform
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QScrollArea, QPushButton, QLabel, QWidget, QVBoxLayout, QStackedWidget
 
@@ -463,7 +464,10 @@ class ScrollFrame(QScrollArea):
             self.container.switchLabel(False)
 
         for url in e.mimeData().urls():
-            f, file_src = str(url.toString()).split('///')
+            if platform.system() == 'Windows':
+                f, file_src = str(url.toString()).split('///')
+            else:
+                f, file_src = str(url.toString()).split('//')
             file_dir, file_name = os.path.split(file_src)
 
             print(file_src)

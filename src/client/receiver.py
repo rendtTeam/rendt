@@ -34,7 +34,7 @@ class Receiver:
         else:
             print('error: couldn\'t receive list of jobs')
 
-    def get_permission_to_execute_task(self,job_id):
+    def get_permission_to_execute_task(self, job_id):
         global server_addr
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect(server_addr)
@@ -59,7 +59,7 @@ class Receiver:
             print('received db token')
             return response['db-token'], response['file-size']
 
-    def download_file_from_db(self,path_to_file, db_token, file_size):
+    def download_file_from_db(self, path_to_file, db_token, file_size):
         global server_addr
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect(server_addr)
@@ -102,7 +102,7 @@ class Receiver:
 
         s.close()
 
-    def execute_job(self,path_to_executable, path_to_output):
+    def execute_job(self, path_to_executable, path_to_output):
         # execute job
         q = os.system(f'python3 {path_to_executable} >> {path_to_output}')
 
@@ -134,7 +134,7 @@ class Receiver:
             print('received db token')
             return response['db-token']
 
-    def upload_output_to_db(self,path_to_file, job_id, db_token):
+    def upload_output_to_db(self, path_to_file, job_id, db_token):
         global server_addr
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect(server_addr)
