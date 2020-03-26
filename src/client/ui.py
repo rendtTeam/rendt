@@ -1,11 +1,11 @@
 import sys
 import os
+import psutil
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QScrollArea, QPushButton, QLabel, QWidget, QVBoxLayout, QStackedWidget
 
 import sender
 import receiver
-
 
 class TaskFinishedWindow(QWidget):
     def __init__(self):
@@ -23,7 +23,6 @@ class TaskFinishedWindow(QWidget):
         label.adjustSize()
 
         self.label = label
-        self.label.setGeometry(QtCore.QRect(135, 100, 144, 17))
 
         self.layout = layout
         self.layout.addWidget(self.label)
@@ -68,6 +67,8 @@ class WaitingWindow(QtWidgets.QWidget):
         self.backBtn.setText('<')
         self.backBtn.setFont(QtGui.QFont('Arial', 12))
         self.backBtn.clicked.connect(parent.goBack)
+        self.backBtn.setFixedWidth(10)
+        self.backBtn.setFixedHeight(10)
 
         font = QtGui.QFont()
         font.setFamily("Arial")
@@ -77,13 +78,151 @@ class WaitingWindow(QtWidgets.QWidget):
         self.waitingLabel.setObjectName("waitingLabel")
         self.waitingLabel.adjustSize()
 
-        self.layout.addWidget(self.backBtn)
+        # self.layout.addWidget(self.backBtn)
         self.layout.addWidget(self.waitingLabel)
+        self.setLayout(self.layout)
 
-    def filesReceivedWindow(self):
-        self.receivedWindow = ReceivedWindow()
-        self.waitingLabel.hide()
-        self.layout.addWidget(self.receivedWindow)
+class JobsFrame(QScrollArea):
+    def __init__(self, parent):
+        super().__init__()
+
+        self.container = parent
+        self.setFixedHeight(241)
+        self.setStyleSheet( 'background: transparent;\n'
+                            'border: 1px solid white;\n'
+                            'color: white;\n')        
+        self.form = QtWidgets.QFormLayout()
+        self.groupBox = QtWidgets.QGroupBox('')
+        self.setWidgetResizable(True)
+
+        jobs = parent.receiveJobs()
+
+        for job in jobs:
+            self.addJob(job)
+
+    def addJob(self, e):
+        jobId = QLabel(str(e))
+        jobId.setFont(QtGui.QFont('Arial', 11))
+        jobId.adjustSize()
+
+        jobExecBtn = QPushButton(self)
+        jobExecBtn.jobId = e
+        jobExecBtn.setText('Run')
+        jobExecBtn.setFixedWidth(50)
+        jobExecBtn.setFont(QtGui.QFont('Arial', 11))
+        jobExecBtn.setStyleSheet(   'QPushButton {\n'
+                                    '   background: transparent;\n'
+                                    '   color: white;\n'
+                                    '   border: 1px solid white;}\n'
+                                    'QPushButton:hover {\n'
+                                    '   background: rgb(76, 175, 80);\n'
+                                    '   border: rgb(76, 175, 80);}\n'
+                                    'QPushButton:clicked {\n'
+                                    '   background: rgb(46, 125, 50);\n'
+                                    '   border: rgb(46, 125, 50);}\n')
+
+        jobExecBtn.clicked.connect(self.container.execJob)
+        self.form.addRow(jobId, jobExecBtn)
+        self.groupBox.setLayout(self.form)
+        self.setWidget(self.groupBox)
+
+class AvailableJobs(QWidget):
+    def __init__(self):
+        super().__init__()
+
+        self.label = QLabel('Available Jobs: ')
+        self.label.setFont(QtGui.QFont('Arial', 20))
+        self.label.adjustSize()
+        self.label.setFixedHeight(25)
+
+        self.jobsFrame = JobsFrame()
+        
+        self.layout = QVBoxLayout()
+
+        self.layout.addWidget(self.label)
+        self.layout.addWidget(self.jobsFrame)
+        self.layout.setAlignment(QtCore.Qt.AlignTop)
+
+        self.setLayout(self.layout)
+
+class HardwareInfoWindow(QWidget):
+    def __init__(self, parent):
+        super().__init__()
+        self.container = parent
+        self.label = QLabel('Hardware Information\n')
+        self.label.setFont(QtGui.QFont('Arial', 20))
+        self.label.adjustSize()
+
+        self.physCores = QLabel('Physical Cores: ' + str(psutil.cpu_count(logical = False)))
+        self.totalCores = QLabel('Total Cores: ' + str(psutil.cpu_count(logical = True)) + '\n')
+
+        self.maxFreq = QLabel(f'Max Frequency: {psutil.cpu_freq().max: .2f} MHz')
+        self.minFreq = QLabel(f'Min Frequency: {psutil.cpu_freq().min: .2f} MHz')
+        self.curFreq = QLabel(f'Current Frequency: {psutil.cpu_freq().current: .2f} MHz\n')
+        
+        self.totalMem = QLabel(f'Total: {self.get_size(psutil.virtual_memory().total)}')
+        self.avalMem = QLabel(f'Available: {self.get_size(psutil.virtual_memory().available)}')
+        self.usedMem = QLabel(f'Used: {self.get_size(psutil.virtual_memory().used)}')
+        self.percentMem = QLabel(f'Percentage: {self.get_size(psutil.virtual_memory().percent)}%\n')
+
+        self.physCores.setFont(QtGui.QFont('Arial', 14))
+        self.physCores.adjustSize()
+        self.totalCores.setFont(QtGui.QFont('Arial', 14))
+        self.totalCores.adjustSize()
+        self.maxFreq.setFont(QtGui.QFont('Arial', 14))
+        self.maxFreq.adjustSize()
+        self.minFreq.setFont(QtGui.QFont('Arial', 14))
+        self.minFreq.adjustSize()
+        self.curFreq.setFont(QtGui.QFont('Arial', 14))
+        self.curFreq.adjustSize()
+        self.totalMem.setFont(QtGui.QFont('Arial', 14))
+        self.totalMem.adjustSize()
+        self.avalMem.setFont(QtGui.QFont('Arial', 14))
+        self.avalMem.adjustSize()
+        self.usedMem.setFont(QtGui.QFont('Arial', 14))
+        self.usedMem.adjustSize()
+        self.percentMem.setFont(QtGui.QFont('Arial', 14))
+        self.percentMem.adjustSize()
+
+        self.startBtn = QPushButton(self)
+        self.startBtn.setFont(QtGui.QFont('Arial', 14))
+        self.startBtn.setText('Lease')
+        self.startBtn.setStyleSheet('background: transparent;\n'
+                                    'border: 1px solid white;\n'
+                                    'color: white;\n')
+        self.startBtn.setFixedWidth(50)
+        self.startBtn.clicked.connect(self.container.showAvailableJobs)
+
+        self.layout = QVBoxLayout()
+
+        self.layout.addWidget(self.label)
+        self.layout.addWidget(self.physCores)
+        self.layout.addWidget(self.totalCores)
+        self.layout.addWidget(self.maxFreq)
+        self.layout.addWidget(self.minFreq)
+        self.layout.addWidget(self.curFreq)
+        self.layout.addWidget(self.totalMem)
+        self.layout.addWidget(self.avalMem)
+        self.layout.addWidget(self.usedMem)
+        self.layout.addWidget(self.percentMem)
+        self.layout.addWidget(self.startBtn)
+
+        self.setLayout(self.layout)
+
+
+    #* Reference: https://www.thepythoncode.com/article/get-hardware-system-information-python 
+    def get_size(self, bytes, suffix="B"):
+        """
+        Scale bytes to its proper format
+        e.g:
+            1253656 => '1.20MB'
+            1253656678 => '1.17GB'
+        """
+        factor = 1024
+        for unit in ["", "K", "M", "G", "T", "P"]:
+            if bytes < factor:
+                return f"{bytes:.2f}{unit}{suffix}"
+            bytes /= factor
 
 
 class ReceiverWindow(QWidget):
@@ -131,6 +270,7 @@ class ReceiverWindow(QWidget):
 
         # Setting up Waiting Screen
         self.waitingWindow = WaitingWindow(self)
+        self.waitingWindow.hide()
 
         # Setting up Received Window
         self.receivedWindow = ReceivedWindow()
@@ -140,27 +280,58 @@ class ReceiverWindow(QWidget):
         self.taskFinishedWindow = TaskFinishedWindow()
         self.taskFinishedWindow.hide()
 
+        # Adding Hardware Info Window
+        self.hardwareInfoWindow = HardwareInfoWindow(self)
+
+        # Adding Available Jobs Window
+        self.availableJobs = AvailableJobs()
+        self.availableJobs.hide()
+
         # Adding everything into the layout
         self.layout.addWidget(self.backBtn)
         self.layout.addWidget(self.waitingWindow)
         self.layout.addWidget(self.receivedWindow)
         self.layout.addWidget(self.taskFinishedWindow)
+        self.layout.addWidget(self.hardwareInfoWindow)
+        self.layout.addWidget(self.availableJobs)
 
         self.setLayout(self.layout)
 
-        # self.receiveAndExecute()
+    def execJob(self):
+        self.availableJobs.hide()
+        self.waitingWindow.show()
 
-    def receiveAndExecute(self):
-        self.receiver = receiver.Receiver()
+        # Getting sent job Id from Push Button
+        job_id = self.sender().widget().jobId
 
-        # Show received message
+        # Getting permission for execution
+        db_token, size = receiver.get_permission_to_execute_task(job_id)
+
+        # Downloading file to be executed
+        receiver.download_file_from_db('sender_job.py', db_token, size)
+
+        # Executing downloaded file
+        receiver.execute_job('sender_job.py', f'sender_output.txt')
+
+        # Getting permission to upload output from execution
+        out_db_token = receiver.get_permission_to_upload_output(job_id, 'sender_output.txt')
+
+        # Uploading execution output
+        receiver.upload_output_to_db('sender_output.txt', job_id, output_db_token)
+
         self.waitingWindow.hide()
-        self.receivedWindow.show()
-
-        # Show execution finished
-        self.receiver.execute()
-        self.receivedWindow.hide()
         self.taskFinishedWindow.show()
+
+    def receiveJobs(self):
+        return receiver.get_available_jobs()
+        # # Show received message
+        # self.waitingWindow.hide()
+        # self.receivedWindow.show()
+
+        # # Show execution finished
+        # self.receiver.execute()
+        # self.receivedWindow.hide()
+        # self.taskFinishedWindow.show()
     
     def goBack(self):
         self.hideWindow()
@@ -175,6 +346,10 @@ class ReceiverWindow(QWidget):
     def showWindow(self):
         self.container.setWindowTitle('Rendt Receiver Demo')
         self.waitingWindow.show()
+    
+    def showAvailableJobs(self):
+        self.hardwareInfoWindow.hide()
+        self.availableJobs.show()
 
 
 class FileButton(QPushButton):
@@ -265,17 +440,12 @@ class ScrollFrame(QScrollArea):
             btn.setFixedHeight(20)
 
             btn.setFileSource(str(file_src))
-
             btn.clicked.connect(self.clickedRemove)
-            if(file_src != ""):
-                filelist.append(file_src)
-                print(filelist)
-                file_src = ""
+
             self.form.addRow(label, btn)
 
         self.groupBox.setLayout(self.form)
         self.setWidget(self.groupBox)
-
 
     def clickedRemove(self):
         self.form.removeRow(self.sender())
@@ -290,6 +460,7 @@ class ScrollFrame(QScrollArea):
 
         for f in self.files:
             print(f'File: {f}')
+            filelist.append(f)
             self.container.sender.sendToServer(f)
         data = ''
         with open('received_output.txt') as f:
@@ -348,7 +519,7 @@ class UploadFinishedWindow(QWidget):
     def __init__(self):
         super().__init__()
 
-    def startWindow(self):
+    def startWindow(self, job_id):
         self.layout = QVBoxLayout()
 
         self.label = QLabel(self)
@@ -363,11 +534,10 @@ class UploadFinishedWindow(QWidget):
         self.label.setGeometry(QtCore.QRect(135, 100, 144, 30))
 
         self.downloadId = QLabel(self)
-        self.downloadId.setText('Job ID: ')
+        self.downloadId.setText('Job ID: ' + str(job_id))
         self.downloadId.setFont(QtGui.QFont('Arial', 20))
         self.downloadId.setGeometry(QtCore.QRect(150, 130, 144, 22))
         self.downloadId.adjustSize()
-        # TODO: Set self.downloadId text to the Job ID received from server
 
         self.layout.addWidget(self.label)
         self.layout.addWidget(self.downloadId)
@@ -416,6 +586,7 @@ class DownloadWindow(QWidget):
                                     "   border: 1px solid rgb(227, 227, 227);\n"
                                     "   color: white;\n}\n")
         self.sendBtn.setGeometry(QtCore.QRect(202, 100, 50, 16))
+        self.sendBtn.clicked.connect(self.downloadFile)
 
         # Adding back button
         self.backBtn = QPushButton(self)
@@ -431,18 +602,42 @@ class DownloadWindow(QWidget):
         self.uploadBtn.setGeometry(22, 0, 50, 20)
         self.uploadBtn.clicked.connect(self.startUploadWindow)
 
+        # Adding Download Finished Successfully Label
+        self.downloadFinishedLabel = QLabel('Download Finished Successfully')
+        self.downloadFinishedLabel.setFont(QtGui.QFont('Arial', 40))
+        self.downloadFinishedLabel.adjustSize()
+        self.downloadFinishedLabel.hide()
+
         self.layout.addWidget(self.label)
         self.layout.addWidget(self.jobIdLabel)
         self.layout.addWidget(self.jobId)
         self.layout.addWidget(self.sendBtn)
         self.layout.addWidget(self.backBtn)
         self.layout.addWidget(self.uploadBtn)
+        self.layout.addWidget(self.downloadFinishedLabel)
 
         # self.setLayout(self.layout)
 
     def startUploadWindow(self):
         self.destroy()
         self.container.resetUi()
+    
+    def downloadFile(self):
+        job_id = int(str(self.jobId.text()))
+        perm = sender.get_permission_to_download_output(job_id)
+
+        if perm:
+            out_db_token, file_size = perm
+            sender.download_output_from_db('received_output.txt', out_db_token, file_size)
+
+        self.label.hide()
+        self.jobId.hide()
+        self.jobIdLabel.hide()
+        self.sendBtn.hide()
+        self.backBtn.hide()
+        self.uploadBtn.hide()
+        self.downloadFinishedLabel.show()
+        
 
 class SenderWindow(QWidget):
     def __init__(self, parent):
@@ -606,12 +801,16 @@ class SenderWindow(QWidget):
         self.uploadLabel.hide()
         self.uploadBtn.hide()
         self.loadingWindow.show()
-        self.startUploadFinishedWindow()
 
-    def startUploadFinishedWindow(self):
-        self.scroll.uploadFiles()
-        self.loadingWindow().hide()
-        self.uploadFinishedWindow()
+        job_id, db_token = sender.get_permission_to_submit_task(filelist[0])
+        sender.upload_file_to_db(filelist[0], job_id, db_token)
+
+        self.startUploadFinishedWindow.startWindow(job_id)
+
+    # def startUploadFinishedWindow(self):
+    #     self.scroll.uploadFiles()
+    #     self.loadingWindow().hide()
+    #     self.uploadFinishedWindow()
 
     def switchLabel(self, flag):
         if (flag):
@@ -795,7 +994,7 @@ if __name__ == "__main__":
     QtWidgets.QApplication.setAttribute(
         QtCore.Qt.AA_EnableHighDpiScaling, True)
     app = QtWidgets.QApplication(sys.argv)
-    
+
     window = RenterLeiserWindow()
     window.show()
 
