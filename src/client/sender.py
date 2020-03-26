@@ -142,37 +142,3 @@ class Sender:
 
         s.close()
 
-# job_id, db_token = get_permission_to_submit_task('/Users/m4hmmd/Desktop/senior/base_server_test/sender/exec_test.py')
-# upload_file_to_db('/Users/m4hmmd/Desktop/senior/base_server_test/sender/exec_test.py', job_id, db_token)
-
-# time.sleep(10)
-
-# output_db_token, file_size = get_permission_to_download_output(job_id)
-# download_output_from_db('received_output.txt', output_db_token, file_size )
-
-# def main():
-
-#     while True:
-#         arg = input('command: ')
-#         if arg == 'exit':
-#             break
-#         if arg == 'send-perm':
-#             job_id, db_token = get_permission_to_submit_task('/Users/m4hmmd/Desktop/senior/base_server_test/sender/exec_test.py')
-#             print('job_id, db_token:', job_id, db_token)
-#         if arg == 'send-up':
-#             job_id, db_token = int(input('job-id ')), int(input('db-token '))
-#             upload_file_to_db('/Users/m4hmmd/Desktop/senior/base_server_test/sender/exec_test.py', job_id, db_token)
-#         if arg == 'down-perm':
-#             job_id = int(input('job-id '))
-#             permission = get_permission_to_download_output(job_id)
-#             if permission:
-#                 output_db_token, file_size = permission
-#                 print('output_db_token, file_size:', output_db_token, file_size)
-#             else:
-#                 print('error: didn\'t receive db token')
-#         if arg == 'down':
-#             output_db_token, file_size = int(input('db-token ')), int(input('file-size '))
-#             download_output_from_db('received_output.txt', output_db_token, file_size)
-        
-# if __name__ == '__main__':
-#     main()
