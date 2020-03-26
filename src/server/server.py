@@ -15,6 +15,7 @@ from server_messaging import Messaging
 BACKLOG = 1024      # size of the queue for pending connections
 
 s = None            # main socket object
+sel = None
 logger = None
 
 # all following structs to be replaced by the db
