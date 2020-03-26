@@ -8,9 +8,19 @@ import sender
 import receiver
 
 class TaskFinishedWindow(QWidget):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent):
+        super(TaskFinishedWindow, self).__init__(parent)
         layout = QVBoxLayout()
+
+        self.backBtn = QPushButton(self)
+        self.backBtn.setText('<')
+        self.backBtn.setStyleSheet( 'background: transparent;\n'
+                                    'color: white;\n'
+                                    'border: 1px solid white;\n')
+        self.backBtn.setFont(QtGui.QFont('Arial', 12))
+        self.backBtn.setFixedHeight(10)
+        self.backBtn.setFixedWidth(10)
+        self.backBtn.clicked.connect(parent.goBack)
 
         label = QLabel(self)
         label.setText('Task finished successfully')
@@ -25,6 +35,7 @@ class TaskFinishedWindow(QWidget):
         self.label = label
 
         self.layout = layout
+        self.layout.addWidget(self.backBtn)
         self.layout.addWidget(self.label)
         self.setLayout(self.layout)
 
@@ -85,7 +96,7 @@ class WaitingWindow(QtWidgets.QWidget):
 class JobsFrame(QScrollArea):
     def __init__(self, parent):
         super().__init__()
-
+        self.all_jobs = []
         self.container = parent
         self.setFixedHeight(241)
         self.setStyleSheet( 'background: transparent;\n'
@@ -94,13 +105,17 @@ class JobsFrame(QScrollArea):
         self.form = QtWidgets.QFormLayout()
         self.groupBox = QtWidgets.QGroupBox('')
         self.setWidgetResizable(True)
+        self.updateJobs()
 
-        jobs = parent.receiveJobs()
+    def updateJobs(self):
+        jobs = self.container.receiveJobs()
 
         for job in jobs:
-            self.addJob(job)
+            if (job not in self.all_jobs):
+                self.addJob(job)
 
     def addJob(self, e):
+        self.all_jobs.append(e)
         jobId = QLabel(str(e))
         jobId.setFont(QtGui.QFont('Arial', 11))
         jobId.adjustSize()
@@ -140,16 +155,28 @@ class AvailableJobs(QWidget):
         self.backBtn.setFixedWidth(10)
         self.backBtn.clicked.connect(parent.goBack)
 
+        self.refreshBtn = QPushButton(self)
+        self.refreshBtn.setText('Refresh')
+        self.refreshBtn.setStyleSheet( 'background: transparent;\n'
+                                    'color: white;\n'
+                                    'border: 1px solid white;\n')
+        self.refreshBtn.setFont(QtGui.QFont('Arial', 12))
+        self.refreshBtn.setFixedHeight(20)
+        self.refreshBtn.setFixedWidth(40)
+        
+
         self.label = QLabel('Available Jobs: ')
         self.label.setFont(QtGui.QFont('Arial', 20))
         self.label.adjustSize()
         self.label.setFixedHeight(25)
 
         self.jobsFrame = JobsFrame(parent)
+        self.refreshBtn.clicked.connect(self.jobsFrame.updateJobs)
         
         self.layout = QVBoxLayout()
 
         self.layout.addWidget(self.backBtn)
+        self.layout.addWidget(self.refreshBtn)
         self.layout.addWidget(self.label)
         self.layout.addWidget(self.jobsFrame)
         self.layout.setAlignment(QtCore.Qt.AlignTop)
@@ -288,7 +315,7 @@ class ReceiverWindow(QWidget):
         self.receivedWindow.hide()
 
         # Setting up Task Finished Window
-        self.taskFinishedWindow = TaskFinishedWindow()
+        self.taskFinishedWindow = TaskFinishedWindow(self)
         self.taskFinishedWindow.hide()
 
         # Adding Hardware Info Window
@@ -313,7 +340,7 @@ class ReceiverWindow(QWidget):
         self.waitingWindow.show()
 
         # Getting sent job Id from Push Button
-        job_id = self.sender().widget().jobId
+        job_id = self.sender().jobId
 
         # Getting permission for execution
         db_token, size = receiver.get_permission_to_execute_task(job_id)
@@ -328,7 +355,7 @@ class ReceiverWindow(QWidget):
         out_db_token = receiver.get_permission_to_upload_output(job_id, 'sender_output.txt')
 
         # Uploading execution output
-        receiver.upload_output_to_db('sender_output.txt', job_id, output_db_token)
+        receiver.upload_output_to_db('sender_output.txt', job_id, out_db_token)
 
         self.waitingWindow.hide()
         self.taskFinishedWindow.show()
@@ -474,15 +501,6 @@ class ScrollFrame(QScrollArea):
         for f in self.files:
             print(f'File: {f}')
             filelist.append(f)
-            self.container.sender.sendToServer(f)
-        data = ''
-        with open('received_output.txt') as f:
-            for i, l in enumerate(f):
-                self.container.outputFrame.addLine(l)
-
-        self.container.loadingWindow.hide()
-        self.container.outputFrame.show()
-        self.container.outputDetailsLabel.show()
 
 
 class OutputFrame(QScrollArea):
@@ -529,11 +547,22 @@ class LoadingWindow(QtWidgets.QWidget):
 
 
 class UploadFinishedWindow(QWidget):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent):
+        super(UploadFinishedWindow, self).__init__(parent)
+        self.container = parent
 
     def startWindow(self, job_id):
         self.layout = QVBoxLayout()
+
+        self.backBtn = QPushButton(self)
+        self.backBtn.setText('<')
+        self.backBtn.setStyleSheet( 'background: transparent;\n'
+                                    'color: white;\n'
+                                    'border: 1px solid white;\n')
+        self.backBtn.setFont(QtGui.QFont('Arial', 12))
+        self.backBtn.setFixedHeight(20)
+        self.backBtn.setFixedWidth(20)
+        self.backBtn.clicked.connect(self.container.goBack)
 
         self.label = QLabel(self)
         self.label.setText('Files uploaded successfully')
@@ -552,6 +581,7 @@ class UploadFinishedWindow(QWidget):
         self.downloadId.setGeometry(QtCore.QRect(150, 130, 144, 22))
         self.downloadId.adjustSize()
 
+        self.layout.addWidget(self.backBtn)
         self.layout.addWidget(self.label)
         self.layout.addWidget(self.downloadId)
         self.setLayout(self.layout)
@@ -616,8 +646,10 @@ class DownloadWindow(QWidget):
         self.uploadBtn.clicked.connect(self.startUploadWindow)
 
         # Adding Download Finished Successfully Label
-        self.downloadFinishedLabel = QLabel('Download Finished Successfully')
-        self.downloadFinishedLabel.setFont(QtGui.QFont('Arial', 40))
+        self.downloadFinishedLabel = QLabel(self)
+        self.downloadFinishedLabel.setText('Download Finished Successfully')
+        self.downloadFinishedLabel.setGeometry(QtCore.QRect(50, 60, 20, 22))
+        self.downloadFinishedLabel.setFont(QtGui.QFont('Arial', 20))
         self.downloadFinishedLabel.adjustSize()
         self.downloadFinishedLabel.hide()
 
@@ -647,7 +679,7 @@ class DownloadWindow(QWidget):
         self.jobId.hide()
         self.jobIdLabel.hide()
         self.sendBtn.hide()
-        self.backBtn.hide()
+        self.backBtn.show()
         self.uploadBtn.hide()
         self.downloadFinishedLabel.show()
         
@@ -781,7 +813,7 @@ class SenderWindow(QWidget):
         self.outputFrame.hide()
 
         # Adding Upload Finished Window
-        self.uploadFinishedWindow = UploadFinishedWindow()
+        self.uploadFinishedWindow = UploadFinishedWindow(self)
         self.uploadFinishedWindow.hide()
 
         # Adding everything into the layout
@@ -812,10 +844,15 @@ class SenderWindow(QWidget):
         self.uploadBtn.hide()
         self.loadingWindow.show()
 
+        self.scroll.uploadFiles()
         job_id, db_token = sender.get_permission_to_submit_task(filelist[0])
         sender.upload_file_to_db(filelist[0], job_id, db_token)
 
-        self.startUploadFinishedWindow.startWindow(job_id)
+        self.loadingWindow.hide()
+        self.downloadWindow.hide()
+        self.hideWindow()
+        self.uploadFinishedWindow.startWindow(job_id)
+        self.uploadFinishedWindow.show()
 
     # def startUploadFinishedWindow(self):
     #     self.scroll.uploadFiles()

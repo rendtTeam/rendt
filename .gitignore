@@ -1,3 +1,4 @@
 
 *.pyc
 *.txt
+src/client/sender_job.py
