@@ -474,15 +474,6 @@ class ScrollFrame(QScrollArea):
         for f in self.files:
             print(f'File: {f}')
             filelist.append(f)
-            self.container.sender.sendToServer(f)
-        data = ''
-        with open('received_output.txt') as f:
-            for i, l in enumerate(f):
-                self.container.outputFrame.addLine(l)
-
-        self.container.loadingWindow.hide()
-        self.container.outputFrame.show()
-        self.container.outputDetailsLabel.show()
 
 
 class OutputFrame(QScrollArea):
@@ -812,6 +803,7 @@ class SenderWindow(QWidget):
         self.uploadBtn.hide()
         self.loadingWindow.show()
 
+        self.scroll.uploadFiles()
         job_id, db_token = sender.get_permission_to_submit_task(filelist[0])
         sender.upload_file_to_db(filelist[0], job_id, db_token)
 
