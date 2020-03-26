@@ -19,7 +19,6 @@ class Server:
     def __init__(self, port):
         self.BACKLOG = 1024      # size of the queue for pending connections
 
-
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.s.bind(('', port))          # Bind to the port
 
@@ -33,9 +32,6 @@ class Server:
         self.issued_job_ids = []             # job ids that have already been used; can't be issued again
         self.user_execfile_tokens = {}       # stores tokens that have been issued to a user to upload exec files
         self.user_output_tokens = {}         # stores tokens that have been issued to a user to upload output files
-        self.available_jobs = []             # all jobs available for execution
-        self.jobs_in_execution = []          # all jobs currently in execution
-        self.finished_jobs = []              # all jobs have been executed
         self.execfile_db = {}                # maps db tokens to job_ids (to access execfiles)
         self.output_db = {}                  # maps db tokens to job_ids (to access outputs)
 
@@ -63,7 +59,7 @@ class Server:
                 self.serve_leaser_request(req_pipe, conn, addr)
                 
     def configure_logging(self):
-        logger = logging.getself.logger('Serverself.logger')
+        logger = logging.getLogger('Serverself.logger')
         logger.setLevel(logging.INFO)
 
         currentDT = str(datetime.datetime.now()).replace(' ', '_')
@@ -112,6 +108,7 @@ class Server:
             
             db_token = request_content['db-token']
             job_id = request_content['job-id']
+            job_type = request_content['file-type']
 
             if db_token in self.user_execfile_tokens[addr[0]]: # if db_token really belongs to this user
                 if self.execfile_db[db_token] == job_id:
@@ -122,7 +119,7 @@ class Server:
                     else:
                         self.user_submitted_jobs[addr[0]] = [job_id]
                     # add job to the db of available
-                    self.available_jobs.append(job_id)
+                    self.db_handler.addJob(job_id, job_type, f'jobs/toexec{job_id}.py', db_token)
 
                     response_content = {'status': 'success',
                                         }
@@ -152,7 +149,8 @@ class Server:
                 self.logger.warning(f'couldn\'t issue permission to renter {addr[0]} to download output of job {requested_job_id} via token {self.jobs_to_output_tokens[requested_job_id]}: invalid token')
                 return
 
-            if requested_job_id in self.finished_jobs and requested_job_id in self.jobs_to_output_tokens:
+            finished_jobs = self.db_handler.queryJobs(status='finished')
+            if requested_job_id in finished_jobs and requested_job_id in self.jobs_to_output_tokens:
                 response_content = {'status': 'success',
                                     'file-size': os.path.getsize(f'outputs/output{requested_job_id}.txt'),
                                     'db-token': self.jobs_to_output_tokens[requested_job_id]
@@ -196,7 +194,7 @@ class Server:
         header, request_content = req_pipe.jsonheader, req_pipe.request
         if request_content['request-type'] == 'get-available-jobs':
             self.logger.info(f'connection: leaser from {addr}; request type: get-available-jobs')
-            available_jobs = self.get_available_jobs()
+            available_jobs = self.db_handler.queryJobs(status='available')
             response_content = {'status': 'success',
                                 'jobs': available_jobs,
                                 }
@@ -211,7 +209,7 @@ class Server:
                 return
                 
             requested_job_id = request_content['job-id']
-            available_jobs = self.get_available_jobs()
+            available_jobs = self.db_handler.queryJobs(status='available')
 
             # TODO we can delegate the first condition check below to DB, which would be much much more efficient 
             if requested_job_id in available_jobs and requested_job_id in self.jobs_to_execfile_tokens: 
@@ -220,11 +218,9 @@ class Server:
                                     'db-token': self.jobs_to_execfile_tokens[requested_job_id]
                                     }
                 req_pipe.write(response_content, 'text/json')
-                # mark job unavailable
 
                 # TODO mark this job as in execution
-                self.available_jobs.remove(requested_job_id)
-                self.jobs_in_execution.append(requested_job_id)
+                self.db_handler.changeJobStatus(requested_job_id, 'in-execution')
                 
                 # mark this job being executed by this leaser, so that he can later obtain permission to submit its outputs
                 if addr[0] in self.user_jobs_in_execution:
@@ -300,14 +296,13 @@ class Server:
 
             if db_token in self.user_output_tokens[addr[0]]: # if db_token really belongs to this user
                 if self.output_db[db_token] == job_id:
-                    recv_file(conn, f'outputs/output{job_id}.txt')
+                    self.recv_file(conn, f'outputs/output{job_id}.txt')
 
                     response_content = {'status': 'success',
                                         }
                     req_pipe.write(response_content, 'text/json')
                     self.jobs_to_output_tokens[job_id] = db_token
-                    self.jobs_in_execution.remove(job_id)
-                    self.finished_jobs.append(job_id)
+                    self.db_handler.changeJobStatus(job_id, 'finished')
 
                     self.logger.info(f'received file outputs/output{job_id}.txt from renter {addr[0]}')
                     return
@@ -350,10 +345,6 @@ class Server:
             job_id = int(random.random()*9000000)+1000000
         self.issued_job_ids.append(job_id)
         return job_id
-
-    # TODO pull from DB
-    def get_available_jobs(self):
-        return self.available_jobs
 
     def shutdown_server(self):
         self.s.close()
