@@ -8,6 +8,7 @@ from PyQt5.QtWidgets import QScrollArea, QPushButton, QLabel, QWidget, QVBoxLayo
 from sender import Sender
 from receiver import Receiver
 
+
 class TaskFinishedWindow(QWidget):
     def __init__(self, parent):
         super(TaskFinishedWindow, self).__init__(parent)
@@ -15,16 +16,29 @@ class TaskFinishedWindow(QWidget):
 
         self.backBtn = QPushButton(self)
         self.backBtn.setText('<')
-        self.backBtn.setStyleSheet( 'background: transparent;\n'
-                                    'color: white;\n'
-                                    'border: 1px solid white;\n')
+        self.backBtn.setStyleSheet("QPushButton {\n"
+                                   "    background: transparent;\n"
+                                   "    border: 1px solid rgb(227, 227, 227);\n"
+                                   "    color: white;\n"
+                                   "}\n"
+                                   "\n"
+                                   "QPushButton:hover {\n"
+                                   "    background: rgba(200, 200, 200, 0.3);\n"
+                                   "}\n"
+                                   "\n"
+                                   "QPushButton:pressed {\n"
+                                   "    background: rgba(150, 150, 150, 0.3);\n"
+                                   "}\n"
+                                   "\n")
         self.backBtn.setFont(QtGui.QFont('Arial', 12))
-        self.backBtn.setFixedHeight(10)
-        self.backBtn.setFixedWidth(10)
+        self.backBtn.setFixedHeight(50)
+        self.backBtn.setFixedWidth(50)
         self.backBtn.clicked.connect(parent.goBack)
 
         label = QLabel(self)
-        label.setText('Task finished successfully')
+        label.setText('\nTask finished successfully')
+        label.setStyleSheet('background: transparent')
+        label.setAlignment(QtCore.Qt.AlignHCenter)
 
         font = QtGui.QFont()
         font.setFamily("Arial")
@@ -41,34 +55,11 @@ class TaskFinishedWindow(QWidget):
         self.setLayout(self.layout)
 
 
-class ReceivedWindow(QWidget):
-    def __init__(self):
-        super().__init__()
-        layout = QVBoxLayout()
-
-        label = QLabel(self)
-        label.setText('Files successfully received')
-
-        font = QtGui.QFont()
-        font.setFamily("Arial")
-        font.setPointSize(28)
-
-        label.setFont(font)
-        label.adjustSize()
-
-        self.label = label
-        self.label.setGeometry(QtCore.QRect(135, 100, 144, 17))
-
-        self.layout = layout
-        self.layout.addWidget(self.label)
-        self.setLayout(self.layout)
-
-
 class WaitingWindow(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(WaitingWindow, self).__init__(parent)
         self.layout = QtWidgets.QVBoxLayout()
-        
+
         self.waitingLabel = QtWidgets.QLabel(self)
         self.waitingLabel.setStyleSheet('color: white')
         self.waitingLabel.setGeometry(QtCore.QRect(135, 100, 144, 17))
@@ -94,115 +85,169 @@ class WaitingWindow(QtWidgets.QWidget):
         self.layout.addWidget(self.waitingLabel)
         self.setLayout(self.layout)
 
+
 class JobsFrame(QScrollArea):
     def __init__(self, parent):
         super().__init__()
         self.all_jobs = []
         self.container = parent
         self.setFixedHeight(241)
-        self.setStyleSheet( 'background: transparent;\n'
-                            'border: 1px solid white;\n'
-                            'color: white;\n')        
+        self.setStyleSheet('background: transparent;\n'
+                           'border: 1px solid white;\n'
+                           'color: white;\n')
         self.form = QtWidgets.QFormLayout()
         self.groupBox = QtWidgets.QGroupBox('')
         self.setWidgetResizable(True)
         self.updateJobs()
 
     def updateJobs(self):
+        self.all_jobs = []
         jobs = self.container.receiveJobs()
+        self.form = QtWidgets.QFormLayout()
 
         for job in jobs:
-            if (job not in self.all_jobs):
-                self.addJob(job)
+            self.addJob(job)
 
     def addJob(self, e):
         self.all_jobs.append(e)
         jobId = QLabel(str(e))
-        jobId.setFont(QtGui.QFont('Arial', 11))
+        jobId.setFont(QtGui.QFont('Arial', 14))
         jobId.adjustSize()
+        jobId.setStyleSheet('border: 1px solid transparent;')
+        jobId.setFixedWidth(self.width() - 150)
 
         jobExecBtn = QPushButton(self)
         jobExecBtn.jobId = e
         jobExecBtn.setText('Run')
-        jobExecBtn.setFixedWidth(50)
-        jobExecBtn.setFont(QtGui.QFont('Arial', 11))
-        jobExecBtn.setStyleSheet(   'QPushButton {\n'
-                                    '   background: transparent;\n'
-                                    '   color: white;\n'
-                                    '   border: 1px solid white;}\n'
-                                    'QPushButton:hover {\n'
-                                    '   background: rgb(76, 175, 80);\n'
-                                    '   border: rgb(76, 175, 80);}\n'
-                                    'QPushButton:clicked {\n'
-                                    '   background: rgb(46, 125, 50);\n'
-                                    '   border: rgb(46, 125, 50);}\n')
+        jobExecBtn.setFixedWidth(100)
+        jobExecBtn.setFixedHeight(50)
+        jobExecBtn.setFont(QtGui.QFont('Arial', 14))
+        jobExecBtn.setStyleSheet('QPushButton {\n'
+                                 '   background: transparent;\n'
+                                 '   color: white;\n'
+                                 '   border: 1px solid white;}\n'
+                                 'QPushButton:hover {\n'
+                                 '   background: rgb(76, 175, 80);\n'
+                                 '   border: rgb(76, 175, 80);}\n'
+                                 'QPushButton:clicked {\n'
+                                 '   background: rgb(46, 125, 50);\n'
+                                 '   border: rgb(46, 125, 50);}\n')
 
         jobExecBtn.clicked.connect(self.container.execJob)
+
         self.form.addRow(jobId, jobExecBtn)
         self.groupBox.setLayout(self.form)
         self.setWidget(self.groupBox)
+
 
 class AvailableJobs(QWidget):
     def __init__(self, parent):
         super().__init__()
 
+        self.setStyleSheet('background: transparent')
         self.backBtn = QPushButton(self)
         self.backBtn.setText('<')
-        self.backBtn.setStyleSheet( 'background: transparent;\n'
-                                    'color: white;\n'
-                                    'border: 1px solid white;\n')
+        self.backBtn.setStyleSheet('background: transparent;\n'
+                                   'color: white;\n'
+                                   'border: 1px solid white;\n')
         self.backBtn.setFont(QtGui.QFont('Arial', 12))
-        self.backBtn.setFixedHeight(10)
-        self.backBtn.setFixedWidth(10)
+        self.backBtn.setFixedHeight(50)
+        self.backBtn.setFixedWidth(50)
         self.backBtn.clicked.connect(parent.goBack)
+        self.backBtn.setStyleSheet("QPushButton {\n"
+                                   "    background: transparent;\n"
+                                   "    border: 1px solid rgb(227, 227, 227);\n"
+                                   "    color: white;\n"
+                                   "}\n"
+                                   "\n"
+                                   "QPushButton:hover {\n"
+                                   "    background: rgba(200, 200, 200, 0.3);\n"
+                                   "}\n"
+                                   "\n"
+                                   "QPushButton:pressed {\n"
+                                   "    background: rgba(150, 150, 150, 0.3);\n"
+                                   "}\n"
+                                   "\n")
 
         self.refreshBtn = QPushButton(self)
         self.refreshBtn.setText('Refresh')
-        self.refreshBtn.setStyleSheet( 'background: transparent;\n'
-                                    'color: white;\n'
-                                    'border: 1px solid white;\n')
+        self.refreshBtn.setStyleSheet("QPushButton {\n"
+                                      "    background: transparent;\n"
+                                      "    border: 1px solid rgb(227, 227, 227);\n"
+                                      "    color: white;\n"
+                                      "}\n"
+                                      "\n"
+                                      "QPushButton:hover {\n"
+                                      "    background: rgba(200, 200, 200, 0.3);\n"
+                                      "}\n"
+                                      "\n"
+                                      "QPushButton:pressed {\n"
+                                      "    background: rgba(150, 150, 150, 0.3);\n"
+                                      "}\n"
+                                      "\n")
         self.refreshBtn.setFont(QtGui.QFont('Arial', 12))
-        self.refreshBtn.setFixedHeight(20)
-        self.refreshBtn.setFixedWidth(40)
-        
+        self.refreshBtn.setFixedHeight(50)
+        self.refreshBtn.setFixedWidth(100)
 
         self.label = QLabel('Available Jobs: ')
-        self.label.setFont(QtGui.QFont('Arial', 20))
+        self.label.setFont(QtGui.QFont('Arial', 20, 1000))
         self.label.adjustSize()
-        self.label.setFixedHeight(25)
+        self.label.setFixedHeight(30)
 
         self.jobsFrame = JobsFrame(parent)
         self.refreshBtn.clicked.connect(self.jobsFrame.updateJobs)
-        
+
         self.layout = QVBoxLayout()
 
-        self.layout.addWidget(self.backBtn)
-        self.layout.addWidget(self.refreshBtn)
+        topButtons = QtWidgets.QHBoxLayout()
+        topButtons.addWidget(self.backBtn)
+        topButtons.addWidget(self.refreshBtn)
+        topButtons.setContentsMargins(0, 0, 0, 0)
+        topButtons.setAlignment(QtCore.Qt.AlignTop)
+        topButtonsCombo = QWidget(self)
+        topButtonsCombo.setLayout(topButtons)
+        topButtonsCombo.setFixedHeight(60)
+
+        self.layout.addWidget(topButtonsCombo)
         self.layout.addWidget(self.label)
         self.layout.addWidget(self.jobsFrame)
         self.layout.setAlignment(QtCore.Qt.AlignTop)
 
         self.setLayout(self.layout)
+        self.layout.setContentsMargins(60, 0, 60, 80)
+
 
 class HardwareInfoWindow(QWidget):
     def __init__(self, parent):
         super().__init__()
         self.container = parent
-        self.label = QLabel('Hardware Information\n')
-        self.label.setFont(QtGui.QFont('Arial', 20))
+        self.setStyleSheet('background: transparent')
+        self.label = QLabel('Hardware Information')
+        self.label.setFont(QtGui.QFont('Century Gothic', 40, 1000))
+
         self.label.adjustSize()
+        self.label.setAlignment(QtCore.Qt.AlignVCenter)
 
-        self.physCores = QLabel('Physical Cores: ' + str(psutil.cpu_count(logical = False)))
-        self.totalCores = QLabel('Total Cores: ' + str(psutil.cpu_count(logical = True)) + '\n')
+        self.physCores = QLabel(
+            'Physical Cores: \t\t' + str(psutil.cpu_count(logical=False)))
+        self.totalCores = QLabel(
+            'Total Cores: \t\t' + str(psutil.cpu_count(logical=True)) + '\n')
 
-        self.maxFreq = QLabel(f'Max Frequency: {psutil.cpu_freq().max: .2f} MHz')
-        self.minFreq = QLabel(f'Min Frequency: {psutil.cpu_freq().min: .2f} MHz')
-        self.curFreq = QLabel(f'Current Frequency: {psutil.cpu_freq().current: .2f} MHz\n')
-        
-        self.totalMem = QLabel(f'Total: {self.get_size(psutil.virtual_memory().total)}')
-        self.avalMem = QLabel(f'Available: {self.get_size(psutil.virtual_memory().available)}')
-        self.usedMem = QLabel(f'Used: {self.get_size(psutil.virtual_memory().used)}')
-        self.percentMem = QLabel(f'Percentage: {self.get_size(psutil.virtual_memory().percent)}%\n')
+        self.maxFreq = QLabel(
+            f'Max Frequency: \t{psutil.cpu_freq().max: .2f} MHz')
+        self.minFreq = QLabel(
+            f'Min Frequency: \t{psutil.cpu_freq().min: .2f} MHz')
+        self.curFreq = QLabel(
+            f'Current Frequency: \t{psutil.cpu_freq().current: .2f} MHz\n')
+
+        self.totalMem = QLabel(
+            f'Total: \t\t\t{self.get_size(psutil.virtual_memory().total)}')
+        self.avalMem = QLabel(
+            f'Available: \t\t{self.get_size(psutil.virtual_memory().available)}')
+        self.usedMem = QLabel(
+            f'Used: \t\t\t{self.get_size(psutil.virtual_memory().used)}')
+        self.percentMem = QLabel(
+            f'Percentage: \t\t{self.get_size(psutil.virtual_memory().percent)}%\n')
 
         self.physCores.setFont(QtGui.QFont('Arial', 14))
         self.physCores.adjustSize()
@@ -226,10 +271,22 @@ class HardwareInfoWindow(QWidget):
         self.startBtn = QPushButton(self)
         self.startBtn.setFont(QtGui.QFont('Arial', 14))
         self.startBtn.setText('Lease')
-        self.startBtn.setStyleSheet('background: transparent;\n'
-                                    'border: 1px solid white;\n'
-                                    'color: white;\n')
-        self.startBtn.setFixedWidth(50)
+        self.startBtn.setStyleSheet("QPushButton {\n"
+                                    "    background: transparent;\n"
+                                    "    border: 1px solid rgb(227, 227, 227);\n"
+                                    "    color: white;\n"
+                                    "}\n"
+                                    "\n"
+                                    "QPushButton:hover {\n"
+                                    "    background: rgba(200, 200, 200, 0.3);\n"
+                                    "}\n"
+                                    "\n"
+                                    "QPushButton:pressed {\n"
+                                    "    background: rgba(150, 150, 150, 0.3);\n"
+                                    "}\n"
+                                    "\n")
+        self.startBtn.setFixedWidth(100)
+        self.startBtn.setFixedHeight(50)
         self.startBtn.clicked.connect(self.container.showAvailableJobs)
 
         self.layout = QVBoxLayout()
@@ -245,11 +302,11 @@ class HardwareInfoWindow(QWidget):
         self.layout.addWidget(self.usedMem)
         self.layout.addWidget(self.percentMem)
         self.layout.addWidget(self.startBtn)
+        self.layout.setContentsMargins(0, 0, 0, 0)
 
         self.setLayout(self.layout)
+    # * Reference: https://www.thepythoncode.com/article/get-hardware-system-information-python
 
-
-    #* Reference: https://www.thepythoncode.com/article/get-hardware-system-information-python 
     def get_size(self, bytes, suffix="B"):
         """
         Scale bytes to its proper format
@@ -270,13 +327,14 @@ class ReceiverWindow(QWidget):
         self.container = parent
         self.started = False
         self.receiver = Receiver()
-    
+
     def startWindow(self):
         self.started = True
         self.container.setWindowTitle('Rendt Receiver Demo')
         self.setWindowIcon(QtGui.QIcon(
             '../../assets/img/rendt_new_logo_square.png'))
-        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
+                           QtWidgets.QSizePolicy.Expanding)
         self.setStyleSheet("QPushButton {\n"
                            "    background: rgb(232, 232, 232);\n"
                            "    border: 1px solid rgb(227, 227, 227);\n"
@@ -302,10 +360,12 @@ class ReceiverWindow(QWidget):
 
         # Adding back button
         self.backBtn = QPushButton(self)
-        self.backBtn.setGeometry(QtCore.QRect(0, 0, 20, 20))
+        # self.backBtn.setGeometry(QtCore.QRect(0, 0, 20, 20))
         self.backBtn.setText('<')
         self.backBtn.setFont(QtGui.QFont('Arial', 12))
         self.backBtn.clicked.connect(self.goBack)
+        self.backBtn.setFixedWidth(50)
+        self.backBtn.setFixedHeight(50)
         self.backBtn.hide()
 
         # Setting up Waiting Screen
@@ -313,8 +373,8 @@ class ReceiverWindow(QWidget):
         self.waitingWindow.hide()
 
         # Setting up Received Window
-        self.receivedWindow = ReceivedWindow()
-        self.receivedWindow.hide()
+        # self.receivedWindow = ReceivedWindow()
+        # self.receivedWindow.hide()
 
         # Setting up Task Finished Window
         self.taskFinishedWindow = TaskFinishedWindow(self)
@@ -330,12 +390,13 @@ class ReceiverWindow(QWidget):
         # Adding everything into the layout
         self.layout.addWidget(self.backBtn)
         self.layout.addWidget(self.waitingWindow)
-        self.layout.addWidget(self.receivedWindow)
+        # self.layout.addWidget(self.receivedWindow)
         self.layout.addWidget(self.taskFinishedWindow)
         self.layout.addWidget(self.hardwareInfoWindow)
         self.layout.addWidget(self.availableJobs)
 
         self.setLayout(self.layout)
+        self.selectDefaultFont('Century Gothic')
 
     def execJob(self):
         self.availableJobs.hide()
@@ -354,10 +415,12 @@ class ReceiverWindow(QWidget):
         self.receiver.execute_job('sender_job.py', f'sender_output.txt')
 
         # Getting permission to upload output from execution
-        out_db_token = self.receiver.get_permission_to_upload_output(job_id, 'sender_output.txt')
+        out_db_token = self.receiver.get_permission_to_upload_output(
+            job_id, 'sender_output.txt')
 
         # Uploading execution output
-        self.receiver.upload_output_to_db('sender_output.txt', job_id, out_db_token)
+        self.receiver.upload_output_to_db(
+            'sender_output.txt', job_id, out_db_token)
 
         self.waitingWindow.hide()
         self.taskFinishedWindow.show()
@@ -372,11 +435,11 @@ class ReceiverWindow(QWidget):
         # self.receiver.execute()
         # self.receivedWindow.hide()
         # self.taskFinishedWindow.show()
-    
+
     def goBack(self):
         self.hideWindow()
         self.container.resetUi()
-    
+
     def hideWindow(self):
         self.waitingWindow.hide()
         self.taskFinishedWindow.hide()
@@ -388,10 +451,13 @@ class ReceiverWindow(QWidget):
         self.container.setWindowTitle('Rendt Receiver Demo')
         self.hardwareInfoWindow.show()
         # self.waitingWindow.show()
-    
+
     def showAvailableJobs(self):
         self.hardwareInfoWindow.hide()
         self.availableJobs.show()
+
+    def selectDefaultFont(self, f):
+        self.container.selectDefaultFont(f)
 
 
 class FileButton(QPushButton):
@@ -411,10 +477,30 @@ class ScrollFrame(QScrollArea):
         super().__init__(parent)
         self.setAcceptDrops(True)
         self.form = QtWidgets.QFormLayout()
-        self.setFixedHeight(121)
+        self.setFixedHeight(250)
         self.container = parent
         self.groupBox = QtWidgets.QGroupBox('')
         self.files = []
+
+        self.layout = QVBoxLayout()
+
+        self.uploadLabel = QLabel(self)
+        self.uploadLabel.setStyleSheet(
+            'color: white;\nbackground: transparent;')
+
+        font = QtGui.QFont()
+        font.setFamily("Arial")
+        font.setPointSize(15)
+
+        self.uploadLabel.setFont(font)
+        self.uploadLabel.setObjectName("uploadLabel")
+        self.uploadLabel.setText('Drag & Drop files here')
+        self.uploadLabel.setStyleSheet('border: 1px solid transparent')
+        self.uploadLabel.adjustSize()
+
+        self.layout.addWidget(self.uploadLabel)
+        self.layout.setAlignment(QtCore.Qt.AlignCenter)
+        self.setLayout(self.layout)
 
     def dragEnterEvent(self, e):
         if e.mimeData().hasUrls():
@@ -423,24 +509,25 @@ class ScrollFrame(QScrollArea):
         else:
             e.ignore()
             print('Ignored')
-        self.setStyleSheet("background: rgb(30, 136, 229);\n"
+        self.setStyleSheet("QScrollArea {\n background: rgba(30, 136, 229, 0.3);\n"
                            "border: 1px solid rgb(25, 118, 210);\n"
-                           "color: white")
+                           "color: white;\n}")
 
     def dragLeaveEvent(self, e):
-        self.setStyleSheet("background: rgb(150, 150, 150);\n"
-                           "border: 1px solid rgb(150, 150, 150);\n"
+        self.setStyleSheet("background: transparent;\n"
+                           "border: 1px solid white;\n"
                            "color: white")
 
     def dropEvent(self, e):
         self.setStyleSheet("QScrollArea{\n"
+                           "    background: transparent;"
                            "    color: white;\n"
                            "}\n"
                            "QLabel{\n"
                            "    color: white;\n"
                            "}\n"
                            "QPushButton {\n"
-                           "    background: rgb(232, 232, 232);\n"
+                           "    background: transparent;\n"
                            "    color: white;\n"
                            "    border: 1px solid rgb(227, 227, 227);\n"
                            "}\n"
@@ -455,13 +542,10 @@ class ScrollFrame(QScrollArea):
                            "    border: 1px solid rgb(182,0,0);\n"
                            "}\n"
                            "\n"
-                           "QWidget {\n"
-                           "    background: rgb(120, 120, 120);\n"
-                           "}\n"
                            "\n"
                            "")
         if (self.form.rowCount() == 0):
-            self.container.switchLabel(False)
+            self.switchLabel(False)
 
         for url in e.mimeData().urls():
             if platform.system() == 'Windows':
@@ -476,13 +560,14 @@ class ScrollFrame(QScrollArea):
 
             font = QtGui.QFont()
             font.setFamily("Arial")
-            font.setPointSize(12)
+            font.setPointSize(14)
 
             label.setFont(font)
-            label.setFixedWidth(270)
+            label.setAlignment(QtCore.Qt.AlignLeft)
+            label.setFixedWidth(self.width() - 160)
             btn.setFont(font)
-            btn.setFixedWidth(50)
-            btn.setFixedHeight(20)
+            btn.setFixedWidth(100)
+            btn.setFixedHeight(40)
 
             btn.setFileSource(str(file_src))
             btn.clicked.connect(self.clickedRemove)
@@ -496,7 +581,7 @@ class ScrollFrame(QScrollArea):
         self.form.removeRow(self.sender())
 
         if (self.form.rowCount() == 0):
-            self.container.switchLabel(True)
+            self.switchLabel(True)
 
     def uploadFiles(self):
         for i in range(self.form.rowCount() * 2):
@@ -507,6 +592,14 @@ class ScrollFrame(QScrollArea):
             print(f'File: {f}')
             filelist.append(f)
             self.form.removeRow(0)
+
+        self.switchLabel(True)
+
+    def switchLabel(self, flag):
+        if (flag):
+            self.uploadLabel.show()
+        else:
+            self.uploadLabel.hide()
 
 
 class OutputFrame(QScrollArea):
@@ -556,18 +649,28 @@ class UploadFinishedWindow(QWidget):
     def __init__(self, parent):
         super(UploadFinishedWindow, self).__init__(parent)
         self.container = parent
+        self.started = False
 
     def startWindow(self, job_id):
+        self.started = True
         self.layout = QVBoxLayout()
 
         self.backBtn = QPushButton(self)
         self.backBtn.setText('<')
-        self.backBtn.setStyleSheet( 'background: transparent;\n'
-                                    'color: white;\n'
-                                    'border: 1px solid white;\n')
+        self.backBtn.setStyleSheet("QPushButton:hover {\n"
+                                   "    background: rgba(200, 200, 200, 0.3);\n"
+                                   "}\n"
+                                   "\n"
+                                   "QPushButton:pressed {\n"
+                                   "    background: rgba(150, 150, 150, 0.3);\n"
+                                   "}\n"
+                                   "QPushButton {\n"
+                                   "   background: transparent;\n"
+                                   "   border: 1px solid white;\n"
+                                   "   color: white;\n}\n")
         self.backBtn.setFont(QtGui.QFont('Arial', 12))
-        self.backBtn.setFixedHeight(20)
-        self.backBtn.setFixedWidth(20)
+        self.backBtn.setFixedHeight(50)
+        self.backBtn.setFixedWidth(50)
         self.backBtn.clicked.connect(self.container.goBack)
 
         self.label = QLabel(self)
@@ -579,33 +682,61 @@ class UploadFinishedWindow(QWidget):
 
         self.label.setFont(font)
         self.label.adjustSize()
-        self.label.setGeometry(QtCore.QRect(135, 100, 144, 30))
+        self.label.setFixedHeight(70)
+        self.label.setAlignment(QtCore.Qt.AlignCenter)
+
+        # self.label.setGeometry(QtCore.QRect(135, 100, 144, 30))
 
         self.downloadId = QLabel(self)
         self.downloadId.setText('Job ID: ' + str(job_id))
         self.downloadId.setFont(QtGui.QFont('Arial', 20))
-        self.downloadId.setGeometry(QtCore.QRect(150, 130, 144, 22))
+        # self.downloadId.setGeometry(QtCore.QRect(150, 130, 144, 22))
         self.downloadId.adjustSize()
+        self.downloadId.setFixedHeight(70)
+        self.downloadId.setFixedWidth(220)
+        # self.downloadId.setAlignment(QtCore.Qt.AlignCenter)
 
         self.copyBtn = QPushButton(self)
-        self.copyBtn.setStyleSheet( 'background: transparent;\n'
-                                    'color: white;\n'
-                                    'border: 1px solid white;\n')
+        self.copyBtn.setStyleSheet("QPushButton:hover {\n"
+                                   "    background: rgba(200, 200, 200, 0.3);\n"
+                                   "}\n"
+                                   "\n"
+                                   "QPushButton:pressed {\n"
+                                   "    background: rgba(150, 150, 150, 0.3);\n"
+                                   "}\n"
+                                   "QPushButton {\n"
+                                   "   background: transparent;\n"
+                                   "   border: 1px solid white;\n"
+                                   "   color: white;\n}\n")
         self.copyBtn.setText('Copy')
         self.copyBtn.setFont(QtGui.QFont('Arial', 12))
-        self.copyBtn.setFixedWidth(50)
-        self.copyBtn.setFixedHeight(20)
+        self.copyBtn.setFixedWidth(80)
+        self.copyBtn.setFixedHeight(50)
         self.copyBtn.clicked.connect(lambda: self.copyToClipBoard(str(job_id)))
+
+        self.buttonsCombo = QWidget(self)
+        buttons = QtWidgets.QHBoxLayout(self)
+        buttons.addWidget(self.downloadId)
+        buttons.addWidget(self.copyBtn)
+        buttons.setAlignment(QtCore.Qt.AlignCenter)
+        self.buttonsCombo.setLayout(buttons)
 
         self.layout.addWidget(self.backBtn)
         self.layout.addWidget(self.label)
-        self.layout.addWidget(self.downloadId)
-        self.layout.addWidget(self.copyBtn)
+        self.layout.addWidget(self.buttonsCombo)
         self.setLayout(self.layout)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setAlignment(QtCore.Qt.AlignTop)
+        self.selectDefaultFont('Century Gothic')
 
     def copyToClipBoard(self, e):
         cb = QtWidgets.QApplication.clipboard()
         cb.setText(e)
+
+    def selectDefaultFont(self, f):
+        self.label.setFont(QtGui.QFont(f, 28))
+        self.downloadId.setFont(QtGui.QFont(f, 20))
+        self.copyBtn.setFont(QtGui.QFont(f, 12))
 
 
 class DownloadWindow(QWidget):
@@ -618,83 +749,110 @@ class DownloadWindow(QWidget):
 
         self.label = QLabel(self)
         self.label.setText('Download executed files with Job ID')
-        self.label.setFont(QtGui.QFont('Arial', 20))
-        self.label.setGeometry(QtCore.QRect(50, 60, 20, 22))
+        self.label.setFont(QtGui.QFont('Arial', 40))
+        self.label.setFixedHeight(60)
         self.label.adjustSize()
+        self.label.setAlignment(QtCore.Qt.AlignCenter)
 
         self.jobIdLabel = QLabel(self)
         self.jobIdLabel.setText('Job ID: ')
-        self.jobIdLabel.setFont(QtGui.QFont('Arial', 14))
-        self.jobIdLabel.setGeometry(QtCore.QRect(50, 100, 20, 16))
+        self.jobIdLabel.setFont(QtGui.QFont('Century Gothic', 14))
         self.jobIdLabel.adjustSize()
+        self.jobIdLabel.setFixedWidth(100)
+        self.jobIdLabel.setFixedHeight(50)
+        self.jobIdLabel.setAlignment(QtCore.Qt.AlignCenter)
 
         self.jobId = QtWidgets.QLineEdit(self)
         self.jobId.setFont(QtGui.QFont('Arial', 14))
-        self.jobId.setStyleSheet(   'background: white;\n'
-                                    'border: 1px solid transparent;\n'
-                                    'color: black;\n')
-        self.jobId.setGeometry(QtCore.QRect(100, 100, 100, 16))
+        self.jobId.setStyleSheet('background: transparent;\n'
+                                 'border: 1px solid white;\n'
+                                 'color: white;\n')
+        self.jobId.setFixedHeight(50)
+        self.jobId.setFixedWidth(200)
 
         self.sendBtn = QPushButton(self)
         self.sendBtn.setText('Send')
         self.sendBtn.setFont(QtGui.QFont('Arial', 12))
-        self.sendBtn.setStyleSheet( "QPushButton:hover {\n"
-                                    "    background: rgb(200, 200, 200);\n"
-                                    "}\n"
-                                    "\n"
-                                    "QPushButton:pressed {\n"
-                                    "    background: rgb(150, 150, 150);\n"
-                                    "}\n"
-                                    "QPushButton {\n"
-                                    "   background: transparent;\n"
-                                    "   border: 1px solid rgb(227, 227, 227);\n"
-                                    "   color: white;\n}\n")
-        self.sendBtn.setGeometry(QtCore.QRect(202, 100, 50, 16))
+        self.sendBtn.setStyleSheet("QPushButton:hover {\n"
+                                   "    background: rgba(200, 200, 200, 0.3);\n"
+                                   "}\n"
+                                   "\n"
+                                   "QPushButton:pressed {\n"
+                                   "    background: rgba(150, 150, 150, 0.3);\n"
+                                   "}\n"
+                                   "QPushButton {\n"
+                                   "   background: transparent;\n"
+                                   "   border: 1px solid rgb(227, 227, 227);\n"
+                                   "   color: white;\n}\n")
+        self.sendBtn.setFixedHeight(50)
+        self.sendBtn.setFixedWidth(70)
         self.sendBtn.clicked.connect(self.downloadFile)
+
+        midWidgets = QtWidgets.QHBoxLayout(self)
+        midWidgets.addWidget(self.jobIdLabel)
+        midWidgets.addWidget(self.jobId)
+        midWidgets.addWidget(self.sendBtn)
+        midWidgets.setAlignment(QtCore.Qt.AlignCenter)
+        midWidgetsCombo = QWidget(self)
+        midWidgetsCombo.setLayout(midWidgets)
 
         # Adding back button
         self.backBtn = QPushButton(self)
-        self.backBtn.setGeometry(QtCore.QRect(0, 0, 20, 20))
         self.backBtn.setText('<')
         self.backBtn.setFont(QtGui.QFont('Arial', 12))
         self.backBtn.clicked.connect(self.container.goBack)
+        self.backBtn.setFixedHeight(50)
+        self.backBtn.setFixedWidth(50)
 
         # Adding download files button
         self.uploadBtn = QPushButton(self)
         self.uploadBtn.setText('Upload')
         self.uploadBtn.setFont(QtGui.QFont('Arial', 12))
-        self.uploadBtn.setGeometry(22, 0, 50, 20)
         self.uploadBtn.clicked.connect(self.startUploadWindow)
+        self.uploadBtn.setFixedWidth(100)
+        self.uploadBtn.setFixedHeight(50)
 
         # Adding Download Finished Successfully Label
         self.downloadFinishedLabel = QLabel(self)
-        self.downloadFinishedLabel.setText('Download Finished Successfully')
+        self.downloadFinishedLabel.setText('\nDownload Finished Successfully')
         self.downloadFinishedLabel.setGeometry(QtCore.QRect(50, 60, 20, 22))
-        self.downloadFinishedLabel.setFont(QtGui.QFont('Arial', 20))
+        self.downloadFinishedLabel.setFont(QtGui.QFont('Arial', 30, 1000))
         self.downloadFinishedLabel.adjustSize()
+        self.downloadFinishedLabel.setAlignment(QtCore.Qt.AlignHCenter)
         self.downloadFinishedLabel.hide()
 
+        topButtons = QtWidgets.QHBoxLayout(self)
+        topButtons.addWidget(self.backBtn)
+        topButtons.addWidget(self.uploadBtn)
+        topButtonsCombo = QWidget(self)
+        topButtonsCombo.setLayout(topButtons)
+        # topButtonsCombo.setFixedHeight(55)
+        topButtons.setAlignment(QtCore.Qt.AlignTop)
+        topButtons.setContentsMargins(0, 0, 0, 0)
+        topButtonsCombo.setContentsMargins(0, 0, 0, 0)
+        # topButtonsCombo.setStyleSheet('background: black')
+
+        self.layout.addWidget(topButtonsCombo)
         self.layout.addWidget(self.label)
-        self.layout.addWidget(self.jobIdLabel)
-        self.layout.addWidget(self.jobId)
-        self.layout.addWidget(self.sendBtn)
-        self.layout.addWidget(self.backBtn)
-        self.layout.addWidget(self.uploadBtn)
+        self.layout.addWidget(midWidgetsCombo)
         self.layout.addWidget(self.downloadFinishedLabel)
 
-        # self.setLayout(self.layout)
+        self.setLayout(self.layout)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setAlignment(QtCore.Qt.AlignTop)
 
     def startUploadWindow(self):
         self.destroy()
         self.container.resetUi()
-    
+
     def downloadFile(self):
         job_id = int(str(self.jobId.text()))
         perm = self.container.sender.get_permission_to_download_output(job_id)
 
         if perm:
             out_db_token, file_size = perm
-            self.container.sender.download_output_from_db('received_output.txt', out_db_token, file_size)
+            self.container.sender.download_output_from_db(
+                'received_output.txt', out_db_token, file_size)
 
         self.label.hide()
         self.jobId.hide()
@@ -703,7 +861,7 @@ class DownloadWindow(QWidget):
         self.backBtn.show()
         self.uploadBtn.hide()
         self.downloadFinishedLabel.show()
-        
+
 
 class SenderWindow(QWidget):
     def __init__(self, parent):
@@ -717,9 +875,10 @@ class SenderWindow(QWidget):
         self.setWindowIcon(QtGui.QIcon(
             '../../assets/img/rendt_new_logo_square.png'))
         # self.resize(600, 300)
-        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
+                           QtWidgets.QSizePolicy.Expanding)
         self.setStyleSheet("QPushButton {\n"
-                           "    background: rgb(232, 232, 232);\n"
+                           "    background: transparent;\n"
                            "    border: 1px solid rgb(227, 227, 227);\n"
                            "    color: white;\n"
                            "}\n"
@@ -729,11 +888,11 @@ class SenderWindow(QWidget):
                            "}\n"
                            "\n"
                            "QPushButton:pressed {\n"
-                           "    background: rgb(150, 150, 150);\n"
+                           "    background: rgba(150, 150, 150, 1);\n"
                            "}\n"
                            "\n"
                            "QWidget {\n"
-                           "    background: rgb(120, 120, 120);\n"
+                           "    background: transparent;\n"
                            "}\n"
                            "\n"
                            "")
@@ -743,22 +902,54 @@ class SenderWindow(QWidget):
 
         # Adding back button
         self.backBtn = QPushButton(self)
-        self.backBtn.setGeometry(QtCore.QRect(0, 0, 20, 20))
+        # self.backBtn.setGeometry(QtCore.QRect(0, 0, 20, 20))
         self.backBtn.setText('<')
         self.backBtn.setFont(QtGui.QFont('Arial', 12))
         self.backBtn.clicked.connect(self.goBack)
+        self.backBtn.setFixedHeight(50)
+        self.backBtn.setFixedWidth(50)
+        self.backBtn.setStyleSheet("QPushButton {\n"
+                                   "    background: transparent;\n"
+                                   "    border: 1px solid rgb(227, 227, 227);\n"
+                                   "    color: white;\n"
+                                   "}\n"
+                                   "\n"
+                                   "QPushButton:hover {\n"
+                                   "    background: rgba(200, 200, 200, 0.3);\n"
+                                   "}\n"
+                                   "\n"
+                                   "QPushButton:pressed {\n"
+                                   "    background: rgba(150, 150, 150, 0.3);\n"
+                                   "}\n"
+                                   "\n")
 
         # Adding download files button
         self.downloadBtn = QPushButton(self)
         self.downloadBtn.setText('Download')
         self.downloadBtn.setFont(QtGui.QFont('Arial', 12))
-        self.downloadBtn.setGeometry(22, 0, 70, 20)
+        # self.downloadBtn.setGeometry(22, 0, 70, 20)
         self.downloadBtn.clicked.connect(self.startDownloadWindow)
+        self.downloadBtn.setFixedHeight(50)
+        self.downloadBtn.setFixedWidth(150)
+        self.downloadBtn.setStyleSheet("QPushButton {\n"
+                                       "    background: transparent;\n"
+                                       "    border: 1px solid rgb(227, 227, 227);\n"
+                                       "    color: white;\n"
+                                       "}\n"
+                                       "\n"
+                                       "QPushButton:hover {\n"
+                                       "    background: rgba(200, 200, 200, 0.3);\n"
+                                       "}\n"
+                                       "\n"
+                                       "QPushButton:pressed {\n"
+                                       "    background: rgba(150, 150, 150, 0.3);\n"
+                                       "}\n"
+                                       "\n")
 
         # Setting up the label and configuring it
         self.label = QLabel(self)
         self.label.setText('Drag & Drop')
-        self.label.setGeometry(QtCore.QRect(30, 20, 210, 43))
+        # self.label.setGeometry(QtCore.QRect(30, 20, 210, 43))
 
         font = QtGui.QFont()
         font.setFamily("Arial")
@@ -767,12 +958,13 @@ class SenderWindow(QWidget):
         self.label.setFont(font)
         self.label.setStyleSheet("color: white;")
         self.label.setObjectName("label")
+        self.label.setFixedHeight(100)
 
         # Adding Scroll Frame where the Dragging and Dropping will happen
         self.scroll = ScrollFrame(self)
-        self.scroll.setGeometry(QtCore.QRect(30, 70, 361, 121))
-        self.scroll.setStyleSheet("background: rgb(150, 150, 150);\n"
-                                  "border: 1px solid rgb(150, 150, 150);\n")
+        # self.scroll.setGeometry(QtCore.QRect(30, 70, 361, 121))
+        self.scroll.setStyleSheet("background: transparent;\n"
+                                  "border: 1px solid white;\n")
         self.scroll.setWidgetResizable(True)
 
         # Adding Download Window
@@ -780,22 +972,22 @@ class SenderWindow(QWidget):
         self.downloadWindow.hide()
 
         # Setting up the label inside the frame and configuring it
-        self.uploadLabel = QLabel(self.scroll)
-        self.uploadLabel.setStyleSheet('color: white')
-        self.uploadLabel.setGeometry(QtCore.QRect(100, 50, 144, 17))
+        # self.uploadLabel = QLabel(self.scroll)
+        # self.uploadLabel.setStyleSheet('color: white')
+        # # self.uploadLabel.setGeometry(QtCore.QRect(100, 50, 144, 17))
 
-        font = QtGui.QFont()
-        font.setFamily("Arial")
-        font.setPointSize(14)
+        # font = QtGui.QFont()
+        # font.setFamily("Arial")
+        # font.setPointSize(14)
 
-        self.uploadLabel.setFont(font)
-        self.uploadLabel.setObjectName("uploadLabel")
-        self.uploadLabel.setText('Drag & Drop files here')
-        self.uploadLabel.adjustSize()
+        # self.uploadLabel.setFont(font)
+        # self.uploadLabel.setObjectName("uploadLabel")
+        # self.uploadLabel.setText('Drag & Drop files here')
+        # self.uploadLabel.adjustSize()
 
         # Adding the 'Upload' button and configuring it
         self.uploadBtn = QPushButton(self)
-        self.uploadBtn.setGeometry(QtCore.QRect(320, 200, 71, 31))
+        # self.uploadBtn.setGeometry(QtCore.QRect(320, 200, 71, 31))
         self.uploadBtn.setText('Upload')
 
         font = QtGui.QFont()
@@ -803,9 +995,25 @@ class SenderWindow(QWidget):
         font.setPointSize(12)
 
         self.uploadBtn.setFont(font)
-        self.uploadBtn.setStyleSheet("color: white;")
         self.uploadBtn.setObjectName("uploadBtn")
         self.uploadBtn.clicked.connect(self.startLoadingWindow)
+        self.uploadBtn.setFixedHeight(50)
+        self.uploadBtn.setFixedWidth(120)
+        self.uploadBtn.setLayoutDirection(QtCore.Qt.RightToLeft)
+        self.uploadBtn.setStyleSheet("QPushButton {\n"
+                                     "    background: transparent;\n"
+                                     "    border: 1px solid rgb(227, 227, 227);\n"
+                                     "    color: white;\n"
+                                     "}\n"
+                                     "\n"
+                                     "QPushButton:hover {\n"
+                                     "    background: rgba(200, 200, 200, 0.3);\n"
+                                     "}\n"
+                                     "\n"
+                                     "QPushButton:pressed {\n"
+                                     "    background: rgba(150, 150, 150, 0.3);\n"
+                                     "}\n"
+                                     "\n")
 
         # Setting up Loading Screen
         self.loadingWindow = LoadingWindow(self)
@@ -814,7 +1022,7 @@ class SenderWindow(QWidget):
         # Adding Output Details Label
         self.outputDetailsLabel = QLabel(self)
         self.outputDetailsLabel.setText('Received Output')
-        self.outputDetailsLabel.setGeometry(QtCore.QRect(30, 20, 210, 43))
+        # self.outputDetailsLabel.setGeometry(QtCore.QRect(30, 20, 210, 43))
 
         font = QtGui.QFont()
         font.setFamily("Arial")
@@ -827,7 +1035,7 @@ class SenderWindow(QWidget):
 
         # Adding Ouput Frame
         self.outputFrame = OutputFrame(self)
-        self.outputFrame.setGeometry(QtCore.QRect(30, 70, 361, 121))
+        # self.outputFrame.setGeometry(QtCore.QRect(30, 70, 361, 121))
         self.outputFrame.setStyleSheet("background: rgb(150, 150, 150);\n"
                                        "border: 1px solid rgb(150, 150, 150);\n")
         self.outputFrame.setWidgetResizable(True)
@@ -838,37 +1046,60 @@ class SenderWindow(QWidget):
         self.uploadFinishedWindow.hide()
 
         # Adding everything into the layout
+        topButtonsCombo = QWidget()
+        # topButtonsCombo.setFixedHeight(55)
+
+        topButtons = QtWidgets.QHBoxLayout(self)
+
+        topButtons.addWidget(self.backBtn)
+        topButtons.addWidget(self.downloadBtn)
+        topButtons.setContentsMargins(0, 0, 0, 0)
+
+        topButtons.setAlignment(QtCore.Qt.AlignLeft)
+        topButtonsCombo.setLayout(topButtons)
+        topButtonsCombo.setStyleSheet('background: transparent')
+        self.topButtons = topButtonsCombo
+
+        self.layout.addWidget(self.topButtons)
         self.layout.addWidget(self.label)
         self.layout.addWidget(self.scroll)
-        self.layout.addWidget(self.uploadLabel)
         self.layout.addWidget(self.uploadBtn)
+        # self.layout.addWidget(self.uploadLabel)
         self.layout.addWidget(self.loadingWindow)
         self.layout.addWidget(self.outputDetailsLabel)
         self.layout.addWidget(self.outputFrame)
         self.layout.addWidget(self.uploadFinishedWindow)
-        self.layout.addWidget(self.backBtn)
         self.layout.addWidget(self.downloadWindow)
 
+        self.layout.setAlignment(QtCore.Qt.AlignTop)
+        self.layout.setContentsMargins(60, 0, 60, 80)
+        # self.layout.setSpacing(10)
+
+        self.setLayout(self.layout)
+
         self.sender = Sender()
-    
+        self.selectDefaultFont('Century Gothic')
+
     def startDownloadWindow(self):
         self.label.hide()
         self.scroll.hide()
-        self.uploadLabel.hide()
+        # self.uploadLabel.hide()
         self.uploadBtn.hide()
         self.backBtn.hide()
         self.downloadBtn.hide()
+        self.topButtons.hide()
         self.downloadWindow.show()
 
     def startLoadingWindow(self):
         self.label.hide()
         self.scroll.hide()
-        self.uploadLabel.hide()
+        # self.uploadLabel.hide()
         self.uploadBtn.hide()
         self.loadingWindow.show()
 
         self.scroll.uploadFiles()
-        job_id, db_token = self.sender.get_permission_to_submit_task(filelist[0])
+        job_id, db_token = self.sender.get_permission_to_submit_task(
+            filelist[0])
         self.sender.upload_file_to_db(filelist[0], job_id, db_token)
 
         self.loadingWindow.hide()
@@ -882,28 +1113,24 @@ class SenderWindow(QWidget):
     #     self.loadingWindow().hide()
     #     self.uploadFinishedWindow()
 
-    def switchLabel(self, flag):
-        if (flag):
-            self.uploadLabel.show()
-        else:
-            self.uploadLabel.hide()
-    
     def goBack(self):
         self.container.resetUi()
-    
+
     def resetUi(self):
         self.downloadWindow.hide()
         self.label.show()
         self.scroll.show()
-        self.uploadLabel.show()
+        self.scroll.uploadLabel.show()
         self.uploadBtn.show()
         self.backBtn.show()
         self.downloadBtn.show()
-    
+        self.topButtons.show()
+
     def hideWindow(self):
         self.label.hide()
         self.scroll.hide()
-        self.uploadLabel.hide()
+        # self.uploadLabel.hide()
+        self.topButtons.hide()
         self.uploadBtn.hide()
         self.backBtn.hide()
         self.downloadBtn.hide()
@@ -912,87 +1139,123 @@ class SenderWindow(QWidget):
         self.loadingWindow.hide()
         self.outputDetailsLabel.hide()
         self.outputFrame.hide()
-    
+
     def showWindow(self):
         self.container.setWindowTitle('Rendt Sender Demo')
         self.label.show()
         self.scroll.show()
-        self.uploadLabel.show()
+        # self.uploadLabel.show()
         self.uploadBtn.show()
         self.backBtn.show()
         self.downloadBtn.show()
+        self.topButtons.show()
+
+    def selectDefaultFont(self, f):
+        self.container.selectDefaultFont(f)
 
 
-class RenterButton(QWidget):
+class RenterButton(QScrollArea):
     def __init__(self, parent):
         super().__init__()
 
         self.container = parent
         self.layout = QVBoxLayout()
-        self.setStyleSheet('QWidget {\nbackground: transparent;\n'
+
+        icon = QtGui.QPixmap('../../assets/img/cloud_w_no_border.png')
+
+        self.icon = QLabel(self)
+        self.icon.setPixmap(icon.scaled(80, 80, QtCore.Qt.KeepAspectRatio))
+        self.icon.adjustSize()
+        self.icon.setAlignment(QtCore.Qt.AlignCenter)
+
+        self.setStyleSheet('QScrollArea {\nbackground: transparent;\n'
                            'border: 1px solid white;\n'
-                           'border-radius: 10px;\n'
+                           'border-radius: 5px;\n'
                            'color: white;\n}\n'
-                           'QWidget:hover {\n'
+                           'QScrollArea:hover {\n'
                            'background: rgba(100, 100, 100, 0.3)\n}\n'
-                           'QWidget:clicked {\n'
-                           'background: rgba(50, 50, 50, 0.3)\n}\n')
+                           'QScrollArea:clicked {\n'
+                           'background: rgba(50, 50, 50, 0.3)\n}\n'
+                           'QWidget {\n'
+                           '    background: transparent;\n}\n')
 
         self.label = QLabel(self)
         self.label.setText('rent')
-        self.label.setFont(QtGui.QFont('Arial', 36))
-        self.label.setSizePolicy(
-            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        self.label.setFont(QtGui.QFont('Century Gothic', 50, 1000))
+        # self.label.setStyleSheet('font-family: Century Gothic;\nfont-size: 80px;\nfont-weight: bold;')
+        # self.label.setSizePolicy(
+        #     QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         self.label.setAlignment(QtCore.Qt.AlignCenter)
         self.label.adjustSize()
+        self.label.setMargin(0)
 
+        self.layout.addWidget(self.icon)
         self.layout.addWidget(self.label)
         self.setLayout(self.layout)
+        self.layout.setAlignment(QtCore.Qt.AlignCenter)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+
         self.setMouseTracking(True)
         self.clicked = self.container.startSenderWindow
 
     def mousePressEvent(self, e):
+        self.container.renterMode()
         self.clicked()
-    
+
     def changeClickedEvent(self, e):
         self.clicked = e
 
 
-class LeaserButton(QWidget):
+class LeaserButton(QScrollArea):
     def __init__(self, parent):
         super().__init__()
 
         self.container = parent
         self.layout = QVBoxLayout()
-        self.setStyleSheet('QWidget {\nbackground: transparent;\n'
+        self.setStyleSheet('QScrollArea {\nbackground: transparent;\n'
                            'border: 1px solid white;\n'
-                           'border-radius: 10px;\n'
+                           'border-radius: 5px;\n'
                            'color: white;\n}\n'
-                           'QWidget:hover {\n'
+                           'QScrollArea:hover {\n'
                            'background: rgba(100, 100, 100, 0.3)\n}\n'
-                           'QWidget:clicked {\n'
-                           'background: rgba(50, 50, 50, 0.3)\n}\n')
+                           'QScrollArea:clicked {\n'
+                           'background: rgba(50, 50, 50, 0.3)\n}\n'
+                           'QWidget {\n'
+                           '    background: transparent;\n}\n')
+
+        icon = QtGui.QPixmap('../../assets/img/cpu_w_no_border.png')
+
+        self.icon = QLabel(self)
+        self.icon.setPixmap(icon.scaled(80, 80, QtCore.Qt.KeepAspectRatio))
+        self.icon.adjustSize()
+        self.icon.setAlignment(QtCore.Qt.AlignCenter)
 
         self.label = QLabel(self)
         self.label.setText('lease')
-        self.label.setFont(QtGui.QFont('Arial', 36))
-        self.label.setSizePolicy(
-            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        self.label.setFont(QtGui.QFont('Century Gothic', 50, 1000))
+        # self.label.setSizePolicy(
+        #     QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         self.label.setAlignment(QtCore.Qt.AlignCenter)
         self.label.adjustSize()
 
+        self.layout.addWidget(self.icon)
         self.layout.addWidget(self.label)
         self.setLayout(self.layout)
+        self.layout.setAlignment(QtCore.Qt.AlignCenter)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+
         self.setMouseTracking(True)
         self.clicked = self.container.startReceiverWindow
 
     def mousePressEvent(self, e):
+        self.container.leaserMode()
         self.clicked()
 
     def changeClickedEvent(self, e):
         self.clicked = e
 
-class RenterLeiserWindow(QWidget):
+
+class RenterLeaserWindow(QWidget):
     def __init__(self):
         super().__init__()
 
@@ -1000,8 +1263,8 @@ class RenterLeiserWindow(QWidget):
             '../../assets/img/rendt_new_logo_square.png'))
         self.setWindowTitle('rendt')
 
-        self.resize(440, 283)
-        self.setStyleSheet('background: rgb(120, 120, 120);\n'
+        self.resize(1000, 600)
+        self.setStyleSheet('background: rgb(0, 23, 37);\n'
                            'color: white;\n')
 
         self.layout = QtWidgets.QHBoxLayout()
@@ -1013,31 +1276,69 @@ class RenterLeiserWindow(QWidget):
 
         self.senderWindow.hide()
         self.receiverWindow.hide()
+        self.seperator = QWidget()
+        self.seperator.setFixedWidth(15)
 
+        self.rendt = QLabel(self)
+        self.rendt.setText('rendt')
+        # self.rendt.setStyleSheet('background: black')
+        self.rendt.setFixedWidth(110)
+        self.rendt.setFixedHeight(60)
+        self.rendt.setFont(QtGui.QFont('Century Gothic', 20, 1000))
+        self.rendt.adjustSize()
+        self.rendt.setAlignment(QtCore.Qt.AlignCenter)
+
+        self.renter = QLabel(self)
+        self.renter.setText('renter')
+        self.renter.setFixedWidth(260)
+        self.renter.setFixedHeight(100)
+        self.renter.setStyleSheet(
+            'background: transparent;\ncolor: rgb(198, 0, 255)')
+        self.renter.setFont(QtGui.QFont('Century Gothic', 20, 1000))
+        self.renter.adjustSize()
+        self.renter.setAlignment(QtCore.Qt.AlignCenter)
+        self.renter.hide()
+
+        self.leaser = QLabel(self)
+        self.leaser.setText('leaser')
+        self.leaser.setFixedWidth(260)
+        self.leaser.setFixedHeight(100)
+        self.leaser.setStyleSheet(
+            'background: transparent;\ncolor: rgb(0, 255, 72)')
+        self.leaser.setFont(QtGui.QFont('Century Gothic', 20, 1000))
+        self.leaser.adjustSize()
+        self.leaser.setAlignment(QtCore.Qt.AlignCenter)
+        self.leaser.hide()
+
+        # self.layout.addWidget(self.rendt)
         self.layout.addWidget(self.senderButton)
+        self.layout.addWidget(self.seperator)
         self.layout.addWidget(self.receiverButton)
         self.layout.addWidget(self.senderWindow)
         self.layout.addWidget(self.receiverWindow)
+        self.layout.setContentsMargins(30, 60, 30, 30)
+        # self.layout.setAlignment(QtCore.Qt.AlignLeft)
         self.setLayout(self.layout)
+        self.selectDefaultFont('Century Gothic')
 
     def startSenderWindow(self):
         self.senderButton.hide()
         self.receiverButton.hide()
         self.senderWindow.startWindow()
         self.senderWindow.show()
-    
+
     def startReceiverWindow(self):
         self.senderButton.hide()
         self.receiverButton.hide()
         self.receiverWindow.startWindow()
         self.receiverWindow.show()
-    
+
     def showSenderWindow(self):
         self.senderButton.hide()
         self.receiverButton.hide()
         self.senderWindow.showWindow()
         self.senderWindow.show()
-    
+
     def showReceiverWindow(self):
         self.senderButton.hide()
         self.receiverButton.hide()
@@ -1046,6 +1347,9 @@ class RenterLeiserWindow(QWidget):
 
     def resetUi(self):
         self.setWindowTitle('rendt')
+        self.renter.hide()
+        self.leaser.hide()
+        self.layout.setContentsMargins(30, 60, 30, 30)
         self.senderButton.show()
         self.receiverButton.show()
         self.senderWindow.hide()
@@ -1054,18 +1358,89 @@ class RenterLeiserWindow(QWidget):
         if (self.senderWindow.started):
             self.senderWindow.hideWindow()
             self.senderButton.changeClickedEvent(self.showSenderWindow)
-        
+
         if (self.receiverWindow.started):
             self.receiverWindow.hideWindow()
             self.receiverButton.changeClickedEvent(self.showReceiverWindow)
 
+    def renterMode(self):
+        self.renter.show()
+        self.layout.setContentsMargins(30, 100, 30, 30)
+
+    def leaserMode(self):
+        self.leaser.show()
+        self.layout.setContentsMargins(30, 100, 30, 30)
+
+    def selectDefaultFont(self, f):
+        self.rendt.setFont(QtGui.QFont(f, 20, 1000))
+        self.renter.setFont(QtGui.QFont(f, 20, 1000))
+        self.leaser.setFont(QtGui.QFont(f, 20, 1000))
+        self.receiverButton.label.setFont(QtGui.QFont(f, 50, 1000))
+        self.senderButton.label.setFont(QtGui.QFont(f, 50, 1000))
+
+        if (self.receiverWindow.started == True):
+            self.receiverWindow.taskFinishedWindow.label.setFont(
+                QtGui.QFont(f, 28, 1000))
+
+            self.receiverWindow.availableJobs.label.setFont(
+                QtGui.QFont(f, 20, 1000))
+
+            self.receiverWindow.hardwareInfoWindow.label.setFont(
+                QtGui.QFont(f, 40, 1000))
+            self.receiverWindow.hardwareInfoWindow.physCores.setFont(
+                QtGui.QFont(f, 14))
+            self.receiverWindow.hardwareInfoWindow.physCores.adjustSize()
+            self.receiverWindow.hardwareInfoWindow.totalCores.setFont(
+                QtGui.QFont(f, 14))
+            self.receiverWindow.hardwareInfoWindow.totalCores.adjustSize()
+            self.receiverWindow.hardwareInfoWindow.maxFreq.setFont(
+                QtGui.QFont(f, 14))
+            self.receiverWindow.hardwareInfoWindow.maxFreq.adjustSize()
+            self.receiverWindow.hardwareInfoWindow.minFreq.setFont(
+                QtGui.QFont(f, 14))
+            self.receiverWindow.hardwareInfoWindow.minFreq.adjustSize()
+            self.receiverWindow.hardwareInfoWindow.curFreq.setFont(
+                QtGui.QFont(f, 14))
+            self.receiverWindow.hardwareInfoWindow.curFreq.adjustSize()
+            self.receiverWindow.hardwareInfoWindow.totalMem.setFont(
+                QtGui.QFont(f, 14))
+            self.receiverWindow.hardwareInfoWindow.totalMem.adjustSize()
+            self.receiverWindow.hardwareInfoWindow.avalMem.setFont(
+                QtGui.QFont(f, 14))
+            self.receiverWindow.hardwareInfoWindow.avalMem.adjustSize()
+            self.receiverWindow.hardwareInfoWindow.usedMem.setFont(
+                QtGui.QFont(f, 14))
+            self.receiverWindow.hardwareInfoWindow.usedMem.adjustSize()
+            self.receiverWindow.hardwareInfoWindow.percentMem.setFont(
+                QtGui.QFont(f, 14))
+            self.receiverWindow.hardwareInfoWindow.percentMem.adjustSize()
+
+        if (self.senderWindow.started == True):
+            self.senderWindow.label.setFont(QtGui.QFont(f, 36))
+            self.senderWindow.uploadBtn.setFont(QtGui.QFont(f, 12))
+            self.senderWindow.downloadBtn.setFont(QtGui.QFont(f, 12))
+            self.senderWindow.outputDetailsLabel.setFont(QtGui.QFont(f, 36))
+
+            self.senderWindow.scroll.uploadLabel.setFont(QtGui.QFont(f, 15))
+
+            self.senderWindow.downloadWindow.label.setFont(QtGui.QFont(f, 25))
+            self.senderWindow.downloadWindow.jobIdLabel.setFont(
+                QtGui.QFont(f, 20))
+            self.senderWindow.downloadWindow.jobId.setFont(QtGui.QFont(f, 14))
+            self.senderWindow.downloadWindow.uploadBtn.setFont(
+                QtGui.QFont(f, 12))
+            self.senderWindow.downloadWindow.downloadFinishedLabel.setFont(
+                QtGui.QFont(f, 30, 1000))
+
+
+
 if __name__ == "__main__":
     filelist = []
-    QtWidgets.QApplication.setAttribute(
-        QtCore.Qt.AA_EnableHighDpiScaling, True)
     app = QtWidgets.QApplication(sys.argv)
+    QtGui.QFontDatabase.addApplicationFont(
+        '../../assets/fonts/Century Gothic.ttf')
 
-    window = RenterLeiserWindow()
+    window = RenterLeaserWindow()
     window.show()
 
     sys.exit(app.exec_())
