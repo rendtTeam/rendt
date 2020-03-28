@@ -15,7 +15,7 @@ class Sender:
 
         content = {'role': 'renter',
                     'request-type': 'submit-permission',
-                    'file-size': file_size,
+                    'size': file_size,
                     'file-type': 'py'}
         request = {'type' : 'text/json',
                     'content': content}
@@ -42,8 +42,6 @@ class Sender:
 
         content = { 'role': 'renter',
                     'request-type': 'executable-upload',
-                    'file-size': file_size,
-                    'file-type': 'py',
                     'job-id': job_id,
                     'db-token': db_token
                     }

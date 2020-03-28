@@ -2,3 +2,5 @@
 *.pyc
 *.txt
 src/client/sender_job.py
+src/server/db_test.py
+.vscode/
