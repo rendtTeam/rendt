@@ -331,7 +331,7 @@ class ReceiverWindow(QWidget):
 
     def startWindow(self):
         self.started = True
-        self.container.setWindowTitle('Rendt Receiver Demo')
+        self.container.setWindowTitle('rendt Receiver Demo')
         self.setWindowIcon(QtGui.QIcon(
             '../../assets/img/rendt_new_logo_square.png'))
         self.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
@@ -583,6 +583,16 @@ class ScrollFrame(QScrollArea):
 
         if (self.form.rowCount() == 0):
             self.switchLabel(True)
+
+    def removeFiles(self):
+        for f in range (self.form.rowCount()):
+            self.form.removeRow(0)
+        
+        self.form = QtWidgets.QFormLayout()
+        self.groupBox = QtWidgets.QGroupBox('')
+        self.groupBox.setLayout(self.form)
+
+        self.switchLabel(True)
 
     def uploadFiles(self):
         for i in range(self.form.rowCount() * 2):
@@ -872,7 +882,7 @@ class SenderWindow(QWidget):
 
     def startWindow(self):
         self.started = True
-        self.container.setWindowTitle('Rendt Sender Demo')
+        self.container.setWindowTitle('rendt Sender Demo')
         self.setWindowIcon(QtGui.QIcon(
             '../../assets/img/rendt_new_logo_square.png'))
         # self.resize(600, 300)
@@ -1359,6 +1369,7 @@ class RenterLeaserWindow(QWidget):
         self.receiverWindow.hide()
 
         if (self.senderWindow.started):
+            self.senderWindow.scroll.removeFiles()
             self.senderWindow.hideWindow()
             self.senderButton.changeClickedEvent(self.showSenderWindow)
 
