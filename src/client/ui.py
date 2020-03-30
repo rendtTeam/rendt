@@ -1304,7 +1304,7 @@ class RenterLeaserWindow(QWidget):
         self.renter = QLabel(self)
         self.renter.setText('renter')
         self.renter.setFixedWidth(260)
-        self.renter.setFixedHeight(100)
+        self.renter.setFixedHeight(90)
         self.renter.setStyleSheet(
             'background: transparent;\ncolor: rgb(198, 0, 255)')
         self.renter.setFont(QtGui.QFont('Century Gothic', 20, 1000))
@@ -1450,6 +1450,7 @@ class RenterLeaserWindow(QWidget):
 
 if __name__ == "__main__":
     filelist = []
+    QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
     app = QtWidgets.QApplication(sys.argv)
     QtGui.QFontDatabase.addApplicationFont(
         '../../assets/fonts/CenturyGothic.ttf')
