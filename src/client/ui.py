@@ -2,6 +2,7 @@ import sys
 import os
 import psutil
 import platform
+from fontTools.ttLib import TTFont
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QScrollArea, QPushButton, QLabel, QWidget, QVBoxLayout, QStackedWidget
 
@@ -959,6 +960,7 @@ class SenderWindow(QWidget):
         self.label.setStyleSheet("color: white;")
         self.label.setObjectName("label")
         self.label.setFixedHeight(100)
+        self.label.setAlignment(QtCore.Qt.AlignVCenter)
 
         # Adding Scroll Frame where the Dragging and Dropping will happen
         self.scroll = ScrollFrame(self)
@@ -1055,9 +1057,10 @@ class SenderWindow(QWidget):
         topButtons.addWidget(self.downloadBtn)
         topButtons.setContentsMargins(0, 0, 0, 0)
 
-        topButtons.setAlignment(QtCore.Qt.AlignLeft)
+        topButtons.setAlignment(QtCore.Qt.AlignTop)
         topButtonsCombo.setLayout(topButtons)
         topButtonsCombo.setStyleSheet('background: transparent')
+        topButtonsCombo.setFixedHeight(55)
         self.topButtons = topButtonsCombo
 
         self.layout.addWidget(self.topButtons)
@@ -1438,7 +1441,9 @@ if __name__ == "__main__":
     filelist = []
     app = QtWidgets.QApplication(sys.argv)
     QtGui.QFontDatabase.addApplicationFont(
-        '../../assets/fonts/Century Gothic.ttf')
+        '../../assets/fonts/CenturyGothic.ttf')
+    QtGui.QFontDatabase.addApplicationFont(
+        '../../assets/fonts/CenturyGothicBold.ttf')
 
     window = RenterLeaserWindow()
     window.show()
