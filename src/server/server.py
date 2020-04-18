@@ -51,16 +51,24 @@ class Server:
                 self.serve_leaser_request(req_pipe, conn, addr)
                 
     def configure_logging(self):
-        logger = logging.getLogger('Serverself.logger')
+        logger = logging.getLogger('Server.logger')
         logger.setLevel(logging.INFO)
 
         currentDT = str(datetime.datetime.now()).replace(' ', '_')
         file_handler = logging.FileHandler('logs/logfile_' + currentDT)
-        format_ = logging.Formatter('%(asctime)s  %(name)-12s  %(levelname)-8s  %(message)s')
+        format_ = logging.Formatter('%(asctime)s  %(name)-15s  %(levelname)-8s  %(message)s')
         
+        # create console handler with a higher log level
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(logging.ERROR)
+
         file_handler.setLevel(logging.INFO)
+        console_handler.setLevel(logging.ERROR)
+        console_handler.setFormatter(format_)
         file_handler.setFormatter(format_)
+
         logger.addHandler(file_handler)
+        logger.addHandler(console_handler)
 
         logger.info('begin log')
         return logger
