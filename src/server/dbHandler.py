@@ -119,8 +119,14 @@ class DBHandler(object):
             self.__cursor.execute(query, dataList)
             self.__mySession.commit()
         except mysql.connector.Error as err:
-            self.logger.error("Failed executing query: {}".format(err))
-            exit(1)
+            self.logger.warning("Lost connection to database. Trying to reconnect.")
+            self.__mySession.reconnect(attempts=3)
+            try: 
+                self.__cursor.execute(query, dataList)
+                self.__mySession.commit()
+            except mysql.connector.Error as err:
+                self.logger.error("DBHandler Error: {}".format(err))
+                exit(1)
     
     def _createNewDB(self, dbName):
         try:
