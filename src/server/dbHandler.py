@@ -1,59 +1,28 @@
 import mysql.connector
 from mysql.connector import errorcode
-import logging
-import datetime
 
 class DBHandler(object):
     def __init__(self):
-        self.logger = self.configure_logging()
-        self.connect()
-        
-    def connect(self):
         try:
             self.__mySession = mysql.connector.connect(
-                host="rendt-database.cksgcmivrysp.us-east-2.rds.amazonaws.com",
-                port="3306",
-                user='rendtTeam',
-                password="rendt-db-admin",
-                database='RendtDB')
-            self.__mySession.ping(reconnect=True, attempts=1, delay=0)
+                host = "rendt-database.cksgcmivrysp.us-east-2.rds.amazonaws.com",
+                port = "3306",
+                user = 'rendtTeam',
+                password = "rendt-db-admin",
+                database = 'RendtDB')
         except mysql.connector.Error as err:
             if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-                self.logger.error(
-                    "Something is wrong with your user name or password")
+                print("Something is wrong with your user name or password")
             elif err.errno == errorcode.ER_BAD_DB_ERROR:
-                self.logger.error("Database does not exist")
+                print("Database does not exist")
             else:
-                self.logger.error("ERROR: err")
+                print(err)
                 exit(1)
         else:
-            self.logger.info("connected successfully to db")
+            print("connected successfully to db")
             self.__cursor = self.__mySession.cursor(buffered=True)
             self.__cursor.execute("use {}".format(self.__mySession.database))
-
-    def configure_logging(self):
-        logger = logging.getLogger('DBHandler.logger')
-        logger.setLevel(logging.INFO)
-
-        # create console handler with a higher log level
-        console_handler = logging.StreamHandler()
-        console_handler.setLevel(logging.ERROR)
-
-        currentDT = str(datetime.datetime.now()).replace(' ', '_')
-        db_logfile_handler = logging.FileHandler('logs/db_logfile_' + currentDT)
-        format_ = logging.Formatter('%(asctime)s  %(name)-15s  %(levelname)-8s  %(message)s')
-        
-        db_logfile_handler.setLevel(logging.INFO)
-        db_logfile_handler.setFormatter(format_)
-        console_handler.setLevel(logging.WARNING)
-        console_handler.setFormatter(format_)
-
-        logger.addHandler(console_handler)
-        logger.addHandler(db_logfile_handler)
-
-        logger.info('begin log')
-        return logger
-
+    
     def queryJobs(self, status='a'):
         query = f'SELECT job_id FROM jobs WHERE job_status = "{status}"'
         self._executeQuery(query)
@@ -119,34 +88,28 @@ class DBHandler(object):
             self.__cursor.execute(query, dataList)
             self.__mySession.commit()
         except mysql.connector.Error as err:
-            self.logger.warning("Lost connection to database. Trying to reconnect.")
-            self.__mySession.reconnect(attempts=3)
-            try: 
-                self.__cursor.execute(query, dataList)
-                self.__mySession.commit()
-            except mysql.connector.Error as err:
-                self.logger.error("DBHandler Error: {}".format(err))
-                exit(1)
+            print("Failed executing query: {}".format(err))
+            exit(1)
     
     def _createNewDB(self, dbName):
         try:
             self.__cursor.execute("create database {} ".format(dbName))
         except mysql.connector.Error as err:
-            self.logger.error("Failed creating database: {}".format(err))
+            print("Failed creating database: {}".format(err))
             exit(1)
             
     def _deleteDB(self, dbName):
         try:
             self.__cursor.execute("drop database {} ".format(dbName))
         except mysql.connector.Error as err:
-            self.logger.error("Failed deleting database: {}".format(err))
+            print("Failed deleting database: {}".format(err))
             exit(1)
 
     def _switchDB(self, dbName):
         try:
             self.__cursor.execute("use {} ".format(dbName))
         except mysql.connector.Error as err:
-            self.logger.error("Failed creating database: {}".format(err))
+            print("Failed creating database: {}".format(err))
             exit(1)
     
     def _endSession(self):
@@ -154,7 +117,7 @@ class DBHandler(object):
             self.__mySession.close()
             self.__cursor.close()
         except mysql.connector.Error as err:
-            self.logger.error("Could not end session successfully: {}".format(err))
+            print("Could not end session successfully: {}".format(err))
             exit(1)
     """
     def getSessionHandler(self):
