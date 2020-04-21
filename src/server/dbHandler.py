@@ -119,6 +119,28 @@ class DBHandler(object):
         except mysql.connector.Error as err:
             print("Could not end session successfully: {}".format(err))
             exit(1)
+    
+    def addAuthToken(self, user_id, token):
+        query = f'INSERT INTO authentication_token (user_id, auth_token) VALUES ({user_id}, "{token}")'
+        self._executeQuery(query)
+
+    def getAuthToken(self, token):
+        query = f'SELECT auth_token FROM authentication_token WHERE auth_token = {token}'
+        self._executeQuery(query)
+        rows = self.__cursor.fetchall()
+        return rows
+    
+    # Blacklist holds expired aythentication tokens alongside the user id 
+    def addAuthTokenToBList(self, user_id, token):
+        query = f'INSERT INTO authentication_token_blacklist (user_id, auth_token_blist) VALUES ({user_id}, "{token}")'
+        self._executeQuery(query)
+
+    def getAuthTokenFromBList(self, token):
+        query = f'SELECT auth_token_blist FROM authentication_token_blacklist WHERE auth_token_blist = {token}'
+        self._executeQuery(query)
+        rows = self.__cursor.fetchall()
+        return rows
+
     """
     def getSessionHandler(self):
         return self.__mySession
