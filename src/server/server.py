@@ -3,21 +3,19 @@
 # * introduce threads for scalability
 # * set timeout for issued tokens (permissions)
 # * introduce a proper token generator; tokens must depend on user_id,
-#   (e.g. hash(user_id)_randint) so that server can verify ownership
+#   (e.g. hash(user_id)+randint) so that server can verify ownership
 
 import socket
-import sys
-import os
+import sys, os
 import logging
-import selectors
-import random
-import datetime
+import random, datetime, time
+import threading
+from threading import Thread
 from server_messaging import Messaging
 from dbHandler import DBHandler
 
 
 class Server:
-
     def __init__(self, port):
         self.BACKLOG = 1024      # size of the queue for pending connections
 
@@ -38,32 +36,55 @@ class Server:
         while True:
             # self.logger.info('waiting for connection')
             conn, addr = self.s.accept()
-            req_pipe = Messaging(conn, addr)
-            req_pipe.read()
-
-            if not req_pipe.jsonheader or not req_pipe.request or 'role' not in req_pipe.request or 'request-type' not in req_pipe.request:
-                self.logger.warning(f'invalid request from {addr}.')
-            elif req_pipe.request.get('role') == 'renter':
-                # self.logger.info(f'connection: renter from {addr}')
-                self.serve_renter_request(req_pipe, conn, addr)
-            elif req_pipe.request.get('role') == 'leaser':
-                # self.logger.info(f'connection: leaser from {addr}')
-                self.serve_leaser_request(req_pipe, conn, addr)
-                
+            try:
+                Thread(target=self.serve_client, args=(conn, addr)).start()
+            except:
+                self.refuse_client(conn, addr)
+                self.logger.error(f'Couldn\'t create thread. Refused client at {addr[0]}')
+    
     def configure_logging(self):
-        logger = logging.getLogger('Serverself.logger')
+        logger = logging.getLogger('Server.logger')
         logger.setLevel(logging.INFO)
 
         currentDT = str(datetime.datetime.now()).replace(' ', '_')
         file_handler = logging.FileHandler('logs/logfile_' + currentDT)
-        format_ = logging.Formatter('%(asctime)s  %(name)-12s  %(levelname)-8s  %(message)s')
+        format_ = logging.Formatter('%(asctime)s  %(name)-15s  %(levelname)-8s  %(message)s')
         
+        # create console handler with a higher log level
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(logging.ERROR)
+
         file_handler.setLevel(logging.INFO)
+        console_handler.setLevel(logging.ERROR)
+        console_handler.setFormatter(format_)
         file_handler.setFormatter(format_)
+
         logger.addHandler(file_handler)
+        logger.addHandler(console_handler)
 
         logger.info('begin log')
         return logger
+
+    def serve_client(self, conn, addr):
+        self.logger.info(f'Thread {threading.get_ident()} initialized to server request from {addr}')
+        req_pipe = Messaging(conn, addr)
+        req_pipe.read()
+
+        if not req_pipe.jsonheader or not req_pipe.request or 'role' not in req_pipe.request or 'request-type' not in req_pipe.request:
+            self.logger.warning(f'invalid request from {addr}.')
+        elif req_pipe.request.get('role') == 'renter':
+            self.serve_renter_request(req_pipe, conn, addr)
+        elif req_pipe.request.get('role') == 'leaser':
+            self.serve_leaser_request(req_pipe, conn, addr)
+
+        time.sleep(30)
+    
+    def refuse_client(self, conn, addr):
+        req_pipe = Messaging(conn, addr)
+        req_pipe.read()
+        response_content = {'status': 'Error: server busy, can\'t serve at the time.',
+                                    }
+        req_pipe.write(response_content, 'text/json')
 
     def serve_renter_request(self, req_pipe, conn, addr):
         header, request_content = req_pipe.jsonheader, req_pipe.request
