@@ -2,21 +2,18 @@ import socket
 import sys
 import os
 import logging
-import random
 import datetime
 from storage_messaging import Messaging
 from dbHandler import DBHandler
+import random
 
 class Storage:
     def __init__(self, port):
         self.BACKLOG = 1024      # size of the queue for pending connections
 
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        print('check3')
         self.s.bind(('', port))          # Bind to the port
-        print('check4')
         self.db_handler = DBHandler()
-        print('check5')
 
     def run(self):
         self.s.listen(self.BACKLOG)           # Now wait for client connection.
@@ -93,13 +90,10 @@ class Storage:
 
             
 def main():
-    print('check0')
     args = sys.argv[1:]
     port = int(args[0])
 
-    print('check1')
     server_instance = Storage(port)
-    print('checka')
     server_instance.run()
 
 if __name__ == '__main__':

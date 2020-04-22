@@ -3,7 +3,6 @@ from mysql.connector import errorcode
 
 class DBHandler(object):
     def __init__(self):
-        print('works')
         try:
             self.__mySession = mysql.connector.connect(
                 host = "rendt-database.cksgcmivrysp.us-east-2.rds.amazonaws.com",
@@ -11,7 +10,6 @@ class DBHandler(object):
                 user = 'rendtTeam',
                 password = "rendt-db-admin",
                 database = 'RendtDB')
-            print('bashi')
         except mysql.connector.Error as err:
             if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
                 print("Something is wrong with your user name or password")
