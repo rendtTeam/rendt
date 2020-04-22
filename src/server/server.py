@@ -5,16 +5,16 @@
 # * introduce a proper token generator; tokens must depend on user_id,
 #   (e.g. hash(user_id)_randint) so that server can verify ownership
 
+# TODO migrate upload/download functions (not permissions) to storage.py
+
 import socket
 import sys
 import os
 import logging
-import selectors
 import random
 import datetime
 from server_messaging import Messaging
 from dbHandler import DBHandler
-
 
 class Server:
 
@@ -44,10 +44,8 @@ class Server:
             if not req_pipe.jsonheader or not req_pipe.request or 'role' not in req_pipe.request or 'request-type' not in req_pipe.request:
                 self.logger.warning(f'invalid request from {addr}.')
             elif req_pipe.request.get('role') == 'renter':
-                # self.logger.info(f'connection: renter from {addr}')
                 self.serve_renter_request(req_pipe, conn, addr)
             elif req_pipe.request.get('role') == 'leaser':
-                # self.logger.info(f'connection: leaser from {addr}')
                 self.serve_leaser_request(req_pipe, conn, addr)
                 
     def configure_logging(self):
@@ -84,7 +82,7 @@ class Server:
             self.db_handler.addJob(self.get_user_id(addr[0]), job_id, job_type, files_size, db_token, status='xtbu')
 
             self.logger.info(f'issued permission to renter {addr[0]} to submit job {job_id} via token {db_token}')
-        elif request_content['request-type'] == 'executable-upload':
+        elif request_content['request-type'] == 'executable-upload': # TODO migrate these functions to storage.py
             self.logger.info(f'connection: renter from {addr}; request type: executable-upload')
             if 'db-token' not in request_content or 'job-id' not in request_content:
                 response_content = {'status': 'error: no permission to upload',
@@ -105,6 +103,7 @@ class Server:
                 response_content = {'status': 'success',
                                     }
                 req_pipe.write(response_content, 'text/json')
+
                 #self.logger.info(f'received file jobs/toexec{job_id}.py from renter {addr[0]}')-------------------------------------------------
                 return
             
@@ -137,18 +136,19 @@ class Server:
             finished_jobs = self.db_handler.queryJobs(status='f')
             requested_token = self.db_handler.getOutputToken(requested_job_id)
 
-            # if requested_job_id in finished_jobs and requested_token: --------------------------------------
-            #     response_content = {'status': 'success',------------------------------------
-            #                         'file-size': os.path.getsize(f'outputs/output{requested_job_id}.txt'),-----------------------------
-            #                         'db-token': requested_token--------------------------
-            #                         }------------------------------------
-            #     req_pipe.write(response_content, 'text/json')------------------------------------------------------------------------------------------
-            #     self.logger.info(f'issued permission to renter {addr[0]} to download output of job {requested_job_id} via token {requested_token}')------
-            # else:-------------------------------------------------------------------------------------------------------
-            #     response_content = {'status': f'error: no output files found for this job id {requested_job_id}',---------------------------
-            #                         }---------------------------
-            #     req_pipe.write(response_content, 'text/json')----------------------------------------------------------------------------------------------------------
-            #     self.logger.warning(f'couldn\'t issue permission to renter {addr[0]} to download output of job {requested_job_id}: no output files for this job')--------------
+            if requested_job_id in finished_jobs and requested_token:
+                file_size = self.db_handler.getOutputFileSize(requested_job_id)
+                response_content = {'status': 'success',
+                                    'file-size': file_size, 
+                                    'db-token': requested_token
+                                    }
+                req_pipe.write(response_content, 'text/json')
+                self.logger.info(f'issued permission to renter {addr[0]} to download output of job {requested_job_id} via token {requested_token}')
+            else:
+                response_content = {'status': f'error: no output files found for this job id {requested_job_id}',
+                                    }
+                req_pipe.write(response_content, 'text/json')
+                self.logger.warning(f'couldn\'t issue permission to renter {addr[0]} to download output of job {requested_job_id}: no output files for this job')
         elif request_content['request-type'] == 'output-download':
             self.logger.info(f'connection: renter from {addr}; request type: output-download')
             if 'db-token' not in request_content:
@@ -160,7 +160,7 @@ class Server:
             
             db_token = request_content['db-token']
             job_id = self.db_handler.getJobIdFromToken(db_token, 'o')
-            if job_id:
+            if job_id: # TODO fix the logic
                 #requested_file_path = f'outputs/output{job_id}.txt'-------------------------------------
                # if os.path.exists(requested_file_path):-----------------------------------------
                     #self.send_file(conn, requested_file_path)------------------------------------
@@ -204,22 +204,23 @@ class Server:
             # get token of the requested job id
             requested_token = self.db_handler.getExecfileToken(requested_job_id)
             
-            # if requested_token: -------------------------------------
-            #     response_content = {'status': 'success',----------------------------------------------------
-            #                         'file-size': os.path.getsize(f'jobs/toexec{requested_job_id}.py'),----------------
-            #                         'db-token': requested_token--------------------------
-            #                         }-------------------------------
-            #     req_pipe.write(response_content, 'text/json')----------------
+            if requested_token: 
+                file_size = self.db_handler.getJobFileSize(requested_job_id)
+                response_content = {'status': 'success',
+                                    'file-size': file_size, 
+                                    'db-token': requested_token
+                                    }
+                req_pipe.write(response_content, 'text/json')
 
-            #     # mark this job as in execution------------------------------------
-            #     self.db_handler.changeJobStatus(requested_job_id, 'ix')----------------------------------------------------------------------------------------
+                # mark this job as in execution
+                self.db_handler.changeJobStatus(requested_job_id, 'ix')
                 
-            #     self.logger.info(f'issued permission to leaser {addr[0]} to download executable of job {requested_job_id} via token {requested_token}')-----------------
-            # else:------------------------------------------------------------------------------------------------------
-            #     response_content = {'status': f'error: no files found for this job id {requested_job_id}',-------------------------------
-            #                         }------------------------------------------------------
-            #     req_pipe.write(response_content, 'text/json')-----------------------------------------------------------------------------------------------------
-            #     self.logger.warning(f'couldn\'t issue permission to leaser {addr[0]} to download executable of job {requested_job_id}: no files for this job')----------------------
+                self.logger.info(f'issued permission to leaser {addr[0]} to download executable of job {requested_job_id} via token {requested_token}')
+            else:
+                response_content = {'status': f'error: no files found for this job id {requested_job_id}',
+                                    }
+                req_pipe.write(response_content, 'text/json')
+                self.logger.warning(f'couldn\'t issue permission to leaser {addr[0]} to download executable of job {requested_job_id}: no files for this job')
         elif request_content['request-type'] == 'executable-download':
             self.logger.info(f'connection: leaser from {addr}; request type: executable-download')
 

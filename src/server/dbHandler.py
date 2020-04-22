@@ -3,6 +3,7 @@ from mysql.connector import errorcode
 
 class DBHandler(object):
     def __init__(self):
+        print('works')
         try:
             self.__mySession = mysql.connector.connect(
                 host = "rendt-database.cksgcmivrysp.us-east-2.rds.amazonaws.com",
@@ -10,13 +11,14 @@ class DBHandler(object):
                 user = 'rendtTeam',
                 password = "rendt-db-admin",
                 database = 'RendtDB')
+            print('bashi')
         except mysql.connector.Error as err:
             if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
                 print("Something is wrong with your user name or password")
             elif err.errno == errorcode.ER_BAD_DB_ERROR:
                 print("Database does not exist")
             else:
-                print(err)
+                print('DBHandler Error', err)
                 exit(1)
         else:
             print("connected successfully to db")
@@ -82,6 +84,22 @@ class DBHandler(object):
         rows = self.__cursor.fetchall()
         if len(rows) == 1:
             return rows[0][0]
+
+    def getJobFileSize(self, job_id):
+        query = f'SELECT files_size FROM exec_file_tokens WHERE job_id = {job_id}'
+        self._executeQuery(query)
+        rows = self.__cursor.fetchall()
+        if len(rows) == 1:
+            return rows[0][0]
+        # TODO else raise or log an error
+    
+    def getOutputFileSize(self, job_id):
+        query = f'SELECT files_size FROM output_file_tokens WHERE job_id = {job_id}'
+        self._executeQuery(query)
+        rows = self.__cursor.fetchall()
+        if len(rows) == 1:
+            return rows[0][0]
+        # TODO else raise or log an error
 
     def _executeQuery(self, query, dataList=[]):
         try:

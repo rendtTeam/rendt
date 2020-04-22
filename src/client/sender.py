@@ -4,7 +4,7 @@ import os
 import sys
 import time
 
-server_addr = ('18.220.165.22', 23456)
+server_addr = ('18.220.165.22', 23457)
 storage_addr = ('18.197.19.248', 23456)
 class Sender:
     def get_permission_to_submit_task(self, path_to_file):
