@@ -106,7 +106,7 @@ class Receiver:
         # execute job
         q = os.system(f'python3 {path_to_executable} >> {path_to_output}')
 
-    def get_permission_to_upload_output(self,job_id, path_to_file):
+    def get_permission_to_upload_output(self, job_id, path_to_file):
         global server_addr
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect(server_addr)

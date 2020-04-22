@@ -98,7 +98,7 @@ class DBHandler(object):
             self.logger.error(
                 "Could not end session successfully: {}".format(err))
             exit(1)
-            
+
     def queryJobs(self, status='a'):
         query = f'SELECT job_id FROM jobs WHERE job_status = "{status}"'
         self._executeQuery(query)
@@ -112,7 +112,7 @@ class DBHandler(object):
         self._executeQuery(query)
 
         # add tokens to renter jobs table
-        query = f'INSERT INTO exec_file_tokens (job_id, db_token, files_size) VALUES ({job_id}, "{token}", {files_size})'
+        query = f'INSERT INTO exec_file_tokens (job_id, db_token, file_size) VALUES ({job_id}, "{token}", {files_size})'
         self._executeQuery(query)
 
     def getExecfileToken(self, job_id):
@@ -123,8 +123,8 @@ class DBHandler(object):
             return rows[0][0]
         # TODO else raise or log an error
 
-    def addOutputFileToken(self, job_id, token, files_size):
-        query = f'INSERT INTO output_file_tokens (job_id, db_token, files_size) VALUES ({job_id}, "{token}", {files_size})'
+    def addOutputFileToken(self, job_id, token, file_size):
+        query = f'INSERT INTO output_file_tokens (job_id, db_token, file_size) VALUES ({job_id}, "{token}", {file_size})'
         self._executeQuery(query)
 
     def getOutputToken(self, job_id):
