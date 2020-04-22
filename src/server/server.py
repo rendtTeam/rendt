@@ -305,11 +305,15 @@ class Server:
             #     req_pipe.write(response_content, 'text/json')
             #     self.logger.warning(f'couldn\'t issue permission to leaser {addr[0]} to upload output of job {job_id}: not their job')
             #     return
-
+            file_size = request_content['file-size']
+            self.logger.info('[+] obtained job_id')
             db_token = self.generate_db_token()
+            self.logger.info('[+] generated db token')
             # so that leaser can upload the output file
-            self.db_handler.addOutputFileToken(job_id, db_token)
+            self.db_handler.addOutputFileToken(job_id, db_token, file_size)
+            self.logger.info('[+] added output filetoken to db')
             self.db_handler.changeJobStatus(job_id, 'otbu')
+            self.logger.info('[+] changed status')
 
             response_content = {'status': 'success',
                                 'db-token': db_token
