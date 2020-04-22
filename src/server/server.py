@@ -27,7 +27,7 @@ class Server:
         self.db_handler = DBHandler()
         self.logger = self.configure_logging()
 
-        # all following structs to be replaced when we have better token and id generation
+        # TODO all following structs to be replaced when we have better token and id generation
         self.issued_db_tokens = []           # db tokens that have already been used; can't be issued again
         self.issued_job_ids = []             # job ids that have already been used; can't be issued again
 
