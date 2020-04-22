@@ -54,6 +54,51 @@ class DBHandler(object):
         logger.info('begin log')
         return logger
 
+    def _executeQuery(self, query, dataList=[]):
+        try:
+            self.__cursor.execute(query, dataList)
+            self.__mySession.commit()
+        except mysql.connector.Error as err:
+            self.logger.warning(
+                "Lost connection to database. Trying to reconnect.")
+            self.__mySession.reconnect(attempts=3)
+            try:
+                self.__cursor.execute(query, dataList)
+                self.__mySession.commit()
+            except mysql.connector.Error as err:
+                self.logger.error("DBHandler Error: {}".format(err))
+                exit(1)
+
+    def _createNewDB(self, dbName):
+        try:
+            self.__cursor.execute("create database {} ".format(dbName))
+        except mysql.connector.Error as err:
+            self.logger.error("Failed creating database: {}".format(err))
+            exit(1)
+
+    def _deleteDB(self, dbName):
+        try:
+            self.__cursor.execute("drop database {} ".format(dbName))
+        except mysql.connector.Error as err:
+            self.logger.error("Failed deleting database: {}".format(err))
+            exit(1)
+
+    def _switchDB(self, dbName):
+        try:
+            self.__cursor.execute("use {} ".format(dbName))
+        except mysql.connector.Error as err:
+            self.logger.error("Failed creating database: {}".format(err))
+            exit(1)
+
+    def _endSession(self):
+        try:
+            self.__mySession.close()
+            self.__cursor.close()
+        except mysql.connector.Error as err:
+            self.logger.error(
+                "Could not end session successfully: {}".format(err))
+            exit(1)
+            
     def queryJobs(self, status='a'):
         query = f'SELECT job_id FROM jobs WHERE job_status = "{status}"'
         self._executeQuery(query)
@@ -67,23 +112,23 @@ class DBHandler(object):
         self._executeQuery(query)
 
         # add tokens to renter jobs table
-        query = f'INSERT INTO storage_tokens (job_id, db_token) VALUES ({job_id}, "{token}")'
+        query = f'INSERT INTO exec_file_tokens (job_id, db_token, files_size) VALUES ({job_id}, "{token}", {files_size})'
         self._executeQuery(query)
 
     def getExecfileToken(self, job_id):
-        query = f'SELECT db_token FROM storage_tokens WHERE job_id = {job_id}'
+        query = f'SELECT db_token FROM exec_file_tokens WHERE job_id = {job_id}'
         self._executeQuery(query)
         rows = self.__cursor.fetchall()
         if len(rows) == 1:
             return rows[0][0]
         # TODO else raise or log an error
 
-    def addOutputFileToken(self, job_id, token):
-        query = f'INSERT INTO outputFile_tokens (job_id, db_token) VALUES ({job_id}, "{token}")'
+    def addOutputFileToken(self, job_id, token, files_size):
+        query = f'INSERT INTO output_file_tokens (job_id, db_token, files_size) VALUES ({job_id}, "{token}", {files_size})'
         self._executeQuery(query)
 
     def getOutputToken(self, job_id):
-        query = f'SELECT db_token FROM outputFile_tokens WHERE job_id = {job_id}'
+        query = f'SELECT db_token FROM output_file_tokens WHERE job_id = {job_id}'
         self._executeQuery(query)
         rows = self.__cursor.fetchall()
         if len(rows) == 1:
@@ -106,56 +151,13 @@ class DBHandler(object):
     # rendundant after storage is set up and we no longer address file addresses using job_ids
     def getJobIdFromToken(self, token, token_type):
         if token_type == 'x': # executable
-            query = f'SELECT job_id FROM storage_tokens WHERE db_token = "{token}"'
+            query = f'SELECT job_id FROM exec_file_tokens WHERE db_token = "{token}"'
         elif token_type == 'o': # output
-            query = f'SELECT job_id FROM outputFile_tokens WHERE db_token = "{token}"'
+            query = f'SELECT job_id FROM output_file_tokens WHERE db_token = "{token}"'
         self._executeQuery(query)
         rows = self.__cursor.fetchall()
         if len(rows) == 1:
             return rows[0][0]
-
-    def _executeQuery(self, query, dataList=[]):
-        try:
-            self.__cursor.execute(query, dataList)
-            self.__mySession.commit()
-        except mysql.connector.Error as err:
-            self.logger.warning("Lost connection to database. Trying to reconnect.")
-            self.__mySession.reconnect(attempts=3)
-            try: 
-                self.__cursor.execute(query, dataList)
-                self.__mySession.commit()
-            except mysql.connector.Error as err:
-                self.logger.error("DBHandler Error: {}".format(err))
-                exit(1)
-    
-    def _createNewDB(self, dbName):
-        try:
-            self.__cursor.execute("create database {} ".format(dbName))
-        except mysql.connector.Error as err:
-            self.logger.error("Failed creating database: {}".format(err))
-            exit(1)
-            
-    def _deleteDB(self, dbName):
-        try:
-            self.__cursor.execute("drop database {} ".format(dbName))
-        except mysql.connector.Error as err:
-            self.logger.error("Failed deleting database: {}".format(err))
-            exit(1)
-
-    def _switchDB(self, dbName):
-        try:
-            self.__cursor.execute("use {} ".format(dbName))
-        except mysql.connector.Error as err:
-            self.logger.error("Failed creating database: {}".format(err))
-            exit(1)
-    
-    def _endSession(self):
-        try:
-            self.__mySession.close()
-            self.__cursor.close()
-        except mysql.connector.Error as err:
-            self.logger.error("Could not end session successfully: {}".format(err))
-            exit(1)
     
     def addAuthToken(self, user_id, token):
         query = f'INSERT INTO authentication_token (user_id, auth_token) VALUES ({user_id}, "{token}")'
