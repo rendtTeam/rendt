@@ -2,17 +2,21 @@ import socket
 import sys
 import os
 import logging
-import selectors
 import random
 import datetime
 from storage_messaging import Messaging
+from dbHandler import DBHandler
 
 class Storage:
     def __init__(self, port):
         self.BACKLOG = 1024      # size of the queue for pending connections
 
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        print('check3')
         self.s.bind(('', port))          # Bind to the port
+        print('check4')
+        self.db_handler = DBHandler()
+        print('check5')
 
     def run(self):
         self.s.listen(self.BACKLOG)           # Now wait for client connection.
@@ -30,15 +34,19 @@ class Storage:
         
     def serve_renter_request(self, req_pipe, conn, addr):
         header, request_content = req_pipe.jsonheader, req_pipe.request
-        job_id = 7
-
+        # job_id = 7
+        client_db_token = request_content['db-token']
         if request_content['request-type'] == 'executable-upload':
+            job_id = self.db_handler.getJobIdFromToken(client_db_token, 'x')
+            
             self.recv_file(conn, f'jobs/toexec{job_id}.py')
             response_content = {'status': 'success',}
             req_pipe.write(response_content, 'text/json')
             return
         
         elif request_content['request-type'] == 'output-download':
+            job_id = self.db_handler.getJobIdFromToken(client_db_token, 'o')
+
             requested_file_path = f'outputs/output{job_id}.txt'
             if os.path.exists(requested_file_path):
                 self.send_file(conn, requested_file_path)
@@ -48,9 +56,11 @@ class Storage:
 
     def serve_leaser_request(self, req_pipe, conn, addr):
         header, request_content = req_pipe.jsonheader, req_pipe.request
-        job_id = 7
+        # job_id = 7
+        client_db_token = request_content['db-token']
 
         if request_content['request-type'] == 'executable-download':
+            job_id = self.db_handler.getJobIdFromToken(client_db_token, 'x')
             requested_file_path = f'jobs/toexec{job_id}.py'
             if os.path.exists(requested_file_path):
                 self.send_file(conn, requested_file_path)
@@ -59,8 +69,8 @@ class Storage:
                 return
         
         elif request_content['request-type'] == 'output-upload':
+            job_id = self.db_handler.getJobIdFromToken(client_db_token, 'o')
             self.recv_file(conn, f'outputs/output{job_id}.txt')
-
             response_content = {'status': 'success',}
             req_pipe.write(response_content, 'text/json')
             return
@@ -83,10 +93,13 @@ class Storage:
 
             
 def main():
+    print('check0')
     args = sys.argv[1:]
     port = int(args[0])
 
+    print('check1')
     server_instance = Storage(port)
+    print('checka')
     server_instance.run()
 
 if __name__ == '__main__':
