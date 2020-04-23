@@ -7,6 +7,49 @@ import time
 server_addr = ('18.220.165.22', 23456)
 storage_addr = ('18.197.19.248', 23456)
 class Sender:
+
+    def __init__(self, email, password):
+        self.usrEmail = email
+        self.usrPass = password
+    
+    def signIn(self,  email, password):
+        global server_addr
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect(server_addr)
+
+        content = {'emailAddr': self.usrEmail,
+                    'password': self.usrPass,
+                    'request-type': 'sign-in'}
+        request = {'type' : 'text/json',
+                    'content': content}
+        request_pipe = Messaging(s, server_addr, request)
+        request_pipe.queue_request()
+        request_pipe.write()
+        request_pipe.read()
+        response = request_pipe.response
+        self.authToken = response["authToken"]
+
+        s.close()
+        
+    def signUp(self,  email, password):
+        global server_addr
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect(server_addr)
+
+        content = {'emailAddr': self.usrEmail,
+                    'password': self.usrPass,
+                    'request-type': 'sign-up'}
+        request = {'type' : 'text/json',
+                    'content': content}
+        request_pipe = Messaging(s, server_addr, request)
+        request_pipe.queue_request()
+        request_pipe.write()
+        request_pipe.read()
+        response = request_pipe.response
+        self.authToken = response["authToken"]
+
+        s.close()
+
     def get_permission_to_submit_task(self, path_to_file):
         global server_addr
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

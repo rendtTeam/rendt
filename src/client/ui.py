@@ -327,7 +327,10 @@ class ReceiverWindow(QWidget):
         super().__init__()
         self.container = parent
         self.started = False
-        self.receiver = Receiver()
+        #TODO
+        self.usrEmail = "recabc@email.test"
+        self.usrPass = "recabc"
+        self.receiver = Receiver(self.usrEmail, self.usrPass)
 
     def startWindow(self):
         self.started = True
@@ -1090,7 +1093,12 @@ class SenderWindow(QWidget):
 
         self.setLayout(self.layout)
 
-        self.sender = Sender()
+        #TODO
+        #get email password from user
+        self.usrEmail = "senabc@email.test"
+        self.usrPass = "senabc"
+
+        self.sender = Sender(self.usrEmail, self.usrPass)
         self.selectDefaultFont('Century Gothic')
 
     def startDownloadWindow(self):

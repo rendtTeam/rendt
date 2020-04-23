@@ -5,14 +5,17 @@ from Crypto.PublicKey import RSA
 import hashlib
 import jwt
 """
-Incase of getting an error of: NotImplementedError: Algorithm 'RS256' could not be found. Do you have cryptography installed?
-try: pip install cryptography --> if installation corrupts
-
+Incase of getting an error of: NotImplementedError: Algorithm 'RS256' could not be found. 
+Check either you have cryptography installed, if not:
+try: pip install cryptography
 """
 
 class Authentication(object):
+    def __init__(self):
+        self.__dbSession = DBHandler()
 
     def createAuthToken(self):
+        #generate random token from os.random
         self.__authToken = random.randrange(1000000000, 10000000000000000000)
         self.__rowsAuthToken = self.__checkAuthToken(self.__authToken)
         self.__rowsAuthTokenBList = self.__checkAuthTokenBList(self.__authToken)
@@ -24,12 +27,10 @@ class Authentication(object):
         return self.__authToken
 
     def __checkAuthToken(self, token):
-        self.__dbSession = DBHandler()
         self.__rows = self.__dbSession.getAuthToken(token)
         return self.__rows
     
     def __checkAuthTokenBList(self, token):
-        self.__dbSession = DBHandler()
         self.__rows = self.__dbSession.getAuthTokenFromBList(token)
         return self.__rows
     
@@ -67,6 +68,8 @@ class Authentication(object):
         return self.__decoded
     
 
+    
+
 
 
 
@@ -92,13 +95,13 @@ privateKey, publicKey = x.generateSecurityKey()
 
 """Checking jwt RSA enc/dec"""
 payload2 = {"auth": "my message to be encoded and decoded"}
-rsaenc = x.encodeUsingRSAKeys(payload2, privateKey)
-# print(rsaenc)
-pKey = {"pkey":publicKey.decode("utf-8")}
-enPubKey = x.encodeUsingJWTDefault(pKey, "a")
-dePubKey = x.decodeUsingJWTDefault(enPubKey, "a")
+rsaenc = x.encodeUsingRSAKeys(payload2, publicKey)
+# # print(rsaenc)
+# pKey = {"pkey":publicKey.decode("utf-8")}
+# enPubKey = x.encodeUsingJWTDefault(pKey, "a")
+# dePubKey = x.decodeUsingJWTDefault(enPubKey, "a")
 # print (dePubKey["pkey"])
-rsadec = x.decodeUsingRSAKeys(rsaenc, dePubKey["pkey"])
+rsadec = x.decodeUsingRSAKeys(rsaenc, publicKey)
 print(rsadec)
 
 # print("priv: {} , pub: {}".format(privateKey,publicKey))

@@ -15,6 +15,7 @@ import random
 import datetime
 from server_messaging import Messaging
 from dbHandler import DBHandler
+from authentication import Authentication
 
 class Server:
 
@@ -69,6 +70,49 @@ class Server:
 
         logger.info('begin log')
         return logger
+        
+    def isTokenValid(self, authToken):
+        print("valid")
+        #TODO
+        #check db for validity
+        return True
+
+    def serve_client(self, conn, addr):
+        self.logger.info(f'Thread {threading.get_ident()} initialized to server request from {addr}')
+        req_pipe = Messaging(conn, addr)
+        req_pipe.read()
+
+        if not req_pipe.jsonheader or not req_pipe.request:
+            self.logger.warning(f'invalid request from {addr}.')
+        else:
+            self.authHandler = Authentication()
+            if req_pipe.request.get('request-type') == 'sign-in':
+                # check db generate token and send
+                self.signInAuthToken = self.authHandler.createAuthToken()
+            elif req_pipe.request.get('request-type') == 'sign-up':
+                # check db add to db do sth
+                self.signInAuthToken = self.authHandler.createAuthToken()
+            else:
+                if 'authToken' not in req_pipe.request or 'role' not in req_pipe.request or 'request-type' not in req_pipe.request:
+                    self.logger.warning(f'invalid request from {addr}.')
+                else:
+                    if (self.isTokenValid(req_pipe.request.get('authToken'))):
+                        if req_pipe.request.get('role') == 'renter':
+                            self.serve_renter_request(req_pipe, conn, addr)
+                        elif req_pipe.request.get('role') == 'leaser':
+                            self.serve_leaser_request(req_pipe, conn, addr)
+                    else:
+                        # log error, send error msg
+                        self.logger.warning(f'invalid request from {addr}.')
+
+        time.sleep(30)
+    
+    def refuse_client(self, conn, addr):
+        req_pipe = Messaging(conn, addr)
+        req_pipe.read()
+        response_content = {'status': 'Error: server busy, can\'t serve at the time.',
+                                    }
+        req_pipe.write(response_content, 'text/json')
 
     def serve_renter_request(self, req_pipe, conn, addr):
         header, request_content = req_pipe.jsonheader, req_pipe.request
