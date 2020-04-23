@@ -38,7 +38,7 @@ class Authentication(object):
     def generateSecurityKey(self):
         self.__randomGenerator = Random.new().read
         self.__RSAKey = RSA.generate(1024, self.__randomGenerator)
-        self.__privateKey = self.__RSAKey.export_key()
+        self.__privateKey = self.__RSAKey.exportKey()
         self.__publicKey = self.__RSAKey.publickey().exportKey()
         return self.__privateKey, self.__publicKey
 
@@ -95,13 +95,13 @@ privateKey, publicKey = x.generateSecurityKey()
 
 """Checking jwt RSA enc/dec"""
 payload2 = {"auth": "my message to be encoded and decoded"}
-rsaenc = x.encodeUsingRSAKeys(payload2, publicKey)
+# rsaenc = x.encodeUsingRSAKeys(payload2, publicKey)
 # # print(rsaenc)
 # pKey = {"pkey":publicKey.decode("utf-8")}
 # enPubKey = x.encodeUsingJWTDefault(pKey, "a")
 # dePubKey = x.decodeUsingJWTDefault(enPubKey, "a")
 # print (dePubKey["pkey"])
-rsadec = x.decodeUsingRSAKeys(rsaenc, publicKey)
-print(rsadec)
+# rsadec = x.decodeUsingRSAKeys(rsaenc, publicKey)
+# print(rsadec)
 
 # print("priv: {} , pub: {}".format(privateKey,publicKey))

@@ -104,8 +104,6 @@ class Server:
                     else:
                         # log error, send error msg
                         self.logger.warning(f'invalid request from {addr}.')
-
-        time.sleep(30)
     
     def refuse_client(self, conn, addr):
         req_pipe = Messaging(conn, addr)
@@ -217,7 +215,7 @@ class Server:
                                     }
                 req_pipe.write(response_content, 'text/json')
                 self.logger.warning(f'couldn\'t issue permission to leaser {addr[0]} to download executable of job {requested_job_id}: no files for this job')
-       elif request_content['request-type'] == 'output-upload-permission':
+        elif request_content['request-type'] == 'output-upload-permission':
             self.logger.info(f'connection: leaser from {addr}; request type: output-upload-permission')
             job_id = request_content['job-id']
             file_size = request_content['file-size']

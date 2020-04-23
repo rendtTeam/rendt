@@ -146,7 +146,7 @@ class Receiver:
 
     def execute_job(self, path_to_executable, path_to_output):
         # execute job
-        q = os.system(f'python {path_to_executable} >> {path_to_output}')
+        q = os.system(f'python {path_to_executable} > {path_to_output}')
 
     def get_permission_to_upload_output(self, job_id, path_to_file):
         global server_addr

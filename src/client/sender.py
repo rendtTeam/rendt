@@ -7,7 +7,6 @@ import time
 server_addr = ('18.220.165.22', 23456)
 storage_addr = ('18.197.19.248', 23456)
 class Sender:
-
     def __init__(self, email, password):
         self.usrEmail = email
         self.usrPass = password
