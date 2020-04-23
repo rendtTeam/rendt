@@ -36,18 +36,15 @@ class DBHandler(object):
         logger = logging.getLogger('DBHandler.logger')
         logger.setLevel(logging.INFO)
 
-        # create console handler with a higher log level
-        console_handler = logging.StreamHandler()
-        console_handler.setLevel(logging.ERROR)
-
         currentDT = str(datetime.datetime.now()).replace(' ', '_')
-        db_logfile_handler = logging.FileHandler(
-            'logs/db_logfile_' + currentDT)
-        format_ = logging.Formatter(
-            '%(asctime)s  %(name)-15s  %(levelname)-8s  %(message)s')
+        format_ = logging.Formatter('%(asctime)s  %(name)-15s  %(levelname)-8s  %(message)s')
 
+        # create log fle handler
+        db_logfile_handler = logging.FileHandler('logs/db_logfile_' + currentDT)
         db_logfile_handler.setLevel(logging.INFO)
         db_logfile_handler.setFormatter(format_)
+        # create console handler with a higher log level
+        console_handler = logging.StreamHandler()
         console_handler.setLevel(logging.WARNING)
         console_handler.setFormatter(format_)
 
@@ -171,6 +168,20 @@ class DBHandler(object):
         self._executeQuery(query)
         rows = self.__cursor.fetchall()
         return rows
+
+    def getJobFileSize(self, job_id):
+        query = f'SELECT file_size FROM exec_file_tokens WHERE job_id = {job_id}'
+        self._executeQuery(query)
+        rows = self.__cursor.fetchall()
+        if len(rows) == 1:
+            return rows[0][0]
+
+    def getOutputFileSize(self, job_id):
+        query = f'SELECT file_size FROM output_file_tokens WHERE job_id = {job_id}'
+        self._executeQuery(query)
+        rows = self.__cursor.fetchall()
+        if len(rows) == 1:
+            return rows[0][0]
 
     # Blacklist holds expired aythentication tokens alongside the user id
     def addAuthTokenToBList(self, user_id, token):

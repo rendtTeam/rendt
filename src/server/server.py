@@ -49,16 +49,23 @@ class Server:
                 self.serve_leaser_request(req_pipe, conn, addr)
                 
     def configure_logging(self):
-        logger = logging.getLogger('Serverself.logger')
+        logger = logging.getLogger('Server.logger')
         logger.setLevel(logging.INFO)
 
         currentDT = str(datetime.datetime.now()).replace(' ', '_')
-        file_handler = logging.FileHandler('logs/logfile_' + currentDT)
         format_ = logging.Formatter('%(asctime)s  %(name)-12s  %(levelname)-8s  %(message)s')
-        
+
+        # create log fle handler
+        file_handler = logging.FileHandler('logs/logfile_' + currentDT)
         file_handler.setLevel(logging.INFO)
         file_handler.setFormatter(format_)
+        # create console handler with a higher log level
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(logging.WARNING)
+        console_handler.setFormatter(format_)
+
         logger.addHandler(file_handler)
+        logger.addHandler(console_handler)
 
         logger.info('begin log')
         return logger
@@ -251,6 +258,7 @@ class Server:
         elif request_content['request-type'] == 'output-upload-permission':
             self.logger.info(f'connection: leaser from {addr}; request type: output-upload-permission')
             job_id = request_content['job-id']
+            file_size = request_content['file-size']
 
             # TODO check if this task was assigned to be executed by this leaser. 
             # have a 'Leases' table in DB for (leaser_id, job_id, status)
@@ -265,7 +273,7 @@ class Server:
 
             db_token = self.generate_db_token()
             # so that leaser can upload the output file
-            self.db_handler.addOutputFileToken(job_id, db_token)
+            self.db_handler.addOutputFileToken(job_id, db_token, file_size)
             self.db_handler.changeJobStatus(job_id, 'otbu')
 
             response_content = {'status': 'success',
