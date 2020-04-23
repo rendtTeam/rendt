@@ -68,10 +68,9 @@ class Storage:
         if request_content['request-type'] == 'executable-upload':
             self.logger.info(f'connection: renter from {addr}; request type: executable-upload')
             job_id = self.db_handler.getJobIdFromToken(client_db_token, 'x')
-            
             self.recv_file(conn, f'jobs/toexec{job_id}.py')
+            self.db_handler.changeJobStatus(job_id, 'a')
             self.logger.info(f'successfully received exec file for job {job_id} from renter {addr[0]}')
-
             response_content = {'status': 'success',}
             req_pipe.write(response_content, 'text/json')
             return
@@ -79,7 +78,6 @@ class Storage:
         elif request_content['request-type'] == 'output-download':
             self.logger.info(f'connection: renter from {addr}; request type: output-download')
             job_id = self.db_handler.getJobIdFromToken(client_db_token, 'o')
-
             requested_file_path = f'outputs/output{job_id}.txt'
             if os.path.exists(requested_file_path):
                 self.send_file(conn, requested_file_path)
@@ -101,6 +99,7 @@ class Storage:
         client_db_token = request_content['db-token']
 
         if request_content['request-type'] == 'executable-download':
+            self.logger.info(f'connection: leaser from {addr}; request type: executable-download')
             job_id = self.db_handler.getJobIdFromToken(client_db_token, 'x')
             requested_file_path = f'jobs/toexec{job_id}.py'
             if os.path.exists(requested_file_path):
@@ -111,8 +110,10 @@ class Storage:
                 return
         
         elif request_content['request-type'] == 'output-upload':
+            self.logger.info(f'connection: leaser from {addr}; request type: output-upload')
             job_id = self.db_handler.getJobIdFromToken(client_db_token, 'o')
             self.recv_file(conn, f'outputs/output{job_id}.txt')
+            self.db_handler.changeJobStatus(job_id, 'f')
             self.logger.info(f'successfully received output file for job {job_id} from leaser {addr[0]}')
             response_content = {'status': 'success',}
             req_pipe.write(response_content, 'text/json')

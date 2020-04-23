@@ -3,7 +3,7 @@ import os
 import sys
 from client_messaging import Messaging
 
-server_addr = ('18.220.165.22', 23457)
+server_addr = ('18.220.165.22', 23456)
 storage_addr = ('18.197.19.248', 23456)
 
 class Receiver:
@@ -61,12 +61,9 @@ class Receiver:
             return response['db-token'], response['file-size']
 
     def download_file_from_db(self, path_to_file, db_token, file_size):
-        global server_addr
         global storage_addr
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s1 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect(server_addr)
-        s1.connect(storage_addr)
+        s.connect(storage_addr)
 
         content = { 'role': 'leaser',
                     'request-type': 'executable-download',
@@ -76,13 +73,9 @@ class Receiver:
                     'content': content
                     }
 
-        req_pipe = Messaging(s, server_addr, request)
+        req_pipe = Messaging(s, storage_addr, request)
         req_pipe.queue_request()
         req_pipe.write()
-
-        req_pipe1 = Messaging(s1, storage_addr, request)
-        req_pipe1.queue_request()
-        req_pipe1.write()
 
         # receive exec file
         f = open(path_to_file, "wb")
@@ -90,12 +83,11 @@ class Receiver:
         while True:
             received = 0
             chunk = min(1024, file_size-received)
-            m = s1.recv(chunk)
+            m = s.recv(chunk)
             data = m
             received += chunk
             while received < file_size:
-                # break
-                m = s1.recv(chunk)
+                m = s.recv(chunk)
                 data += m
                 received += chunk
             break
@@ -103,15 +95,12 @@ class Receiver:
         f.close()
 
         req_pipe.read()
-        #response_header = req_pipe.jsonheader
+        response_header = req_pipe.jsonheader
         response = req_pipe.response
 
-        req_pipe1.read()
-
         print("- receiving execution file status:", response['status'])
-
+        
         s.close()
-        s1.close()
 
     def execute_job(self, path_to_executable, path_to_output):
         # execute job
@@ -146,12 +135,9 @@ class Receiver:
             return response['db-token']
 
     def upload_output_to_db(self, path_to_file, job_id, db_token):
-        global server_addr
         global storage_addr
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s1 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect(server_addr)
-        s1.connect(storage_addr)
+        s.connect(storage_addr)
 
         file_size = os.path.getsize(path_to_file)
 
@@ -166,31 +152,24 @@ class Receiver:
                     'content': content
                     }
 
-        req_pipe = Messaging(s, server_addr, request)
+        req_pipe = Messaging(s, storage_addr, request)
         req_pipe.queue_request()
         req_pipe.write()
-
-        req_pipe1 = Messaging(s1, storage_addr, request)
-        req_pipe1.queue_request()
-        req_pipe1.write()
 
         # send exec file
         f = open(path_to_file,'rb')
         l = f.read(1024)
         while (l):
-            s1.send(l)
+            s.send(l)
             l = f.read(1024)
         f.close()
         print ('Done Sending')
-        s1.shutdown(socket.SHUT_WR)
+        s.shutdown(socket.SHUT_WR)
 
         req_pipe.read()
-        #response_header = req_pipe.jsonheader
+        response_header = req_pipe.jsonheader
         response = req_pipe.response
-
-        req_pipe1.read()
 
         print('- uploading output file status:', response['status'])
 
         s.close()
-        s1.close()
