@@ -4,6 +4,7 @@ import sys
 from client_messaging import Messaging
 
 server_addr = ('18.220.165.22', 23456)
+storage_addr = ('18.197.19.248', 23456)
 
 class Receiver:
 
@@ -60,9 +61,9 @@ class Receiver:
             return response['db-token'], response['file-size']
 
     def download_file_from_db(self, path_to_file, db_token, file_size):
-        global server_addr
+        global storage_addr
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect(server_addr)
+        s.connect(storage_addr)
 
         content = { 'role': 'leaser',
                     'request-type': 'executable-download',
@@ -72,7 +73,7 @@ class Receiver:
                     'content': content
                     }
 
-        req_pipe = Messaging(s, server_addr, request)
+        req_pipe = Messaging(s, storage_addr, request)
         req_pipe.queue_request()
         req_pipe.write()
 
@@ -86,7 +87,6 @@ class Receiver:
             data = m
             received += chunk
             while received < file_size:
-                # break
                 m = s.recv(chunk)
                 data += m
                 received += chunk
@@ -95,16 +95,16 @@ class Receiver:
         f.close()
 
         req_pipe.read()
-        #response_header = req_pipe.jsonheader
+        response_header = req_pipe.jsonheader
         response = req_pipe.response
 
         print("- receiving execution file status:", response['status'])
-
+        
         s.close()
 
     def execute_job(self, path_to_executable, path_to_output):
         # execute job
-        q = os.system(f'python3 {path_to_executable} >> {path_to_output}')
+        q = os.system(f'python {path_to_executable} >> {path_to_output}')
 
     def get_permission_to_upload_output(self, job_id, path_to_file):
         global server_addr
@@ -135,9 +135,9 @@ class Receiver:
             return response['db-token']
 
     def upload_output_to_db(self, path_to_file, job_id, db_token):
-        global server_addr
+        global storage_addr
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect(server_addr)
+        s.connect(storage_addr)
 
         file_size = os.path.getsize(path_to_file)
 
@@ -152,7 +152,7 @@ class Receiver:
                     'content': content
                     }
 
-        req_pipe = Messaging(s, server_addr, request)
+        req_pipe = Messaging(s, storage_addr, request)
         req_pipe.queue_request()
         req_pipe.write()
 
@@ -167,7 +167,7 @@ class Receiver:
         s.shutdown(socket.SHUT_WR)
 
         req_pipe.read()
-        #response_header = req_pipe.jsonheader
+        response_header = req_pipe.jsonheader
         response = req_pipe.response
 
         print('- uploading output file status:', response['status'])

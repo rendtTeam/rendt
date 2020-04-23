@@ -3,19 +3,21 @@
 # * introduce threads for scalability
 # * set timeout for issued tokens (permissions)
 # * introduce a proper token generator; tokens must depend on user_id,
-#   (e.g. hash(user_id)+randint) so that server can verify ownership
+#   (e.g. hash(user_id)_randint) so that server can verify ownership
+
+# TODO migrate upload/download functions (not permissions) to storage.py
 
 import socket
-import sys, os
+import sys
+import os
 import logging
-import random, datetime, time
-import threading
-from threading import Thread
+import random
+import datetime
 from server_messaging import Messaging
 from dbHandler import DBHandler
 
-
 class Server:
+
     def __init__(self, port):
         self.BACKLOG = 1024      # size of the queue for pending connections
 
@@ -25,7 +27,7 @@ class Server:
         self.db_handler = DBHandler()
         self.logger = self.configure_logging()
 
-        # all following structs to be replaced when we have better token and id generation
+        # TODO all following structs to be replaced when we have better token and id generation
         self.issued_db_tokens = []           # db tokens that have already been used; can't be issued again
         self.issued_job_ids = []             # job ids that have already been used; can't be issued again
 
@@ -36,55 +38,37 @@ class Server:
         while True:
             # self.logger.info('waiting for connection')
             conn, addr = self.s.accept()
-            try:
-                Thread(target=self.serve_client, args=(conn, addr)).start()
-            except:
-                self.refuse_client(conn, addr)
-                self.logger.error(f'Couldn\'t create thread. Refused client at {addr[0]}')
-    
+            req_pipe = Messaging(conn, addr)
+            req_pipe.read()
+
+            if not req_pipe.jsonheader or not req_pipe.request or 'role' not in req_pipe.request or 'request-type' not in req_pipe.request:
+                self.logger.warning(f'invalid request from {addr}.')
+            elif req_pipe.request.get('role') == 'renter':
+                self.serve_renter_request(req_pipe, conn, addr)
+            elif req_pipe.request.get('role') == 'leaser':
+                self.serve_leaser_request(req_pipe, conn, addr)
+                
     def configure_logging(self):
         logger = logging.getLogger('Server.logger')
         logger.setLevel(logging.INFO)
 
         currentDT = str(datetime.datetime.now()).replace(' ', '_')
+        format_ = logging.Formatter('%(asctime)s  %(name)-12s  %(levelname)-8s  %(message)s')
+
+        # create log fle handler
         file_handler = logging.FileHandler('logs/logfile_' + currentDT)
-        format_ = logging.Formatter('%(asctime)s  %(name)-15s  %(levelname)-8s  %(message)s')
-        
+        file_handler.setLevel(logging.INFO)
+        file_handler.setFormatter(format_)
         # create console handler with a higher log level
         console_handler = logging.StreamHandler()
-        console_handler.setLevel(logging.ERROR)
-
-        file_handler.setLevel(logging.INFO)
-        console_handler.setLevel(logging.ERROR)
+        console_handler.setLevel(logging.WARNING)
         console_handler.setFormatter(format_)
-        file_handler.setFormatter(format_)
 
         logger.addHandler(file_handler)
         logger.addHandler(console_handler)
 
         logger.info('begin log')
         return logger
-
-    def serve_client(self, conn, addr):
-        self.logger.info(f'Thread {threading.get_ident()} initialized to server request from {addr}')
-        req_pipe = Messaging(conn, addr)
-        req_pipe.read()
-
-        if not req_pipe.jsonheader or not req_pipe.request or 'role' not in req_pipe.request or 'request-type' not in req_pipe.request:
-            self.logger.warning(f'invalid request from {addr}.')
-        elif req_pipe.request.get('role') == 'renter':
-            self.serve_renter_request(req_pipe, conn, addr)
-        elif req_pipe.request.get('role') == 'leaser':
-            self.serve_leaser_request(req_pipe, conn, addr)
-
-        time.sleep(30)
-    
-    def refuse_client(self, conn, addr):
-        req_pipe = Messaging(conn, addr)
-        req_pipe.read()
-        response_content = {'status': 'Error: server busy, can\'t serve at the time.',
-                                    }
-        req_pipe.write(response_content, 'text/json')
 
     def serve_renter_request(self, req_pipe, conn, addr):
         header, request_content = req_pipe.jsonheader, req_pipe.request
@@ -105,35 +89,6 @@ class Server:
             self.db_handler.addJob(self.get_user_id(addr[0]), job_id, job_type, files_size, db_token, status='xtbu')
 
             self.logger.info(f'issued permission to renter {addr[0]} to submit job {job_id} via token {db_token}')
-        elif request_content['request-type'] == 'executable-upload':
-            self.logger.info(f'connection: renter from {addr}; request type: executable-upload')
-            if 'db-token' not in request_content or 'job-id' not in request_content:
-                response_content = {'status': 'error: no permission to upload',
-                                    }
-                req_pipe.write(response_content, 'text/json')
-                self.logger.warning(f'received no token or job id from renter {addr[0]}')
-                return
-            
-            db_token = request_content['db-token']
-            job_id = request_content['job-id']
-
-            actual_job_id = self.db_handler.getJobIdFromToken(db_token, 'x')
-            if actual_job_id == job_id:
-                self.recv_file(conn, f'jobs/toexec{job_id}.py')
-
-                self.db_handler.changeJobStatus(job_id, 'a')
-
-                response_content = {'status': 'success',
-                                    }
-                req_pipe.write(response_content, 'text/json')
-                self.logger.info(f'received file jobs/toexec{job_id}.py from renter {addr[0]}')
-                return
-            
-            response_content = {'status': 'error: invalid token',
-                                }
-            req_pipe.write(response_content, 'text/json')
-
-            self.logger.warning(f'received invalid token {db_token} for job {job_id} from renter {addr[0]}')
         elif request_content['request-type'] == 'output-download-permission':
             self.logger.info(f'connection: renter from {addr}; request type: output-download-permission')
             if 'job-id' not in request_content:
@@ -159,8 +114,9 @@ class Server:
             requested_token = self.db_handler.getOutputToken(requested_job_id)
 
             if requested_job_id in finished_jobs and requested_token:
+                file_size = self.db_handler.getOutputFileSize(requested_job_id)
                 response_content = {'status': 'success',
-                                    'file-size': os.path.getsize(f'outputs/output{requested_job_id}.txt'),
+                                    'file-size': file_size, 
                                     'db-token': requested_token
                                     }
                 req_pipe.write(response_content, 'text/json')
@@ -170,31 +126,6 @@ class Server:
                                     }
                 req_pipe.write(response_content, 'text/json')
                 self.logger.warning(f'couldn\'t issue permission to renter {addr[0]} to download output of job {requested_job_id}: no output files for this job')
-        elif request_content['request-type'] == 'output-download':
-            self.logger.info(f'connection: renter from {addr}; request type: output-download')
-            if 'db-token' not in request_content:
-                response_content = {'status': 'error: no/invalid token provided',
-                                    }
-                req_pipe.write(response_content, 'text/json')
-                self.logger.warning(f'couldn\'t send output file to renter at {addr[0]}: no/invalid token')
-                return
-            
-            db_token = request_content['db-token']
-            job_id = self.db_handler.getJobIdFromToken(db_token, 'o')
-            if job_id:
-                requested_file_path = f'outputs/output{job_id}.txt'
-                if os.path.exists(requested_file_path):
-                    self.send_file(conn, requested_file_path)
-                    response_content = {'status': 'success',
-                                        }
-                    req_pipe.write(response_content, 'text/json')
-                    self.logger.info(f'sent file {requested_file_path} to renter {addr[0]}')
-                    return
-            
-            response_content = {'status': 'error: invalid token',
-                                }
-            req_pipe.write(response_content, 'text/json')
-            self.logger.warning(f'couldn\'t send file {requested_file_path} to renter {addr[0]}: file doesn\'t exist')
         else:
             self.logger.warning(f'connection: renter from {addr}; request type: invalid')
             response_content = {'status': 'error: unable to serve request. unknown request type',
@@ -226,8 +157,9 @@ class Server:
             requested_token = self.db_handler.getExecfileToken(requested_job_id)
             
             if requested_token: 
+                file_size = self.db_handler.getJobFileSize(requested_job_id)
                 response_content = {'status': 'success',
-                                    'file-size': os.path.getsize(f'jobs/toexec{requested_job_id}.py'),
+                                    'file-size': file_size, 
                                     'db-token': requested_token
                                     }
                 req_pipe.write(response_content, 'text/json')
@@ -241,36 +173,10 @@ class Server:
                                     }
                 req_pipe.write(response_content, 'text/json')
                 self.logger.warning(f'couldn\'t issue permission to leaser {addr[0]} to download executable of job {requested_job_id}: no files for this job')
-        elif request_content['request-type'] == 'executable-download':
-            self.logger.info(f'connection: leaser from {addr}; request type: executable-download')
-
-            if 'db-token' not in request_content:
-                response_content = {'status': 'error: no/invalid token provided',
-                                    }
-                req_pipe.write(response_content, 'text/json')
-                self.logger.warning(f'couldn\'t send executable file to leaser at {addr[0]}: no/invalid token')
-                return
-
-            db_token = request_content['db-token']
-            job_id = self.db_handler.getJobIdFromToken(db_token, 'x')
-            
-            if job_id:
-                requested_file_path = f'jobs/toexec{job_id}.py'
-                if os.path.exists(requested_file_path):
-                    self.send_file(conn, requested_file_path)
-                    response_content = {'status': 'success',
-                                        }
-                    req_pipe.write(response_content, 'text/json')
-                    self.logger.info(f'sent file {requested_file_path} to leaser {addr[0]}')
-                    return
-
-            response_content = {'status': 'error: invalid token',
-                                }
-            req_pipe.write(response_content, 'text/json')
-            self.logger.warning(f'couldn\'t send file {requested_file_path} to leaser {addr[0]}: file doesn\'t exist')
-        elif request_content['request-type'] == 'output-upload-permission':
+       elif request_content['request-type'] == 'output-upload-permission':
             self.logger.info(f'connection: leaser from {addr}; request type: output-upload-permission')
             job_id = request_content['job-id']
+            file_size = request_content['file-size']
 
             # TODO check if this task was assigned to be executed by this leaser. 
             # have a 'Leases' table in DB for (leaser_id, job_id, status)
@@ -288,7 +194,6 @@ class Server:
             self.logger.info('[+] generated db token')
             # so that leaser can upload the output file
             self.db_handler.addOutputFileToken(job_id, db_token, file_size)
-            self.logger.info('[+] added output filetoken to db')
             self.db_handler.changeJobStatus(job_id, 'otbu')
             self.logger.info('[+] changed status')
 
@@ -299,35 +204,6 @@ class Server:
         
             # tie this job id to its corresponding token so that the file can be accessed knowing job id            
             self.logger.info(f'issued permission to leaser {addr[0]} to upload output of job {job_id} via token {db_token}')
-
-        elif request_content['request-type'] == 'output-upload':
-            self.logger.info(f'connection: leaser from {addr}; request type: output-upload')
-            if 'db-token' not in request_content or 'job-id' not in request_content:
-                response_content = {'status': 'error: no permission to upload',
-                                    }
-                req_pipe.write(response_content, 'text/json')
-                self.logger.warning(f'received no token or job id from leaser {addr[0]}')
-                return
-            db_token = request_content['db-token']
-            job_id = request_content['job-id']
-
-            actual_job_id = self.db_handler.getJobIdFromToken(db_token, 'o')
-            if actual_job_id == job_id:
-                self.recv_file(conn, f'outputs/output{job_id}.txt')
-
-                response_content = {'status': 'success',
-                                    }
-                req_pipe.write(response_content, 'text/json')
-
-                self.db_handler.changeJobStatus(job_id, 'f')
-
-                self.logger.info(f'received file outputs/output{job_id}.txt from renter {addr[0]}')
-                return
-
-            response_content = {'status': 'error: invalid token',
-                                }
-            req_pipe.write(response_content, 'text/json')
-            self.logger.warning(f'received invalid token {db_token} for job {job_id} from leaser {addr[0]}')
         else:
             self.logger.warning(f'connection: leaser from {addr}; request type: invalid')
             response_content = {'status': 'error: unable to serve request. unknown request type',
@@ -338,22 +214,6 @@ class Server:
     def get_user_id(self, addr):
         return int(''.join(addr.split('.'))[-8:])
         
-    def recv_file(self, conn, file_name): # TODO add file_size to this
-        f = open(file_name,'wb')
-        l = conn.recv(1024)
-        while (l):
-            f.write(l)
-            l = conn.recv(1024)
-        f.close()
-
-    def send_file(self, conn, file_name):
-        f = open(file_name, "rb")
-        l = os.path.getsize(file_name)
-        m = f.read(l)
-        conn.send(m)
-        f.close()
-        # conn.shutdown(socket.SHUT_WR)
-
     def generate_db_token(self):
         token = int(random.random()*90000)+10000
         while token in self.issued_db_tokens:

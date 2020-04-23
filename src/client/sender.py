@@ -5,6 +5,7 @@ import sys
 import time
 
 server_addr = ('18.220.165.22', 23456)
+storage_addr = ('18.197.19.248', 23456)
 class Sender:
     def get_permission_to_submit_task(self, path_to_file):
         global server_addr
@@ -34,9 +35,9 @@ class Sender:
             return response['job-id'], response['db-token']
 
     def upload_file_to_db(self,path_to_file, job_id, db_token):
-        global server_addr
+        global storage_addr
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect(server_addr)
+        s.connect(storage_addr)
 
         file_size = os.path.getsize(path_to_file)
 
@@ -49,7 +50,7 @@ class Sender:
                     'content': content
                     }
 
-        req_pipe = Messaging(s, server_addr, request)
+        req_pipe = Messaging(s, storage_addr, request)
         req_pipe.queue_request()
         req_pipe.write()
 
@@ -75,6 +76,7 @@ class Sender:
         global server_addr
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect(server_addr)
+        
 
         content = {'role': 'renter',
                     'request-type': 'output-download-permission',
@@ -97,9 +99,9 @@ class Sender:
             return response['db-token'], response['file-size']
 
     def download_output_from_db(self, path_to_file, db_token, file_size):
-        global server_addr
+        global storage_addr
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect(server_addr)
+        s.connect(storage_addr)
 
         content = { 'role': 'renter',
                     'request-type': 'output-download',
@@ -109,7 +111,7 @@ class Sender:
                     'content': content
                     }
 
-        req_pipe = Messaging(s, server_addr, request)
+        req_pipe = Messaging(s, storage_addr, request)
         req_pipe.queue_request()
         req_pipe.write()
 
@@ -132,9 +134,9 @@ class Sender:
         f.close()
 
         req_pipe.read()
-        #response_header = req_pipe.jsonheader
-        response = req_pipe.response
-
+        response_header = req_pipe.jsonheader
+        response = req_pipe.response      
+        
         print("- receiving output file status:", response['status'])
 
         s.close()

@@ -3,11 +3,12 @@ from mysql.connector import errorcode
 import logging
 import datetime
 
+
 class DBHandler(object):
     def __init__(self):
         self.logger = self.configure_logging()
         self.connect()
-        
+
     def connect(self):
         try:
             self.__mySession = mysql.connector.connect(
@@ -35,16 +36,15 @@ class DBHandler(object):
         logger = logging.getLogger('DBHandler.logger')
         logger.setLevel(logging.INFO)
 
-        # create console handler with a higher log level
-        console_handler = logging.StreamHandler()
-        console_handler.setLevel(logging.ERROR)
-
         currentDT = str(datetime.datetime.now()).replace(' ', '_')
-        db_logfile_handler = logging.FileHandler('logs/db_logfile_' + currentDT)
         format_ = logging.Formatter('%(asctime)s  %(name)-15s  %(levelname)-8s  %(message)s')
-        
+
+        # create log fle handler
+        db_logfile_handler = logging.FileHandler('logs/db_logfile_' + currentDT)
         db_logfile_handler.setLevel(logging.INFO)
         db_logfile_handler.setFormatter(format_)
+        # create console handler with a higher log level
+        console_handler = logging.StreamHandler()
         console_handler.setLevel(logging.WARNING)
         console_handler.setFormatter(format_)
 
@@ -150,18 +150,49 @@ class DBHandler(object):
 
     # rendundant after storage is set up and we no longer address file addresses using job_ids
     def getJobIdFromToken(self, token, token_type):
-        if token_type == 'x': # executable
+        if token_type == 'x':  # executable
             query = f'SELECT job_id FROM exec_file_tokens WHERE db_token = "{token}"'
-        elif token_type == 'o': # output
+        elif token_type == 'o':  # output
             query = f'SELECT job_id FROM output_file_tokens WHERE db_token = "{token}"'
         self._executeQuery(query)
         rows = self.__cursor.fetchall()
         if len(rows) == 1:
             return rows[0][0]
-    
+
     def addAuthToken(self, user_id, token):
         query = f'INSERT INTO authentication_token (user_id, auth_token) VALUES ({user_id}, "{token}")'
         self._executeQuery(query)
+
+    def getAuthToken(self, token):
+        query = f'SELECT auth_token FROM authentication_token WHERE auth_token = {token}'
+        self._executeQuery(query)
+        rows = self.__cursor.fetchall()
+        return rows
+
+    def getJobFileSize(self, job_id):
+        query = f'SELECT file_size FROM exec_file_tokens WHERE job_id = {job_id}'
+        self._executeQuery(query)
+        rows = self.__cursor.fetchall()
+        if len(rows) == 1:
+            return rows[0][0]
+
+    def getOutputFileSize(self, job_id):
+        query = f'SELECT file_size FROM output_file_tokens WHERE job_id = {job_id}'
+        self._executeQuery(query)
+        rows = self.__cursor.fetchall()
+        if len(rows) == 1:
+            return rows[0][0]
+
+    # Blacklist holds expired aythentication tokens alongside the user id
+    def addAuthTokenToBList(self, user_id, token):
+        query = f'INSERT INTO authentication_token_blacklist (user_id, auth_token_blist) VALUES ({user_id}, "{token}")'
+        self._executeQuery(query)
+
+    def getAuthTokenFromBList(self, token):
+        query = f'SELECT auth_token_blist FROM authentication_token_blacklist WHERE auth_token_blist = {token}'
+        self._executeQuery(query)
+        rows = self.__cursor.fetchall()
+        return rows
 
     def getAuthToken(self, token):
         query = f'SELECT auth_token FROM authentication_token WHERE auth_token = {token}'
