@@ -1,6 +1,5 @@
 # TODO
 # * surround 'send's with try-except clauses
-# * introduce threads for scalability
 # * set timeout for issued tokens (permissions)
 # * introduce a proper token generator; tokens must depend on user_id,
 #   (e.g. hash(user_id)_randint) so that server can verify ownership
@@ -13,6 +12,8 @@ import os
 import logging
 import random
 import datetime
+import threading
+from threading import Thread
 from server_messaging import Messaging
 from dbHandler import DBHandler
 from authentication import Authentication
@@ -39,15 +40,11 @@ class Server:
         while True:
             # self.logger.info('waiting for connection')
             conn, addr = self.s.accept()
-            req_pipe = Messaging(conn, addr)
-            req_pipe.read()
-
-            if not req_pipe.jsonheader or not req_pipe.request or 'role' not in req_pipe.request or 'request-type' not in req_pipe.request:
-                self.logger.warning(f'invalid request from {addr}.')
-            elif req_pipe.request.get('role') == 'renter':
-                self.serve_renter_request(req_pipe, conn, addr)
-            elif req_pipe.request.get('role') == 'leaser':
-                self.serve_leaser_request(req_pipe, conn, addr)
+            try:
+                Thread(target=self.serve_client, args=(conn, addr)).start()
+            except:
+                self.refuse_client(conn, addr)
+                self.logger.error(f'Couldn\'t create thread. Refused client at {addr[0]}')
                 
     def configure_logging(self):
         logger = logging.getLogger('Server.logger')
@@ -70,9 +67,8 @@ class Server:
 
         logger.info('begin log')
         return logger
-        
+
     def isTokenValid(self, authToken):
-        print("valid")
         #TODO
         #check db for validity
         return True
@@ -87,10 +83,10 @@ class Server:
         else:
             self.authHandler = Authentication()
             if req_pipe.request.get('request-type') == 'sign-in':
-                # check db generate token and send
+                # TODO check db generate token and send
                 self.signInAuthToken = self.authHandler.createAuthToken()
             elif req_pipe.request.get('request-type') == 'sign-up':
-                # check db add to db do sth
+                # TODO check db add to db do sth
                 self.signInAuthToken = self.authHandler.createAuthToken()
             else:
                 if 'authToken' not in req_pipe.request or 'role' not in req_pipe.request or 'request-type' not in req_pipe.request:
@@ -103,7 +99,7 @@ class Server:
                             self.serve_leaser_request(req_pipe, conn, addr)
                     else:
                         # log error, send error msg
-                        self.logger.warning(f'invalid request from {addr}.')
+                        self.logger.warning(f'invalid request from {addr}: no/invalid credentials')
     
     def refuse_client(self, conn, addr):
         req_pipe = Messaging(conn, addr)
@@ -231,13 +227,10 @@ class Server:
             #     self.logger.warning(f'couldn\'t issue permission to leaser {addr[0]} to upload output of job {job_id}: not their job')
             #     return
             file_size = request_content['file-size']
-            self.logger.info('[+] obtained job_id')
             db_token = self.generate_db_token()
-            self.logger.info('[+] generated db token')
             # so that leaser can upload the output file
             self.db_handler.addOutputFileToken(job_id, db_token, file_size)
             self.db_handler.changeJobStatus(job_id, 'otbu')
-            self.logger.info('[+] changed status')
 
             response_content = {'status': 'success',
                                 'db-token': db_token
