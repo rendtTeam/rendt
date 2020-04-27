@@ -55,7 +55,8 @@ class Receiver:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect(server_addr)
 
-        content = {'role': 'leaser',
+        content = { 'authToken': '123',
+                    'role': 'leaser',
                     'request-type': 'get-available-jobs',
                     }
         request = {'type' : 'text/json',
@@ -82,7 +83,8 @@ class Receiver:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect(server_addr)
 
-        content = {'role': 'leaser',
+        content = { 'authToken': '123',
+                    'role': 'leaser',
                     'request-type': 'execute-permission',
                     'job-id': job_id}
         request = {'type' : 'text/json',
@@ -155,7 +157,8 @@ class Receiver:
 
         file_size = os.path.getsize(path_to_file)
 
-        content = {'role': 'leaser',
+        content = { 'authToken': '123',
+                    'role': 'leaser',
                     'request-type': 'output-upload-permission',
                     'job-id': job_id,
                     'file-size': file_size,

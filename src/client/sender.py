@@ -56,7 +56,8 @@ class Sender:
 
         file_size = os.path.getsize(path_to_file)
 
-        content = {'role': 'renter',
+        content = { 'authToken': '123',
+                    'role': 'renter',
                     'request-type': 'submit-permission',
                     'size': file_size,
                     'file-type': 'py'}
@@ -119,8 +120,8 @@ class Sender:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect(server_addr)
         
-
-        content = {'role': 'renter',
+        content = { 'authToken': '123',
+                    'role': 'renter',
                     'request-type': 'output-download-permission',
                     'job-id': job_id}
         request = {'type' : 'text/json',
