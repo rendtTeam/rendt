@@ -4,12 +4,10 @@
 # * introduce a proper token generator; tokens must depend on user_id,
 #   (e.g. hash(user_id)_randint) so that server can verify ownership
 
-# TODO migrate upload/download functions (not permissions) to storage.py
-
 import socket
-import sys
-import os
+import sys, os
 import logging
+import string
 import random
 import datetime
 import threading
@@ -44,8 +42,8 @@ class Server:
                 Thread(target=self.serve_client, args=(conn, addr)).start()
             except:
                 self.refuse_client(conn, addr)
-                self.logger.error(f'Couldn\'t create thread. Refused client at {addr[0]}')
-                
+                self.logger.error(f'Couldn\'t create thread. Refused client at {uid}')
+
     def configure_logging(self):
         logger = logging.getLogger('Server.logger')
         logger.setLevel(logging.INFO)
@@ -68,11 +66,6 @@ class Server:
         logger.info('begin log')
         return logger
 
-    def isTokenValid(self, authToken):
-        #TODO
-        #check db for validity
-        return True
-
     def serve_client(self, conn, addr):
         self.logger.info(f'Thread {threading.get_ident()} initialized to server request from {addr}')
         req_pipe = Messaging(conn, addr)
@@ -81,26 +74,93 @@ class Server:
         if not req_pipe.jsonheader or not req_pipe.request:
             self.logger.warning(f'invalid request from {addr}.')
         else:
-            self.authHandler = Authentication()
+            # self.authHandler = Authentication()
             if req_pipe.request.get('request-type') == 'sign-in':
+                self.sign_in_user(req_pipe, conn, addr)
                 # TODO check db generate token and send
-                self.signInAuthToken = self.authHandler.createAuthToken()
+                # self.signInAuthToken = self.authHandler.createAuthToken()
             elif req_pipe.request.get('request-type') == 'sign-up':
+                print('sign up request')
+                self.register_user(req_pipe, conn, addr)
                 # TODO check db add to db do sth
-                self.signInAuthToken = self.authHandler.createAuthToken()
+                # self.signInAuthToken = self.authHandler.createAuthToken()
             else:
                 if 'authToken' not in req_pipe.request or 'role' not in req_pipe.request or 'request-type' not in req_pipe.request:
                     self.logger.warning(f'invalid request from {addr}.')
+                    response_content = {'status': 'error: invalid request. check that you have authToken, role and request-type in the request',
+                                    }
+                    req_pipe.write(response_content, 'text/json')
                 else:
-                    if (self.isTokenValid(req_pipe.request.get('authToken'))):
+                    authToken = int(req_pipe.request.get('authToken'))
+                    if (self.db_handler.checkAuthToken(authToken)):
+                        uid = self.db_handler.getUserIdFromAuthToken(authToken)
                         if req_pipe.request.get('role') == 'renter':
-                            self.serve_renter_request(req_pipe, conn, addr)
+                            self.serve_renter_request(req_pipe, conn, addr, uid)
                         elif req_pipe.request.get('role') == 'leaser':
-                            self.serve_leaser_request(req_pipe, conn, addr)
+                            self.serve_leaser_request(req_pipe, conn, addr, uid)
                     else:
                         # log error, send error msg
                         self.logger.warning(f'invalid request from {addr}: no/invalid credentials')
     
+    def register_user(self, req_pipe, conn, addr):
+        request = req_pipe.request
+        if 'email' not in request or 'password' not in request or 'user-type' not in request or 'machine-chars' not in request:
+            self.logger.warning(f'could not sign up: missing field(s) in a sign up request from {addr}.')
+            response_content = {'status': 'error',
+                                'error-msg': 'could not sign up: some field(s) missing'
+                                    }
+            req_pipe.write(response_content, 'text/json')
+        else:
+            email, pswd, usr_type, chars = request['email'], request['password'], request['user-type'], request['machine-chars']
+            print('+', email, pswd, usr_type, chars)
+            if self.db_handler.checkEmailAvailability(email):
+                user_id = self.generate_user_id()
+                self.db_handler.registerUser(user_id, email, pswd, usr_type, chars)
+                authToken = self.generate_auth_token()
+                self.db_handler.addAuthToken(user_id, authToken)
+                
+                self.logger.info(f'successfully registered user {user_id}')
+                response_content = {'status': 'success',
+                                    'user-id': user_id, 
+                                    'authToken': authToken,
+                                    'user-type': usr_type
+                                        }
+                req_pipe.write(response_content, 'text/json')
+            else:
+                self.logger.warning('could not sign up: email already in use')
+                response_content = {'status': 'error',
+                                    'error-msg': 'could not sign up: email already in use'
+                                        }
+                req_pipe.write(response_content, 'text/json')
+        
+    def sign_in_user(self, req_pipe, conn, addr):
+        request = req_pipe.request
+        if 'email' not in request or 'password' not in request:
+            self.logger.warning(f'could not sign in: missing field(s) in the request from {addr}.')
+            response_content = {'status': 'error',
+                                'error-msg': 'could not sign in: some field(s) missing'
+                                    }
+            req_pipe.write(response_content, 'text/json')
+        else:
+            email, pswd = request['email'], request['password']
+            if self.db_handler.checkLoginCredentials(email, pswd):
+                user_id, user_type = self.db_handler.getUserIdAndType(email)
+                authToken = self.generate_auth_token()
+                self.db_handler.addAuthToken(user_id, authToken)
+
+                self.logger.info(f'successful sign in. uid: {user_id}')
+                response_content = {'status': 'success',
+                                    'authToken': authToken,
+                                    'user-type': user_type
+                                        }
+                req_pipe.write(response_content, 'text/json')
+            else:
+                self.logger.warning(f'could not sign in: bad credentials from {addr}.')
+                response_content = {'status': 'error',
+                                    'error-msg': 'bad credentials'
+                                        }
+                req_pipe.write(response_content, 'text/json')
+
     def refuse_client(self, conn, addr):
         req_pipe = Messaging(conn, addr)
         req_pipe.read()
@@ -108,10 +168,10 @@ class Server:
                                     }
         req_pipe.write(response_content, 'text/json')
 
-    def serve_renter_request(self, req_pipe, conn, addr):
+    def serve_renter_request(self, req_pipe, conn, addr, uid):
         header, request_content = req_pipe.jsonheader, req_pipe.request
         if request_content['request-type'] == 'submit-permission':
-            self.logger.info(f'connection: renter from {addr}; request type: submit-permission')
+            self.logger.info(f'connection: renter {uid} from {addr}; request type: submit-permission')
             job_id = self.generate_job_id() # some unique id generator
             db_token = self.generate_db_token()
             job_type = request_content['file-type']
@@ -124,9 +184,9 @@ class Server:
             req_pipe.write(response_content, 'text/json')
 
             # add job to DB
-            self.db_handler.addJob(self.get_user_id(addr[0]), job_id, job_type, files_size, db_token, status='xtbu')
+            self.db_handler.addJob(uid, job_id, job_type, files_size, db_token, status='xtbu')
 
-            self.logger.info(f'issued permission to renter {addr[0]} to submit job {job_id} via token {db_token}')
+            self.logger.info(f'issued permission to renter {uid} to submit job {job_id} via token {db_token}')
         elif request_content['request-type'] == 'output-download-permission':
             self.logger.info(f'connection: renter from {addr}; request type: output-download-permission')
             if 'job-id' not in request_content:
@@ -136,16 +196,13 @@ class Server:
                 return
             
             requested_job_id = request_content['job-id']
-
-            user_submitted_jobs = self.db_handler.getUserJobs(self.get_user_id(addr[0]), status='f')
-
-            self.logger.debug('+ ' + str(user_submitted_jobs))
+            user_submitted_jobs = self.db_handler.getUserJobs(uid, status='f')
 
             if requested_job_id not in user_submitted_jobs:
                 response_content = {'status': 'error: not your job',
                                     }
                 req_pipe.write(response_content, 'text/json')
-                self.logger.warning(f'couldn\'t issue permission to renter {addr[0]} to download output of job {requested_job_id}: job doesn\'t belong to this user')
+                self.logger.warning(f'couldn\'t issue permission to renter {uid} to download output of job {requested_job_id}: job doesn\'t belong to this user')
                 return
 
             finished_jobs = self.db_handler.queryJobs(status='f')
@@ -158,19 +215,19 @@ class Server:
                                     'db-token': requested_token
                                     }
                 req_pipe.write(response_content, 'text/json')
-                self.logger.info(f'issued permission to renter {addr[0]} to download output of job {requested_job_id} via token {requested_token}')
+                self.logger.info(f'issued permission to renter {uid} to download output of job {requested_job_id} via token {requested_token}')
             else:
                 response_content = {'status': f'error: no output files found for this job id {requested_job_id}',
                                     }
                 req_pipe.write(response_content, 'text/json')
-                self.logger.warning(f'couldn\'t issue permission to renter {addr[0]} to download output of job {requested_job_id}: no output files for this job')
+                self.logger.warning(f'couldn\'t issue permission to renter {uid} to download output of job {requested_job_id}: no output files for this job')
         else:
-            self.logger.warning(f'connection: renter from {addr}; request type: invalid')
+            self.logger.warning(f'connection: renter {uid} from {addr}; request type: invalid')
             response_content = {'status': 'error: unable to serve request. unknown request type',
                                 }
             req_pipe.write(response_content, 'text/json')
 
-    def serve_leaser_request(self, req_pipe, conn, addr):
+    def serve_leaser_request(self, req_pipe, conn, addr, uid):
         header, request_content = req_pipe.jsonheader, req_pipe.request
         if request_content['request-type'] == 'get-available-jobs':
             self.logger.info(f'connection: leaser from {addr}; request type: get-available-jobs')
@@ -205,12 +262,12 @@ class Server:
                 # mark this job as in execution
                 self.db_handler.changeJobStatus(requested_job_id, 'ix')
                 
-                self.logger.info(f'issued permission to leaser {addr[0]} to download executable of job {requested_job_id} via token {requested_token}')
+                self.logger.info(f'issued permission to leaser {uid} to download executable of job {requested_job_id} via token {requested_token}')
             else:
                 response_content = {'status': f'error: no files found for this job id {requested_job_id}',
                                     }
                 req_pipe.write(response_content, 'text/json')
-                self.logger.warning(f'couldn\'t issue permission to leaser {addr[0]} to download executable of job {requested_job_id}: no files for this job')
+                self.logger.warning(f'couldn\'t issue permission to leaser {uid} to download executable of job {requested_job_id}: no files for this job')
         elif request_content['request-type'] == 'output-upload-permission':
             self.logger.info(f'connection: leaser from {addr}; request type: output-upload-permission')
             job_id = request_content['job-id']
@@ -224,7 +281,7 @@ class Server:
             #     response_content = {'status': 'error: not your job',
             #                         }
             #     req_pipe.write(response_content, 'text/json')
-            #     self.logger.warning(f'couldn\'t issue permission to leaser {addr[0]} to upload output of job {job_id}: not their job')
+            #     self.logger.warning(f'couldn\'t issue permission to leaser {checkAuthTokenAvailability]} to upload output of job {job_id}: not their job')
             #     return
             file_size = request_content['file-size']
             db_token = self.generate_db_token()
@@ -238,17 +295,26 @@ class Server:
             req_pipe.write(response_content, 'text/json')
         
             # tie this job id to its corresponding token so that the file can be accessed knowing job id            
-            self.logger.info(f'issued permission to leaser {addr[0]} to upload output of job {job_id} via token {db_token}')
+            self.logger.info(f'issued permission to leaser {uid} to upload output of job {job_id} via token {db_token}')
         else:
             self.logger.warning(f'connection: leaser from {addr}; request type: invalid')
             response_content = {'status': 'error: unable to serve request. unknown request type',
                                 }
             req_pipe.write(response_content, 'text/json')
-    
-    # temporary function to make user id out of host address
-    def get_user_id(self, addr):
-        return int(''.join(addr.split('.'))[-8:])
-        
+     
+    def generate_user_id(self):
+        usrid = int(random.random()*900000)+100000
+        while not self.db_handler.checkUserIdAvailability(usrid):
+            usrid = int(random.random()*900000)+100000
+        return usrid
+
+    def generate_auth_token(self):
+        chars = string.ascii_letters + string.digits	
+        token = ''.join(random.choice(chars) for i in range(13))
+        while not self.db_handler.checkAuthTokenAvailability(token) or not self.db_handler.checkAuthTokenBList(token):
+            token = ''.join(random.choice(chars) for i in range(13))
+        return token
+
     def generate_db_token(self):
         token = int(random.random()*90000)+10000
         while token in self.issued_db_tokens:

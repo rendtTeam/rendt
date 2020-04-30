@@ -160,14 +160,21 @@ class DBHandler(object):
             return rows[0][0]
 
     def addAuthToken(self, user_id, token):
-        query = f'INSERT INTO authentication_token (user_id, auth_token) VALUES ({user_id}, "{token}")'
-        self._executeQuery(query)
+        query = f'INSERT INTO active_auth_tokens (user_id, auth_token) VALUES ({user_id}, "{token}")'
+        self._executeQuery(query)        
 
-    def getAuthToken(self, token):
-        query = f'SELECT auth_token FROM authentication_token WHERE auth_token = {token}'
+    def checkAuthToken(self, token):
+        query = f'SELECT auth_token FROM active_auth_tokens WHERE auth_token = "{token}"'
         self._executeQuery(query)
         rows = self.__cursor.fetchall()
-        return rows
+        return len(rows) == 1
+
+    def getUserIdFromAuthToken(self, token):
+        query = f'SELECT user_id FROM active_auth_tokens WHERE auth_token = "{token}"'
+        self._executeQuery(query)
+        rows = self.__cursor.fetchall()
+        if len(rows) == 1:
+            return rows[0][0]
 
     def getJobFileSize(self, job_id):
         query = f'SELECT file_size FROM exec_file_tokens WHERE job_id = {job_id}'
@@ -183,33 +190,64 @@ class DBHandler(object):
         if len(rows) == 1:
             return rows[0][0]
 
+    def addAuthToken(self, user_id, token):
+        query = f'INSERT INTO active_auth_tokens (user_id, auth_token) VALUES ({user_id}, "{token}")'
+        self._executeQuery(query)
+    
     # Blacklist holds expired aythentication tokens alongside the user id
     def addAuthTokenToBList(self, user_id, token):
-        query = f'INSERT INTO authentication_token_blacklist (user_id, auth_token_blist) VALUES ({user_id}, "{token}")'
+        query = f'INSERT INTO archived_auth_tokens (user_id, auth_token) VALUES ({user_id}, "{token}")'
         self._executeQuery(query)
 
     def getAuthTokenFromBList(self, token):
-        query = f'SELECT auth_token_blist FROM authentication_token_blacklist WHERE auth_token_blist = {token}'
+        query = f'SELECT auth_token FROM archived_auth_tokens WHERE auth_token = "{token}"'
         self._executeQuery(query)
         rows = self.__cursor.fetchall()
         return rows
 
-    def getAuthToken(self, token):
-        query = f'SELECT auth_token FROM authentication_token WHERE auth_token = {token}'
+    def checkAuthTokenAvailability(self, token):
+        query = f'SELECT auth_token FROM active_auth_tokens WHERE auth_token = "{token}"'
         self._executeQuery(query)
         rows = self.__cursor.fetchall()
-        return rows
+        return len(rows) == 0
     
-    # Blacklist holds expired aythentication tokens alongside the user id 
-    def addAuthTokenToBList(self, user_id, token):
-        query = f'INSERT INTO authentication_token_blacklist (user_id, auth_token_blist) VALUES ({user_id}, "{token}")'
-        self._executeQuery(query)
-
-    def getAuthTokenFromBList(self, token):
-        query = f'SELECT auth_token_blist FROM authentication_token_blacklist WHERE auth_token_blist = {token}'
+    def checkAuthTokenBList(self, token):
+        query = f'SELECT auth_token FROM archived_auth_tokens WHERE auth_token = "{token}"'
         self._executeQuery(query)
         rows = self.__cursor.fetchall()
-        return rows
+        return len(rows) == 0
+
+    def registerUser(self, user_id, email, pswd, user_type, chars):
+        query = f'INSERT INTO users (user_id, email_address, user_type, machine_chpasswordsars) VALUES ({user_id}, "{email}", "{user_type}", "{chars}")'
+        self._executeQuery(query)
+
+        query = f'INSERT INTO passwords (email_address, password_key) VALUES ("{email}", "{pswd}")'
+        self._executeQuery(query)
+
+    def checkEmailAvailability(self, email):
+        query = f'SELECT user_id FROM users where email_address="{email}"'
+        self._executeQuery(query)
+        rows = self.__cursor.fetchall()
+        return len(rows) == 0
+
+    def checkUserIdAvailability(self, uid):
+        query = f'SELECT user_id FROM users where user_id={uid}'
+        self._executeQuery(query)
+        rows = self.__cursor.fetchall()
+        return len(rows) == 0
+
+    def checkLoginCredentials(self, email, pswd):
+        query = f'SELECT email_address FROM passwords WHERE email_address="{email}" AND password_key="{pswd}"'
+        self._executeQuery(query)
+        rows = self.__cursor.fetchall()
+        return len(rows) == 1
+
+    def getUserIdAndType(self, email):
+        query = f'SELECT user_id, user_type FROM users WHERE email_address="{email}"'
+        self._executeQuery(query)
+        rows = self.__cursor.fetchall()
+        if len(rows) == 1:
+            return rows[0]
 
     """
     def getSessionHandler(self):

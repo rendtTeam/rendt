@@ -1,53 +1,58 @@
 import socket
+import os, sys
 from client_messaging import Messaging
-import os
-import sys
-import time
 
-server_addr = ('18.220.165.22', 23456)
+server_addr = ('18.220.165.22', 23459)
 storage_addr = ('18.197.19.248', 23456)
+
 class Sender:
-    def __init__(self, email, password):
-        self.usrEmail = email
-        self.usrPass = password
-    
-    def signIn(self,  email, password):
-        global server_addr
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect(server_addr)
+    # def __init__(self, email, password):
+    #     self.usrEmail = email
+    #     # self.usrPass = password
+    #     self.sign_in(self.usrEmail, password)
 
-        content = {'emailAddr': self.usrEmail,
-                    'password': self.usrPass,
-                    'request-type': 'sign-in'}
-        request = {'type' : 'text/json',
-                    'content': content}
-        request_pipe = Messaging(s, server_addr, request)
-        request_pipe.queue_request()
-        request_pipe.write()
-        request_pipe.read()
-        response = request_pipe.response
-        self.authToken = response["authToken"]
+    def __init__(self, authToken):
+        self.authToken = authToken
 
-        s.close()
+    # def sign_in(self, email, password):
+    #     global server_addr
+    #     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    #     s.connect(server_addr)
+
+    #     content = { 'request-type': 'sign-in',
+    #                 'emaill': email,
+    #                 'password': password
+    #                 }
+    #     request = {'type' : 'text/json',
+    #                 'content': content}
+    #     request_pipe = Messaging(s, server_addr, request)
+    #     request_pipe.queue_request()
+    #     request_pipe.write()
+    #     request_pipe.read()
+    #     response = request_pipe.response
+    #     self.authToken = response["authToken"]
+
+    #     s.close()
         
-    def signUp(self,  email, password):
-        global server_addr
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect(server_addr)
+    # def sign_up(self, email, password):
+    #     global server_addr
+    #     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    #     s.connect(server_addr)
 
-        content = {'emailAddr': self.usrEmail,
-                    'password': self.usrPass,
-                    'request-type': 'sign-up'}
-        request = {'type' : 'text/json',
-                    'content': content}
-        request_pipe = Messaging(s, server_addr, request)
-        request_pipe.queue_request()
-        request_pipe.write()
-        request_pipe.read()
-        response = request_pipe.response
-        self.authToken = response["authToken"]
+    #     content = { 'request-type': 'sign-up',
+    #                 'email': email,
+    #                 'password': password,
+    #                 }
+    #     request = {'type' : 'text/json',
+    #                 'content': content}
+    #     request_pipe = Messaging(s, server_addr, request)
+    #     request_pipe.queue_request()
+    #     request_pipe.write()
+    #     request_pipe.read()
+    #     response = request_pipe.response
+    #     self.authToken = response["authToken"]
 
-        s.close()
+    #     s.close()
 
     def get_permission_to_submit_task(self, path_to_file):
         global server_addr
@@ -56,7 +61,7 @@ class Sender:
 
         file_size = os.path.getsize(path_to_file)
 
-        content = { 'authToken': '123',
+        content = { 'authToken': self.authToken,
                     'role': 'renter',
                     'request-type': 'submit-permission',
                     'size': file_size,
@@ -120,7 +125,7 @@ class Sender:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect(server_addr)
         
-        content = { 'authToken': '123',
+        content = { 'authToken': self.authToken,
                     'role': 'renter',
                     'request-type': 'output-download-permission',
                     'job-id': job_id}

@@ -8,6 +8,7 @@ from PyQt5.QtWidgets import QScrollArea, QPushButton, QLabel, QWidget, QVBoxLayo
 
 from sender import Sender
 from receiver import Receiver
+from authHandler import Auth
 
 
 class TaskFinishedWindow(QWidget):
@@ -323,14 +324,13 @@ class HardwareInfoWindow(QWidget):
 
 
 class ReceiverWindow(QWidget):
-    def __init__(self, parent):
+    def __init__(self, parent, authToken):
         super().__init__()
         self.container = parent
+        self.authToken = authToken
         self.started = False
-        #TODO
-        self.usrEmail = "recabc@email.test"
-        self.usrPass = "recabc"
-        self.receiver = Receiver(self.usrEmail, self.usrPass)
+
+        self.receiver = Receiver(self.authToken)
 
     def startWindow(self):
         self.started = True
@@ -878,9 +878,10 @@ class DownloadWindow(QWidget):
 
 
 class SenderWindow(QWidget):
-    def __init__(self, parent):
+    def __init__(self, parent, authToken):
         super().__init__()
         self.container = parent
+        self.authToken = authToken
         self.started = False
 
     def startWindow(self):
@@ -1093,12 +1094,12 @@ class SenderWindow(QWidget):
 
         self.setLayout(self.layout)
 
-        #TODO
-        #get email password from user
-        self.usrEmail = "senabc@email.test"
-        self.usrPass = "senabc"
+        # #TODO
+        # #get email password from user
+        # self.usrEmail = "senabc@email.test"
+        # self.usrPass = "senabc"
 
-        self.sender = Sender(self.usrEmail, self.usrPass)
+        self.sender = Sender(self.authToken)
         self.selectDefaultFont('Century Gothic')
 
     def startDownloadWindow(self):
@@ -1277,7 +1278,7 @@ class LeaserButton(QScrollArea):
 
 
 class RenterLeaserWindow(QWidget):
-    def __init__(self):
+    def __init__(self, authToken, user_type):
         super().__init__()
 
         self.setWindowIcon(QtGui.QIcon(
@@ -1292,8 +1293,8 @@ class RenterLeaserWindow(QWidget):
         self.senderButton = RenterButton(self)
         self.receiverButton = LeaserButton(self)
 
-        self.senderWindow = SenderWindow(self)
-        self.receiverWindow = ReceiverWindow(self)
+        self.senderWindow = SenderWindow(self, authToken)
+        self.receiverWindow = ReceiverWindow(self, authToken)
 
         self.senderWindow.hide()
         self.receiverWindow.hide()
@@ -1465,7 +1466,37 @@ if __name__ == "__main__":
     QtGui.QFontDatabase.addApplicationFont(
         '../../assets/fonts/CenturyGothicBold.ttf')
 
-    window = RenterLeaserWindow()
+    # # TODO replace with login UI
+    authToken, user_type = None, None
+    auth = Auth()
+    while True:
+        cmd = input('Choose action: L for login, R for register: ')
+        if cmd == 'L':
+            email = input('Email: ')
+            email = email.strip()
+            pswd = input('Password: ')
+            psdw = pswd.strip()
+            cred = auth.sign_in(email, pswd)
+            if cred:
+                authToken, user_type = cred
+                break
+        elif cmd == 'R':
+            email = input('Email: ')
+            email = email.strip()
+            pswd = input('Password: ')
+            psdw = pswd.strip()
+            user_type = input('User Type: [L]easer or [R]enter.')
+            while user_type not in ['L', 'R']:
+                user_type = input('Please type L or R')
+            machine_chars = input('Enter some specs about your machine:')
+            cred = auth.sign_up(email, pswd, user_type, machine_chars)
+            if cred:
+                authToken, user_type = cred
+                break
+
+    # authToken, user_type = auth.sign_up('email', 'pswd', 'L', 'machine_chars')
+
+    window = RenterLeaserWindow(authToken, user_type)
     window.show()
 
     sys.exit(app.exec_())
