@@ -2,7 +2,7 @@ import socket
 import os, sys
 from client_messaging import Messaging
 
-server_addr = ('18.220.165.22', 23459)
+server_addr = ('18.220.165.22', 23457)
 storage_addr = ('18.197.19.248', 23456)
 
 class Receiver:

@@ -10,6 +10,143 @@ from sender import Sender
 from receiver import Receiver
 from authHandler import Auth
 
+class LoginWindow(QWidget):
+    def __init__(self):
+        super(LoginWindow, self).__init__()
+        layout = QVBoxLayout()
+
+        self.setStyleSheet('background: rgb(0, 23, 37)')
+        self.setWindowIcon(QtGui.QIcon(
+            '../../assets/img/rendt_new_logo_square.png'))
+        self.setWindowTitle('rendt')
+        self.resize(1000, 600)
+
+        self.rendtSign = QLabel(self)
+        self.rendtSign.setText('rendt')
+        self.rendtSign.setFont(QtGui.QFont('Century Gothic', 100, 1000))
+        self.rendtSign.setStyleSheet('background: transparent;\n'
+                                     'color: white;\n')
+        self.rendtSign.setAlignment(QtCore.Qt.AlignBottom)
+        self.rendtSign.adjustSize()
+
+        self.loginEmail = QtWidgets.QLineEdit(self)
+        self.loginEmail.setFont(QtGui.QFont('Arial', 14))
+        self.loginEmail.setFixedHeight(50)
+        self.loginEmail.setFixedWidth(300)
+        self.loginEmail.setPlaceholderText('email')
+        self.loginEmail.setStyleSheet('background: transparent;\n'
+                                      'border: 1px solid white;\n'
+                                      'color: white;\n'
+                                      'border-radius: 5px;\n'
+                                      'padding: 5px 10px;\n')
+        
+        self.loginPassword = QtWidgets.QLineEdit(self)
+        self.loginPassword.setFont(QtGui.QFont('Arial', 14))
+        self.loginPassword.setFixedHeight(50)
+        self.loginPassword.setFixedWidth(300)
+        self.loginPassword.setPlaceholderText('password')
+        self.loginPassword.setStyleSheet('background: transparent;\n'
+                                      'border: 1px solid white;\n'
+                                      'color: white;\n'
+                                      'border-radius: 5px;\n'
+                                      'padding: 5px 10px;\n')
+        self.loginPassword.setEchoMode(QtWidgets.QLineEdit.Password)
+        # self.loginPassword.setAlignment(QtCore.Qt.AlignHCenter)
+
+        self.loginBtn = QPushButton(self)
+        self.loginBtn.setFont(QtGui.QFont('Arial', 20))
+        self.loginBtn.setStyleSheet('QPushButton {\n'
+                                    '   background: white;\n'
+                                    '   border: 0px solid white;\n'
+                                    '   color: black;\n'
+                                    '   border-radius: 5px;\n'
+                                    '   margin: 10px 0px 0px 0px;\n'
+                                    '}\n'
+                                    'QPushButton:hover {\n'
+                                    '   background: rgba(255, 255, 255, 0.9);\n'
+                                    '}\n'
+                                    'QPushButton:pressed: {\n'
+                                    '   background: rgba(255, 255, 255, 0.8);\n'
+                                    '}\n')
+        self.loginBtn.setText('log in')
+        self.loginBtn.setFixedHeight(70)
+        self.loginBtn.setFixedWidth(170)
+        # self.loginBtn.setAlignment(QtCore.Qt.AlignHCenter)
+        self.loginBtn.clicked.connect(self.login)
+
+        self.registerBtn = QPushButton(self)
+        self.registerBtn.setFont(QtGui.QFont('Arial', 20))
+        self.registerBtn.setStyleSheet('QPushButton {\n'
+                                    '   background: transparent;\n'
+                                    '   border: 1px solid white;\n'
+                                    '   color: white;\n'
+                                    '   border-radius: 5px;\n'
+                                    '}\n'
+                                    'QPushButton:hover {\n'
+                                    '   background: rgba(0, 0, 0, 0.1);\n'
+                                    '}\n'
+                                    'QPushButton:pressed: {\n'
+                                    '   background: rgba(0, 0, 0, 0.3);\n'
+                                    '}\n')
+        self.registerBtn.setText('register')
+        self.registerBtn.setFixedHeight(60)
+        self.registerBtn.setFixedWidth(170)
+        # self.registerBtn.setAlignment(QtCore.Qt.AlignHCenter)
+        self.registerBtn.clicked.connect(self.register)
+
+        self.layout = layout
+        self.layout.addWidget(self.rendtSign, alignment = QtCore.Qt.AlignHCenter)
+        self.layout.addWidget(self.loginEmail, alignment = QtCore.Qt.AlignHCenter)
+        self.layout.addWidget(self.loginPassword, alignment = QtCore.Qt.AlignHCenter)
+        self.layout.addWidget(self.loginBtn, alignment = QtCore.Qt.AlignHCenter)
+        self.layout.addWidget(self.registerBtn, alignment = QtCore.Qt.AlignHCenter)
+        self.layout.setAlignment(QtCore.Qt.AlignCenter)
+        self.setLayout(self.layout)
+    
+    def login(self):
+        authToken, user_type = None, None
+        auth = Auth()
+
+        email = self.loginEmail.text()
+        email = email.strip()
+
+        pswd = self.loginPassword.text()
+        pswd = pswd.strip()
+
+        cred = auth.sign_in(email, pswd)
+
+        if cred:
+            authToken, user_type = cred
+            self.renterLeaserWindow = RenterLeaserWindow(authToken, user_type)
+            self.layout.addWidget(self.renterLeaserWindow)
+            self.renterLeaserWindow.show()
+            self.rendtSign.hide()
+            self.loginEmail.hide()
+            self.loginPassword.hide()
+            self.loginBtn.hide()
+            self.registerBtn.hide()
+    
+    def register(self):
+        authToken, user_type = None, None
+        auth = Auth()
+
+        email = self.loginEmail.text()
+        email = email.strip()
+
+        pswd = self.loginPassword.text()
+        pswd = pswd.strip()   
+
+        cred = auth.sign_up(email, pswd, 'R', '')     
+        if cred:
+            authToken, user_type = cred
+            self.renterLeaserWindow = RenterLeaserWindow(authToken, user_type)
+            self.layout.addWidget(self.renterLeaserWindow)
+            self.renterLeaserWindow.show()
+            self.rendtSign.hide()
+            self.loginEmail.hide()
+            self.loginPassword.hide()
+            self.loginBtn.hide()
+            self.registerBtn.hide()
 
 class TaskFinishedWindow(QWidget):
     def __init__(self, parent):
@@ -1467,36 +1604,36 @@ if __name__ == "__main__":
         '../../assets/fonts/CenturyGothicBold.ttf')
 
     # # TODO replace with login UI
-    authToken, user_type = None, None
-    auth = Auth()
-    while True:
-        cmd = input('Choose action: L for login, R for register: ')
-        if cmd == 'L':
-            email = input('Email: ')
-            email = email.strip()
-            pswd = input('Password: ')
-            psdw = pswd.strip()
-            cred = auth.sign_in(email, pswd)
-            if cred:
-                authToken, user_type = cred
-                break
-        elif cmd == 'R':
-            email = input('Email: ')
-            email = email.strip()
-            pswd = input('Password: ')
-            psdw = pswd.strip()
-            user_type = input('User Type: [L]easer or [R]enter.')
-            while user_type not in ['L', 'R']:
-                user_type = input('Please type L or R')
-            machine_chars = input('Enter some specs about your machine:')
-            cred = auth.sign_up(email, pswd, user_type, machine_chars)
-            if cred:
-                authToken, user_type = cred
-                break
+    # authToken, user_type = None, None
+    # auth = Auth()
+    # while True:
+    #     cmd = input('Choose action: L for login, R for register: ')
+    #     if cmd == 'L':
+    #         email = input('Email: ')
+    #         email = email.strip()
+    #         pswd = input('Password: ')
+    #         psdw = pswd.strip()
+    #         cred = auth.sign_in(email, pswd)
+    #         if cred:
+    #             authToken, user_type = cred
+    #             break
+    #     elif cmd == 'R':
+    #         email = input('Email: ')
+    #         email = email.strip()
+    #         pswd = input('Password: ')
+    #         psdw = pswd.strip()
+    #         user_type = input('User Type: [L]easer or [R]enter.')
+    #         while user_type not in ['L', 'R']:
+    #             user_type = input('Please type L or R')
+    #         machine_chars = input('Enter some specs about your machine:')
+    #         cred = auth.sign_up(email, pswd, user_type, machine_chars)
+    #         if cred:
+    #             authToken, user_type = cred
+    #             break
 
     # authToken, user_type = auth.sign_up('email', 'pswd', 'L', 'machine_chars')
 
-    window = RenterLeaserWindow(authToken, user_type)
+    window = LoginWindow()
     window.show()
 
     sys.exit(app.exec_())

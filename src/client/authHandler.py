@@ -1,7 +1,7 @@
 import socket
 from client_messaging import Messaging
 
-server_addr = ('18.220.165.22', 23459)
+server_addr = ('18.220.165.22', 23457)
 
 class Auth:
 
