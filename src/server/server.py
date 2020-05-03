@@ -7,7 +7,6 @@
 import socket
 import sys, os
 import logging
-import string
 import random
 import datetime
 import threading
@@ -24,6 +23,7 @@ class Server:
         self.s.bind(('', port))          # Bind to the port
 
         self.db_handler = DBHandler()
+        self.auth = Authentication()
         self.logger = self.configure_logging()
 
     def run(self):
@@ -102,25 +102,22 @@ class Server:
             req_pipe.write(response_content, 'text/json')
         else:
             email, pswd, usr_type, chars = request['email'], request['password'], request['user-type'], request['machine-chars']
-            if self.db_handler.checkEmailAvailability(email):
-                user_id = self.generate_user_id()
-                self.db_handler.registerUser(user_id, email, pswd, usr_type, chars)
-                authToken = self.generate_auth_token()
-                self.db_handler.addAuthToken(user_id, authToken)
-                
-                self.logger.info(f'successfully registered user {user_id}')
-                response_content = {'status': 'success',
-                                    'user-id': user_id, 
-                                    'authToken': authToken,
-                                    'user-type': usr_type
-                                        }
-                req_pipe.write(response_content, 'text/json')
-            else:
+            res = self.auth.register_user(email, pswd)
+            if res == 1:
                 self.logger.warning('could not sign up: email already in use')
                 response_content = {'status': 'error',
                                     'error-msg': 'could not sign up: email already in use'
                                         }
                 req_pipe.write(response_content, 'text/json')
+            else:       
+                user_id, authToken = res         
+                self.logger.info(f'successfully registered user {user_id}')
+                response_content = {'status': 'success',
+                                    'user-id': user_id, 
+                                    'authToken': authToken,
+                                    # 'user-type': usr_type
+                                        }
+                req_pipe.write(response_content, 'text/json')                
         
     def sign_in_user(self, req_pipe, conn, addr):
         request = req_pipe.request
@@ -132,23 +129,22 @@ class Server:
             req_pipe.write(response_content, 'text/json')
         else:
             email, pswd = request['email'], request['password']
-            if self.db_handler.checkLoginCredentials(email, pswd):
-                user_id, user_type = self.db_handler.getUserIdAndType(email)
-                authToken = self.generate_auth_token()
-                self.db_handler.addAuthToken(user_id, authToken)
-
-                self.logger.info(f'successful sign in. uid: {user_id}')
-                response_content = {'status': 'success',
-                                    'authToken': authToken,
-                                    'user-type': user_type
-                                        }
-                req_pipe.write(response_content, 'text/json')
-            else:
+            authToken = self.auth.sign_in_user(email, pswd)
+            if authToken == 1:
                 self.logger.warning(f'could not sign in: bad credentials from {addr}.')
                 response_content = {'status': 'error',
                                     'error-msg': 'bad credentials'
                                         }
                 req_pipe.write(response_content, 'text/json')
+            else:
+                user_id, user_type = self.db_handler.getUserIdAndType(email)
+                self.db_handler.addAuthToken(user_id, authToken)
+                self.logger.info(f'successful sign in. uid: {user_id}')
+                response_content = {'status': 'success',
+                                    'authToken': authToken,
+                                    'user-type': user_type
+                                        }
+                req_pipe.write(response_content, 'text/json')                
 
     def refuse_client(self, conn, addr):
         req_pipe = Messaging(conn, addr)
@@ -299,19 +295,6 @@ class Server:
                                 }
             req_pipe.write(response_content, 'text/json')
      
-    def generate_user_id(self):
-        usrid = int(random.random()*900000)+100000
-        while not self.db_handler.checkUserIdAvailability(usrid):
-            usrid = int(random.random()*900000)+100000
-        return usrid
-
-    def generate_auth_token(self):
-        chars = string.ascii_letters + string.digits	
-        token = ''.join(random.choice(chars) for i in range(13))
-        while not self.db_handler.checkAuthTokenAvailability(token) or not self.db_handler.checkAuthTokenBList(token):
-            token = ''.join(random.choice(chars) for i in range(13))
-        return token
-
     def generate_db_token(self):
         token = int(random.random()*90000)+10000
         while not self.db_handler.checkDBTokenAvailability(token):

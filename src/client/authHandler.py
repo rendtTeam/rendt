@@ -28,7 +28,7 @@ class Auth:
         else:
             return response['authToken'], response['user-type']
         
-    def sign_up(self, email, password, user_type, machine_chars):
+    def sign_up(self, email, password, user_type='U', machine_chars=' '):
         global server_addr
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect(server_addr)
@@ -50,4 +50,4 @@ class Auth:
         if response['status'] == 'error':
             print('ERROR:', response['error-msg'])
         else:
-            return response['authToken'], response['user-type']
+            return response['authToken'], user_type

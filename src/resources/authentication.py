@@ -1,107 +1,61 @@
+import os
+import hashlib
+import binascii
+import string
 import random
 from dbHandler import DBHandler
-from Crypto import Random
-from Crypto.PublicKey import RSA
-import hashlib
-import jwt
-"""
-Incase of getting an error of: NotImplementedError: Algorithm 'RS256' could not be found. 
-Check either you have cryptography installed, if not:
-try: pip install cryptography
-"""
 
 class Authentication(object):
     def __init__(self):
-        self.__dbSession = DBHandler()
+        self.HASH_ITERATIONS = 100000
+        self.HASH_ALGO = 'sha512'
 
-    def createAuthToken(self):
-        #generate random token from os.random
-        self.__authToken = random.randrange(1000000000, 10000000000000000000)
-        self.__rowsAuthToken = self.__checkAuthToken(self.__authToken)
-        self.__rowsAuthTokenBList = self.__checkAuthTokenBList(self.__authToken)
-        while len(self.__rowsAuthToken) != 0 or len(self.__rowsAuthTokenBList) != 0:
-            self.__authToken = random.randrange(1000000000, 10000000000000000000)
-            self.__rowsAuthToken = self.__checkAuthToken(self.__authToken)
-            self.__rowsAuthTokenBList = self.__checkAuthTokenBList(self.__authToken)
-
-        return self.__authToken
-
-    def __checkAuthToken(self, token):
-        self.__rows = self.__dbSession.getAuthToken(token)
-        return self.__rows
+        self.db_handler = DBHandler()
     
-    def __checkAuthTokenBList(self, token):
-        self.__rows = self.__dbSession.getAuthTokenFromBList(token)
-        return self.__rows
+    def register_user(self, email, password):
+        if self.db_handler.checkEmailAvailability(email):
+            user_id = self.generate_user_id()
+            pswd = self.__hash_password(password)
+            self.db_handler.registerUser(user_id, email, pswd)
+            authToken = self.generate_auth_token()
+            self.db_handler.addAuthToken(user_id, authToken)
+            return (user_id, authToken)
+        else:
+            return 1
+
+    def sign_in_user(self, email, password):
+        stored_password = self.db_handler.getStoredPasswordHash(email)
+        if self.__verify_password(stored_password, password):
+            authToken = self.generate_auth_token()
+            return authToken
+        else:
+            return 1
+
+    def __hash_password(self, password):
+        salt = hashlib.sha256(os.urandom(60)).hexdigest().encode('ascii')
+        pwdhash = hashlib.pbkdf2_hmac(self.HASH_ALGO, password.encode('utf-8'), salt, self.HASH_ITERATIONS)
+        pwdhash = binascii.hexlify(pwdhash)
+        return (salt + pwdhash).decode('ascii')
     
-    # Returns keys in PEM format
-    def generateSecurityKey(self):
-        self.__randomGenerator = Random.new().read
-        self.__RSAKey = RSA.generate(1024, self.__randomGenerator)
-        self.__privateKey = self.__RSAKey.exportKey()
-        self.__publicKey = self.__RSAKey.publickey().exportKey()
-        return self.__privateKey, self.__publicKey
-
-    def hashPublicKey(self, publicKey):
-        self.__hashObject = hashlib.sha256(publicKey)
-        self.__hexDigest = self.__hashObject.hexdigest()
-        return self.__hexDigest
+    def __verify_password(self, stored_password, provided_password):
+        salt = stored_password[:64]
+        stored_password = stored_password[64:]
+        pwdhash = hashlib.pbkdf2_hmac(self.HASH_ALGO, 
+                                    provided_password.encode('utf-8'), 
+                                    salt.encode('ascii'), 
+                                    self.HASH_ITERATIONS)
+        pwdhash = binascii.hexlify(pwdhash).decode('ascii')
+        return pwdhash == stored_password
     
-    def convertToRSAkey(self, publicKey):
-        self.__serverPublicKey = RSA.importKey(publicKey)
-        return self.__serverPublicKey
-
-    def encodeUsingJWTDefault(self, payload, secretKey):
-        self.__encoded = jwt.encode(payload, secretKey, algorithm = 'HS256')
-        return self.__encoded
+    def generate_user_id(self):
+        usrid = int(random.random()*900000)+100000
+        while not self.db_handler.checkUserIdAvailability(usrid):
+            usrid = int(random.random()*900000)+100000
+        return usrid
     
-    def decodeUsingJWTDefault(self, encoded, secretKey):
-        self.__decoded = jwt.decode(encoded, secretKey, algorithm = 'HS256')
-        return self.__decoded
-    
-    def encodeUsingRSAKeys(self, payload, secretKey):
-        self.__encoded = jwt.encode(payload, secretKey, algorithm = 'RS256')
-        return self.__encoded
-    
-    def decodeUsingRSAKeys(self, encoded, secretKey):
-        self.__decoded = jwt.decode(encoded, secretKey, algorithm = 'RS256')
-        return self.__decoded
-    
-
-    
-
-
-
-
-x = Authentication()
-# y = x.createAuthToken()
-# print(y)
-
-"""Checking RSA keys"""
-privateKey, publicKey = x.generateSecurityKey()
-# print(type(publicKey))
-# print (privateKey)
-# print (publicKey)
-# print (x.convertToRSAkey(privateKey))
-# print (x.convertToRSAkey(publicKey))
-# print (x.hashPublicKey(publicKey))
-
-"""Checking jwt default enc/dec"""
-# payload = {"auth": "my message to be encoded and decoded"}
-# enc = x.encodeUsingJWTDefault(payload, "alma")
-# print(enc)
-# dec = x.decodeUsingJWTDefault(enc, "alma")
-# print(dec)
-
-"""Checking jwt RSA enc/dec"""
-payload2 = {"auth": "my message to be encoded and decoded"}
-# rsaenc = x.encodeUsingRSAKeys(payload2, publicKey)
-# # print(rsaenc)
-# pKey = {"pkey":publicKey.decode("utf-8")}
-# enPubKey = x.encodeUsingJWTDefault(pKey, "a")
-# dePubKey = x.decodeUsingJWTDefault(enPubKey, "a")
-# print (dePubKey["pkey"])
-# rsadec = x.decodeUsingRSAKeys(rsaenc, publicKey)
-# print(rsadec)
-
-# print("priv: {} , pub: {}".format(privateKey,publicKey))
+    def generate_auth_token(self):
+        chars = string.ascii_letters + string.digits	
+        token = ''.join(random.choice(chars) for i in range(13))
+        while not self.db_handler.checkAuthTokenAvailability(token) or not self.db_handler.checkAuthTokenBList(token):
+            token = ''.join(random.choice(chars) for i in range(13))
+        return token

@@ -217,11 +217,11 @@ class DBHandler(object):
         rows = self.__cursor.fetchall()
         return len(rows) == 0
 
-    def registerUser(self, user_id, email, pswd, user_type, chars):
+    def registerUser(self, user_id, email, pswd, user_type='U', chars=' '):
         query = f'INSERT INTO users (user_id, email_address, user_type, machine_chpasswordsars) VALUES ({user_id}, "{email}", "{user_type}", "{chars}")'
         self._executeQuery(query)
 
-        query = f'INSERT INTO passwords (email_address, password_key) VALUES ("{email}", "{pswd}")'
+        query = f'INSERT INTO passwords (email_address, password_hash) VALUES ("{email}", "{pswd}")'
         self._executeQuery(query)
 
     def checkEmailAvailability(self, email):
@@ -253,11 +253,12 @@ class DBHandler(object):
 
         return len(rows_exec) + len(rows_out) == 0
 
-    def checkLoginCredentials(self, email, pswd):
-        query = f'SELECT email_address FROM passwords WHERE email_address="{email}" AND password_key="{pswd}"'
+    def getStoredPasswordHash(self, email):
+        query = f'SELECT password_hash FROM passwords WHERE email_address="{email}"'
         self._executeQuery(query)
         rows = self.__cursor.fetchall()
-        return len(rows) == 1
+        if len(rows) == 1:
+            return rows[0][0]
 
     def getUserIdAndType(self, email):
         query = f'SELECT user_id, user_type FROM users WHERE email_address="{email}"'

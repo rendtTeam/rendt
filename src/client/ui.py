@@ -136,7 +136,7 @@ class LoginWindow(QWidget):
         pswd = self.loginPassword.text()
         pswd = pswd.strip()   
 
-        cred = auth.sign_up(email, pswd, 'R', '')     
+        cred = auth.sign_up(email, pswd)     
         if cred:
             authToken, user_type = cred
             self.renterLeaserWindow = RenterLeaserWindow(authToken, user_type)
