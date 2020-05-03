@@ -236,6 +236,23 @@ class DBHandler(object):
         rows = self.__cursor.fetchall()
         return len(rows) == 0
 
+    def checkJobIdAvailability(self, jid):
+        query = f'SELECT job_id FROM jobs where job_id={jid}'
+        self._executeQuery(query)
+        rows = self.__cursor.fetchall()
+        return len(rows) == 0
+
+    def checkDBTokenAvailability(self, token):
+        query = f'SELECT job_id FROM exec_file_tokens where db_token="{token}"'
+        self._executeQuery(query)
+        rows_exec = self.__cursor.fetchall()
+
+        query = f'SELECT job_id FROM output_file_tokens where db_token="{token}"'
+        self._executeQuery(query)
+        rows_out = self.__cursor.fetchall()
+
+        return len(rows_exec) + len(rows_out) == 0
+
     def checkLoginCredentials(self, email, pswd):
         query = f'SELECT email_address FROM passwords WHERE email_address="{email}" AND password_key="{pswd}"'
         self._executeQuery(query)
