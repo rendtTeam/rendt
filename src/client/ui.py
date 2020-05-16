@@ -547,13 +547,13 @@ class ReceiverWindow(QWidget):
         job_id = self.sender().jobId
 
         # Getting permission for execution
-        db_token, size = self.receiver.get_permission_to_execute_task(job_id)
+        db_token, files_size, script_size = self.receiver.get_permission_to_execute_task(job_id)
 
         # Downloading file to be executed
-        self.receiver.download_file_from_db('sender_job.py', db_token, size)
+        self.receiver.download_file_from_db(['files.zip', 'commands.txt'], db_token, files_size, script_size)
 
         # Executing downloaded file
-        self.receiver.execute_job('sender_job.py', f'sender_output.txt')
+        self.receiver.execute_job('files.zip', f'sender_output.txt')
 
         # Getting permission to upload output from execution
         out_db_token = self.receiver.get_permission_to_upload_output(
@@ -1258,8 +1258,8 @@ class SenderWindow(QWidget):
 
         self.scroll.uploadFiles()
         job_id, db_token = self.sender.get_permission_to_submit_task(
-            filelist[0])
-        self.sender.upload_file_to_db(filelist[0], job_id, db_token)
+            filelist[:2])
+        self.sender.upload_file_to_db(filelist[:2], job_id, db_token)
 
         self.loadingWindow.hide()
         self.downloadWindow.hide()

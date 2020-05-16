@@ -61,9 +61,9 @@ class Receiver:
 
         if response['status'] == 'success':
             print('received db token')
-            return response['db-token'], response['file-size']
+            return response['db-token'], response['file-size'], response['script-size']
 
-    def download_file_from_db(self, path_to_file, db_token, file_size):
+    def download_file_from_db(self, path_to_files, db_token, file_size, script_size):
         global storage_addr
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect(storage_addr)
@@ -81,24 +81,11 @@ class Receiver:
         req_pipe.write()
 
         # receive exec file
-        f = open(path_to_file, "wb")
-        data = None
-        while True:
-            received = 0
-            chunk = min(1024, file_size-received)
-            m = s.recv(chunk)
-            data = m
-            received += chunk
-            while received < file_size:
-                m = s.recv(chunk)
-                data += m
-                received += chunk
-            break
-        f.write(data)
-        f.close()
+        self.receive_file(s, path_to_files[0], file_size)
+        self.receive_file(s, path_to_files[1], script_size)
 
         req_pipe.read()
-        response_header = req_pipe.jsonheader
+        # response_header = req_pipe.jsonheader
         response = req_pipe.response
 
         print("- receiving execution file status:", response['status'])
@@ -160,20 +147,39 @@ class Receiver:
         req_pipe.queue_request()
         req_pipe.write()
 
-        # send exec file
-        f = open(path_to_file,'rb')
-        l = f.read(1024)
-        while (l):
-            s.send(l)
-            l = f.read(1024)
-        f.close()
-        print ('Done Sending')
+        # send output file
+        self.send_file(s, path_to_file)
         s.shutdown(socket.SHUT_WR)
 
         req_pipe.read()
-        response_header = req_pipe.jsonheader
+        # response_header = req_pipe.jsonheader
         response = req_pipe.response
 
         print('- uploading output file status:', response['status'])
 
         s.close()
+
+    def send_file(self, conn, path_to_file):
+        f = open(path_to_file,'rb')
+        l = f.read(1024)
+        while (l):
+            conn.send(l)
+            l = f.read(1024)
+        f.close()
+        print ('Done sending file(s)')
+    
+    def receive_file(self, conn, path_to_file, size):
+        f = open(path_to_file, "wb")
+        data = None
+        received = 0
+        while received < size:
+            chunk = min(1024, size-received)
+            m = conn.recv(chunk)
+            if not data:
+                data = m
+            else: 
+                data += m
+            received += chunk
+
+        f.write(data)
+        f.close()
