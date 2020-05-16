@@ -1,57 +1,35 @@
-from tkinter import *
-import os
+import os, sys
+f = open("Dockerfile", "a")
 
-from ui import filelist
+f.write('FROM python\n') 
+f.write('FROM java:8-jdk-alpine\n')
+f.write('FROM ubuntu\n') 
+f.write('RUN apt update && apt install -y zip\n')
+f.write('RUN apt-get -y update && apt-get install -y\n')
+f.write('RUN apt-get -y install clang\n')
+f.write('ADD /files.zip /\n')
+f.write('RUN unzip files.zip && rm files.zip\n')
+f.write('ADD /commands.txt /\n')
 
-def createfilesdir(filelist):
-    workd = "" + os.getcwd() + "/files"
-    home_dir = os.system("mkdir " + workd )
-    for i in filelist:
-        home_dir = os.system("cp /" + i + workd )
+f.close()
 
-def forjava():
-    f = open("Dockerfile", "a")
-    f.write('FROM java:8-jdk-alpine\n')
-    f.write('COPY \n')
-    f.write('WORKDIR /usr/app\n')
-    f.write('ENTRYPOINT ["java", "-jar", ""]\n')
-    f.close()
+home_dir = os.system("docker build -t rendt .")
+home_dir = os.system("docker run -it -d --name rendtcont rendt")
+home_dir = os.system("rm Dockerfile") 
+f = open("commands.txt", "r")
+a = "cd files && "
+for x in f:
+    a = a + x.strip('\n') + ">>sender_output.txt && "
+            
+    a = a[:-3]
+    print(a)
+b = "docker exec -it rendtcont bash -c '" + a + "'"
 
-def forpython(filelist): 
-    createfilesdir(filelist)
-    f = open("Dockerfile", "a")
-    f.write('FROM python\n')
-    f.write('ADD /files /\n')
-    f.write('CMD python '+ os.path.basename(filelist[0]) + '\n') 
+home_dir = os.system(b) 
 
+home_dir = os.system("docker cp rendtcont:/files/sender_output.txt .")
+home_dir = os.system("docker stop rendtcont")
+home_dir = os.system("docker container rm rendtcont")
 
-    f.close()
-
-    home_dir = os.system("docker build -t rendt .")
-    home_dir = os.system("docker run rendt")
-    home_dir = os.system("rm -R files")
-    home_dir = os.system("rm Dockerfile")
-    p = os.popen("docker system prune", "w")
-    p.write("y\n")
-    home_dir = os.system("docker rmi -f rendt")
-    p.write("exit")
-
-def forc():
-    f = open("Dockerfile", "a")
-    f.write('FROM ubuntu:latest\n')
-    f.write('RUN apt-get -y update && apt-get install -y\n')
-    f.write('RUN apt-get -y install clang\n')
-    f.write('COPY . \n')
-    f.write('WORKDIR /usr/src/dockertest1\n')
-    f.write('RUN clang++ -o Test Test.cpp\n')
-    f.write('CMD ["./Test"]\n')
-    f.close()
-
-    home_dir = os.system("docker build -t rendt .")
-    home_dir = os.system("docker run rendt")
-    home_dir = os.system("rm -R files")
-    home_dir = os.system("rm Dockerfile")
-    p = os.popen("docker system prune", "w")
-    p.write("y\n")
-    home_dir = os.system("docker rmi -f rendt")
-    p.write("exit")
+home_dir = os.system("cat sender_output.txt")
+path_to_output = os.getcwd() + "/sender_output.txt"
