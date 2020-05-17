@@ -33,7 +33,7 @@ class Server:
                 Thread(target=self.serve_client, args=(conn, addr)).start()
             except:
                 self.refuse_client(conn, addr)
-                self.logger.error(f'Couldn\'t create thread. Refused client at {uid}')
+                self.logger.error(f'Couldn\'t create thread. Refused client at {addr}')
 
     def configure_logging(self):
         logger = logging.getLogger('Server.logger')

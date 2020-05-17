@@ -183,6 +183,13 @@ class DBHandler(object):
         if len(rows) == 1:
             return rows[0]
 
+    def setJobFileSize(self, job_id, file_size):
+        query = f'UPDATE exec_file_tokens SET file_size = {file_size} WHERE job_id = {job_id}'
+        self._executeQuery(query)
+
+        query = f'UPDATE jobs SET files_size = {file_size} WHERE job_id = {job_id}'
+        self._executeQuery(query)
+
     def getOutputFileSize(self, job_id):
         query = f'SELECT file_size FROM output_file_tokens WHERE job_id = {job_id}'
         self._executeQuery(query)

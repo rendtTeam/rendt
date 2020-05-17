@@ -3,6 +3,8 @@ import sys
 import os
 import logging
 import datetime
+import threading
+from threading import Thread
 from storage_messaging import Messaging
 from dbHandler import DBHandler
 import random
@@ -20,17 +22,15 @@ class Storage:
     def run(self):
         self.s.listen(self.BACKLOG)           # Now wait for client connection.
         self.logger.info('Storage up and running.\n')
+
         while True:
             conn, addr = self.s.accept()
-            req_pipe = Messaging(conn, addr)
-            req_pipe.read()
 
-            if not req_pipe.jsonheader or not req_pipe.request or 'role' not in req_pipe.request or 'request-type' not in req_pipe.request:
-                self.logger.warning(f'invalid request from {addr}.')
-            elif req_pipe.request.get('role') == 'renter':
-                self.serve_renter_request(req_pipe, conn, addr)
-            elif req_pipe.request.get('role') == 'leaser':
-                self.serve_leaser_request(req_pipe, conn, addr)
+            try:
+                Thread(target=self.serve_client, args=(conn, addr)).start()
+            except:
+                self.refuse_client(conn, addr)
+                self.logger.error(f'Couldn\'t create thread. Refused client at {addr}')
     
     def configure_logging(self):
         logger = logging.getLogger('Storage.logger')
@@ -54,6 +54,26 @@ class Storage:
         logger.info('begin log')
         return logger
 
+    def serve_client(self, conn, addr):
+        self.logger.info(f'Thread {threading.get_ident()} initialized to server request from {addr}')
+        req_pipe = Messaging(conn, addr)
+        req_pipe.read()
+
+        if not req_pipe.jsonheader or not req_pipe.request or 'role' not in req_pipe.request or 'request-type' not in req_pipe.request:
+            self.logger.warning(f'invalid request from {addr}.')
+        elif req_pipe.request.get('role') == 'renter':
+            self.serve_renter_request(req_pipe, conn, addr)
+        elif req_pipe.request.get('role') == 'leaser':
+            self.serve_leaser_request(req_pipe, conn, addr)
+    
+    def refuse_client(self, conn, addr):
+        req_pipe = Messaging(conn, addr)
+        req_pipe.read()
+        response_content = {'status': 'error',
+                            'error-msg': 'Storage server busy, can\'t serve at the time.'
+                                    }
+        req_pipe.write(response_content, 'text/json')
+
     def serve_renter_request(self, req_pipe, conn, addr):
         header, request_content = req_pipe.jsonheader, req_pipe.request
         if 'db-token' not in request_content:
@@ -70,11 +90,13 @@ class Storage:
             job_id = self.db_handler.getJobIdFromToken(client_db_token, 'x')
             file_size = request_content['file-size']
             self.recv_file(conn, f'jobs/toexec{job_id}.zip', file_size)
-            # self.recv_file(conn, f'jobs/toexec{job_id}.txt', script_size)
             self.db_handler.changeJobStatus(job_id, 'a')
             self.logger.info(f'successfully received exec files for job {job_id} from renter {addr[0]}')
             response_content = {'status': 'success',}
             req_pipe.write(response_content, 'text/json')
+
+            file_size_new = os.path.getsize(f'jobs/toexec{job_id}.zip')
+            self.db_handler.setJobFileSize(job_id, file_size_new)
             return
         
         elif request_content['request-type'] == 'output-download':

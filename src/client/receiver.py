@@ -199,16 +199,12 @@ class Receiver:
     
     def receive_file(self, conn, path_to_file, size):
         f = open(path_to_file, "wb")
-        data = None
         received = 0
         while received < size:
             chunk = min(1024, size-received)
             m = conn.recv(chunk)
-            if not data:
-                data = m
-            else: 
-                data += m
+            f.write(m)
             received += chunk
 
-        f.write(data)
+        # f.write(data)
         f.close()
