@@ -61,9 +61,9 @@ class Receiver:
 
         if response['status'] == 'success':
             print('received db token')
-            return response['db-token'], response['file-size'], response['script-size']
+            return response['db-token'], response['file-size']
 
-    def download_file_from_db(self, path_to_files, db_token, file_size, script_size):
+    def download_file_from_db(self, path_to_files, db_token, file_size):
         global storage_addr
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect(storage_addr)
@@ -82,7 +82,7 @@ class Receiver:
 
         # receive exec file
         self.receive_file(s, path_to_files[0], file_size)
-        self.receive_file(s, path_to_files[1], script_size)
+        # self.receive_file(s, path_to_files[1], script_size)
 
         req_pipe.read()
         # response_header = req_pipe.jsonheader

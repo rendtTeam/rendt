@@ -68,11 +68,11 @@ class Storage:
         if request_content['request-type'] == 'executable-upload':
             self.logger.info(f'connection: renter from {addr}; request type: executable-upload')
             job_id = self.db_handler.getJobIdFromToken(client_db_token, 'x')
-            files_size, script_size = request_content['files-size'], request_content['script-size']
-            self.recv_file(conn, f'jobs/toexec{job_id}.zip', files_size)
-            self.recv_file(conn, f'jobs/toexec{job_id}.txt', script_size)
+            file_size = request_content['file-size']
+            self.recv_file(conn, f'jobs/toexec{job_id}.zip', file_size)
+            # self.recv_file(conn, f'jobs/toexec{job_id}.txt', script_size)
             self.db_handler.changeJobStatus(job_id, 'a')
-            self.logger.info(f'successfully received exec files and script for job {job_id} from renter {addr[0]}')
+            self.logger.info(f'successfully received exec files for job {job_id} from renter {addr[0]}')
             response_content = {'status': 'success',}
             req_pipe.write(response_content, 'text/json')
             return
@@ -103,10 +103,9 @@ class Storage:
         if request_content['request-type'] == 'executable-download':
             self.logger.info(f'connection: leaser from {addr}; request type: executable-download')
             job_id = self.db_handler.getJobIdFromToken(client_db_token, 'x')
-            requested_file_paths = [f'jobs/toexec{job_id}.zip', f'jobs/toexec{job_id}.txt']
-            if os.path.exists(requested_file_paths[0]) and os.path.exists(requested_file_paths[1]):
-                self.send_file(conn, requested_file_paths[0])
-                self.send_file(conn, requested_file_paths[1])
+            requested_file_path = f'jobs/toexec{job_id}.zip'
+            if os.path.exists(requested_file_path):
+                self.send_file(conn, requested_file_path)
                 self.logger.info(f'successfully sent exec file for job {job_id} to leaser {addr[0]}')
                 response_content = {'status': 'success',}
                 req_pipe.write(response_content, 'text/json')

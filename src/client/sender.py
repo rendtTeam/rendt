@@ -9,18 +9,18 @@ class Sender:
     def __init__(self, authToken):
         self.authToken = authToken
 
-    def get_permission_to_submit_task(self, path_to_files):
+    def get_permission_to_submit_task(self, path_to_file):
         global server_addr
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect(server_addr)
 
-        file_size = os.path.getsize(path_to_files[0])
-        script_size =  os.path.getsize(path_to_files[1])
+        file_size = os.path.getsize(path_to_file)
+        script_size =  0
 
         content = { 'authToken': self.authToken,
                     'role': 'renter',
                     'request-type': 'submit-permission',
-                    'files-size': file_size,
+                    'file-size': file_size,
                     'script-size': script_size,
                     'file-type': 'py'}
         request = {'type' : 'text/json',
@@ -39,18 +39,18 @@ class Sender:
             print('received db token')
             return response['job-id'], response['db-token']
 
-    def upload_file_to_db(self, path_to_files, job_id, db_token):
+    def upload_file_to_db(self, path_to_file, job_id, db_token):
         global storage_addr
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect(storage_addr)
 
-        files_size = os.path.getsize(path_to_files[0])
-        script_size =  os.path.getsize(path_to_files[1])
+        files_size = os.path.getsize(path_to_file)
+        script_size = 0
 
         content = { 'role': 'renter',
                     'request-type': 'executable-upload',
                     'job-id': job_id,
-                    'files-size': files_size,
+                    'file-size': files_size,
                     'script-size': script_size,
                     'db-token': db_token
                     }
@@ -63,8 +63,7 @@ class Sender:
         req_pipe.write()
 
         # send exec file
-        self.send_file(s, path_to_files[0])
-        self.send_file(s, path_to_files[1])
+        self.send_file(s, path_to_file)
 
         s.shutdown(socket.SHUT_WR)
 
@@ -121,25 +120,9 @@ class Sender:
 
         # receive exec file
         self.receive_file(s, path_to_file, file_size)
-        # f = open(path_to_file, "wb")
-        # data = None
-        # while True:
-        #     received = 0
-        #     chunk = min(1024, file_size-received)
-        #     m = s.recv(chunk)
-        #     data = m
-        #     received += chunk
-        #     while received < file_size:
-        #         # break
-        #         m = s.recv(chunk)
-        #         data += m
-        #         received += chunk
-        #     break
-        # f.write(data)
-        # f.close()
 
         req_pipe.read()
-        response_header = req_pipe.jsonheader
+        # response_header = req_pipe.jsonheader
         response = req_pipe.response      
         
         print("- receiving output file status:", response['status'])
