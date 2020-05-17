@@ -105,30 +105,25 @@ class Receiver:
         f.write('ADD /files.zip /\n')
         f.write('RUN unzip files.zip && rm files.zip\n')
         f.write('ADD /commands.txt /\n')
+        f.write('RUN chmod +x run.sh')
 
         f.close()
 
         home_dir = os.system("docker build -t rendt .")
         home_dir = os.system("docker run -it -d --name rendtcont rendt")
         home_dir = os.system("rm Dockerfile") 
-        f = open("commands.txt", "r")
-        a = "cd files && "
 
-        for x in f:
-            a = a + x.strip('\n') + ">>sender_output.txt && "
-            
-        a = a[:-3]
+        a = './run.sh >> sender_output.txt'
         print(a)
         b = "docker exec -it rendtcont bash -c '" + a + "'"
 
         home_dir = os.system(b) 
 
-        home_dir = os.system("docker cp rendtcont:/files/sender_output.txt .")
+        home_dir = os.system("docker cp rendtcont:/sender_output.txt " + path_to_output)
         home_dir = os.system("docker stop rendtcont")
         home_dir = os.system("docker container rm rendtcont")
 
-        home_dir = os.system("cat sender_output.txt")
-        path_to_output = os.getcwd() + "/sender_output.txt"
+        home_dir = os.system("cat " + path_to_output)
 
     def get_permission_to_upload_output(self, job_id, path_to_file):
         global server_addr

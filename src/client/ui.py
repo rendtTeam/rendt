@@ -553,7 +553,7 @@ class ReceiverWindow(QWidget):
         self.receiver.download_file_from_db(['files.zip', 'commands.txt'], db_token, files_size, script_size)
 
         # Executing downloaded file
-        self.receiver.execute_job('files.zip', f'sender_output.txt')
+        self.receiver.execute_job('files.zip', 'sender_output.txt')
 
         # Getting permission to upload output from execution
         out_db_token = self.receiver.get_permission_to_upload_output(
