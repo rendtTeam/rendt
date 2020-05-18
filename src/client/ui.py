@@ -550,7 +550,7 @@ class ReceiverWindow(QWidget):
         db_token, files_size = self.receiver.get_permission_to_execute_task(job_id)
 
         # Downloading file to be executed
-        self.receiver.download_file_from_db(['files.zip', 'commands.txt'], db_token, files_size)
+        self.receiver.download_file_from_db('files.zip', db_token, files_size)
 
         # Executing downloaded file
         self.receiver.execute_job('files.zip', 'sender_output.txt')

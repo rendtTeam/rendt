@@ -159,7 +159,6 @@ class Server:
             db_token = self.generate_db_token()
             job_type = request_content['file-type']
             file_size = request_content['file-size']
-            script_size = request_content['script-size']
 
             response_content = {'status': 'success',
                                 'db-token': db_token,
@@ -168,7 +167,7 @@ class Server:
             req_pipe.write(response_content, 'text/json')
 
             # add job to DB
-            self.db_handler.addJob(uid, job_id, job_type, file_size, script_size, db_token, status='xtbu')
+            self.db_handler.addJob(uid, job_id, job_type, file_size, db_token, status='xtbu')
 
             self.logger.info(f'issued permission to renter {uid} to submit job {job_id} via token {db_token}')
         elif request_content['request-type'] == 'output-download-permission':
@@ -241,10 +240,9 @@ class Server:
             requested_token = self.db_handler.getExecfileToken(requested_job_id)
             
             if requested_token: 
-                file_size, script_size = self.db_handler.getJobFileSize(requested_job_id)
+                file_size = self.db_handler.getJobFileSize(requested_job_id)
                 response_content = {'status': 'success',
                                     'file-size': file_size, 
-                                    'script-size': script_size,
                                     'db-token': requested_token
                                     }
                 req_pipe.write(response_content, 'text/json')

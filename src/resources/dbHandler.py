@@ -105,14 +105,14 @@ class DBHandler(object):
         rows = self.__cursor.fetchall()
         return [row[0] for row in rows]
 
-    def addJob(self, user_id, job_id, job_type, files_size, script_size, token, status='a', comments=''):
+    def addJob(self, user_id, job_id, job_type, files_size, token, status='a', comments=''):
         # add job to list of jobs
-        query = f'INSERT INTO jobs (user_id, job_id, job_type, files_size, job_status, additional_comments, script_size) \
-                VALUES ({user_id}, {job_id}, "{job_type}", {files_size}, "{status}", "{comments}", {script_size})'
+        query = f'INSERT INTO jobs (user_id, job_id, job_type, files_size, job_status, additional_comments) \
+                VALUES ({user_id}, {job_id}, "{job_type}", {files_size}, "{status}", "{comments}")'
         self._executeQuery(query)
 
         # add tokens to renter jobs table
-        query = f'INSERT INTO exec_file_tokens (job_id, db_token, file_size, script_size) VALUES ({job_id}, "{token}", {files_size}, {script_size})'
+        query = f'INSERT INTO exec_file_tokens (job_id, db_token, file_size) VALUES ({job_id}, "{token}", {files_size})'
         self._executeQuery(query)
 
     def getExecfileToken(self, job_id):
@@ -177,11 +177,11 @@ class DBHandler(object):
             return rows[0][0]
 
     def getJobFileSize(self, job_id):
-        query = f'SELECT file_size, script_size FROM exec_file_tokens WHERE job_id = {job_id}'
+        query = f'SELECT file_size FROM exec_file_tokens WHERE job_id = {job_id}'
         self._executeQuery(query)
         rows = self.__cursor.fetchall()
         if len(rows) == 1:
-            return rows[0]
+            return rows[0][0]
 
     def setJobFileSize(self, job_id, file_size):
         query = f'UPDATE exec_file_tokens SET file_size = {file_size} WHERE job_id = {job_id}'

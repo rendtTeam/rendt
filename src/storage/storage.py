@@ -8,6 +8,7 @@ from threading import Thread
 from storage_messaging import Messaging
 from dbHandler import DBHandler
 import random
+import hashlib
 
 class Storage:
     def __init__(self, port):
@@ -94,9 +95,6 @@ class Storage:
             self.logger.info(f'successfully received exec files for job {job_id} from renter {addr[0]}')
             response_content = {'status': 'success',}
             req_pipe.write(response_content, 'text/json')
-
-            file_size_new = os.path.getsize(f'jobs/toexec{job_id}.zip')
-            self.db_handler.setJobFileSize(job_id, file_size_new)
             return
         
         elif request_content['request-type'] == 'output-download':
@@ -106,8 +104,6 @@ class Storage:
             if os.path.exists(requested_file_path):
                 self.send_file(conn, requested_file_path)
                 self.logger.info(f'successfully sent output file for job {job_id} to renter {addr[0]}')
-                response_content = {'status': 'success',}
-                req_pipe.write(response_content, 'text/json')
                 return
             # TODO handle error
 
@@ -129,8 +125,6 @@ class Storage:
             if os.path.exists(requested_file_path):
                 self.send_file(conn, requested_file_path)
                 self.logger.info(f'successfully sent exec file for job {job_id} to leaser {addr[0]}')
-                response_content = {'status': 'success',}
-                req_pipe.write(response_content, 'text/json')
                 return
         
         elif request_content['request-type'] == 'output-upload':
@@ -147,24 +141,29 @@ class Storage:
     def recv_file(self, conn, file_name, size):
         f = open(file_name,'wb')
 
-        received = 0
-        while received < size:
-            chunk = min(1024, size-received)
-            l = conn.recv(chunk)
+        while True:
+            l = conn.recv(1024)
+            if not l:
+                break
             f.write(l)
-            received += chunk
-
         f.close()
 
     def send_file(self, conn, file_name):
-        f = open(file_name, "rb")
-        l = os.path.getsize(file_name)
-        m = f.read(l)
-        conn.send(m)
-        f.close()
-        print('file sent')
-        # conn.shutdown(socket.SHUT_WR)
+        # calculate checksum
+        checksum = hashlib.md5()
+        with open(file_name, "rb") as fl:
+            for chunk in iter(lambda: fl.read(4096), b""):
+                checksum.update(chunk)
+        checksum = checksum.hexdigest()
 
+        # send file with checksum
+        f = open(file_name, "rb")
+        conn.send(checksum.encode('utf-8'))
+        for chunk in iter(lambda: f.read(4096), b""):
+            conn.send(chunk)
+        f.close()
+        
+        conn.shutdown(socket.SHUT_WR)
             
 def main():
     args = sys.argv[1:]

@@ -1,5 +1,6 @@
 import socket
 import os, sys
+import hashlib
 from client_messaging import Messaging
 
 server_addr = ('18.220.165.22', 23457)
@@ -63,7 +64,7 @@ class Receiver:
             print('received db token')
             return response['db-token'], response['file-size']
 
-    def download_file_from_db(self, path_to_files, db_token, file_size):
+    def download_file_from_db(self, path_to_file, db_token, file_size):
         global storage_addr
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect(storage_addr)
@@ -81,15 +82,9 @@ class Receiver:
         req_pipe.write()
 
         # receive exec file
-        self.receive_file(s, path_to_files[0], file_size)
-        # self.receive_file(s, path_to_files[1], script_size)
+        status = self.receive_file(s, path_to_file, file_size)
 
-        req_pipe.read()
-        # response_header = req_pipe.jsonheader
-        response = req_pipe.response
-
-        print("- receiving execution file status:", response['status'])
-        
+        print("- receiving execution file status:", status)
         s.close()
 
     def execute_job(self, path_to_executable, path_to_output):
@@ -104,7 +99,7 @@ class Receiver:
         f.write('RUN apt-get -y install clang\n')
         f.write('ADD /files.zip /\n')
         f.write('RUN unzip files.zip && rm files.zip\n')
-        f.write('ADD /commands.txt /\n')
+        # f.write('ADD /commands.txt /\n')
         f.write('RUN chmod +x run.sh')
 
         f.close()
@@ -198,13 +193,20 @@ class Receiver:
         print ('Done sending file(s)')
     
     def receive_file(self, conn, path_to_file, size):
+        # receive checksum
+        checksum_received = conn.recv(32)
+        # receive file
+        checksum_computed = hashlib.md5()
         f = open(path_to_file, "wb")
-        received = 0
-        while received < size:
-            chunk = min(1024, size-received)
-            m = conn.recv(chunk)
-            f.write(m)
-            received += chunk
-
-        # f.write(data)
+        while True:
+            chunk = conn.recv(4096)
+            if not chunk:
+                break
+            checksum_computed.update(chunk)
+            f.write(chunk)
         f.close()
+        # check for integrity
+        if checksum_computed.hexdigest().encode('utf-8') == checksum_received:
+            return 'success'
+        else:
+            return 'fail'
