@@ -19,7 +19,7 @@ class Messaging:
 
     def _read(self):
         try:
-            data = self.sock.recv(4096)
+            data = self.sock.recv(16384)
         except BlockingIOError:
             # Resource temporarily unavailable (errno EWOULDBLOCK)
             pass

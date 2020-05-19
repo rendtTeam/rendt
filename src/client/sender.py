@@ -47,7 +47,8 @@ class Sender:
     def upload_file_to_db(self, path_to_file, job_id, db_token):
         global storage_addr
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect(storage_addr)
+        ssl_sock = self.ssl_context.wrap_socket(s)
+        ssl_sock.connect(storage_addr)
 
         files_size = os.path.getsize(path_to_file)
 
@@ -61,22 +62,15 @@ class Sender:
                     'content': content
                     }
 
-        req_pipe = Messaging(s, storage_addr, request)
+        req_pipe = Messaging(ssl_sock, storage_addr, request)
         req_pipe.queue_request()
         req_pipe.write()
 
         # send exec file
-        self.send_file(s, path_to_file)
+        self.send_file(ssl_sock, path_to_file)
 
-        s.shutdown(socket.SHUT_WR)
-
-        req_pipe.read()
-        response_header = req_pipe.jsonheader
-        response = req_pipe.response
-
-        print('- server response:', response_header, response['status'])
-
-        s.close()
+        ssl_sock.shutdown(socket.SHUT_RDWR)
+        ssl_sock.close()
 
     def get_permission_to_download_output(self, job_id):
         global server_addr
@@ -109,7 +103,8 @@ class Sender:
     def download_output_from_db(self, path_to_file, db_token, file_size):
         global storage_addr
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect(storage_addr)
+        ssl_sock = self.ssl_context.wrap_socket(s)
+        ssl_sock.connect(storage_addr)
 
         content = { 'role': 'renter',
                     'request-type': 'output-download',
@@ -119,14 +114,16 @@ class Sender:
                     'content': content
                     }
 
-        req_pipe = Messaging(s, storage_addr, request)
+        req_pipe = Messaging(ssl_sock, storage_addr, request)
         req_pipe.queue_request()
         req_pipe.write()
 
         # receive exec file
-        status = self.receive_file(s, path_to_file, file_size)
+        status = self.receive_file(ssl_sock, path_to_file, file_size)
 
         print("- receiving execution file status:", status)
+
+        ssl_sock.close()
         s.close()
 
     def send_file(self, conn, path_to_file):

@@ -75,7 +75,8 @@ class Receiver:
     def download_file_from_db(self, path_to_file, db_token, file_size):
         global storage_addr
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect(storage_addr)
+        ssl_sock = self.ssl_context.wrap_socket(s)
+        ssl_sock.connect(storage_addr)
 
         content = { 'role': 'leaser',
                     'request-type': 'executable-download',
@@ -85,14 +86,16 @@ class Receiver:
                     'content': content
                     }
 
-        req_pipe = Messaging(s, storage_addr, request)
+        req_pipe = Messaging(ssl_sock, storage_addr, request)
         req_pipe.queue_request()
         req_pipe.write()
 
         # receive exec file
-        status = self.receive_file(s, path_to_file, file_size)
+        status = self.receive_file(ssl_sock, path_to_file, file_size)
 
         print("- receiving execution file status:", status)
+
+        ssl_sock.close()
         s.close()
 
     def execute_job(self, path_to_executable, path_to_output):
@@ -162,7 +165,8 @@ class Receiver:
     def upload_output_to_db(self, path_to_file, job_id, db_token):
         global storage_addr
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect(storage_addr)
+        ssl_sock = self.ssl_context.wrap_socket(s)
+        ssl_sock.connect(storage_addr)
 
         file_size = os.path.getsize(path_to_file)
 
@@ -177,21 +181,15 @@ class Receiver:
                     'content': content
                     }
 
-        req_pipe = Messaging(s, storage_addr, request)
+        req_pipe = Messaging(ssl_sock, storage_addr, request)
         req_pipe.queue_request()
         req_pipe.write()
 
         # send output file
-        self.send_file(s, path_to_file)
-        s.shutdown(socket.SHUT_WR)
+        self.send_file(ssl_sock, path_to_file)
 
-        req_pipe.read()
-        # response_header = req_pipe.jsonheader
-        response = req_pipe.response
-
-        print('- uploading output file status:', response['status'])
-
-        s.close()
+        ssl_sock.shutdown(socket.SHUT_RDWR)
+        ssl_sock.close()
 
     def send_file(self, conn, path_to_file):
         f = open(path_to_file,'rb')
