@@ -1,7 +1,7 @@
 # TODO
 # * surround 'send's with try-except clauses
 
-import socket
+import socket, ssl
 import sys, os
 import logging
 import random
@@ -16,8 +16,14 @@ class Server:
     def __init__(self, port):
         self.BACKLOG = 1024      # size of the queue for pending connections
 
+        self.ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        self.ssl_context.load_cert_chain('ssl/certificate.crt', 'ssl/private.key')
+
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.s.bind(('', port))          # Bind to the port
+
+        # self.ssl_sock = self.ssl_context.wrap_socket(self.s, server_side=True)
+        self.s = self.ssl_context.wrap_socket(self.s, server_side=True)
 
         self.db_handler = DBHandler()
         self.auth = Authentication()
@@ -234,8 +240,6 @@ class Server:
                 return
                 
             requested_job_id = request_content['job-id']
-            available_jobs = self.db_handler.queryJobs(status='a')
-
             # get token of the requested job id
             requested_token = self.db_handler.getExecfileToken(requested_job_id)
             

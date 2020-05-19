@@ -1,19 +1,24 @@
-import socket
+import socket, ssl
 import os, sys
 import hashlib
 from client_messaging import Messaging
 
-server_addr = ('18.220.165.22', 23457)
+server_addr = ('18.220.165.22', 23456)
 storage_addr = ('18.197.19.248', 23456)
 
 class Receiver:
     def __init__(self, authToken):
         self.authToken = authToken
+        self.ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+        self.ssl_context.check_hostname = False
+        self.ssl_context.verify_mode = ssl.CERT_NONE
+        self.ssl_context.load_default_certs()
     
     def get_available_jobs(self):
         global server_addr
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect(server_addr)
+        ssl_sock = self.ssl_context.wrap_socket(s)
+        ssl_sock.connect(server_addr)
 
         content = { 'authToken': self.authToken,
                     'role': 'leaser',
@@ -22,7 +27,7 @@ class Receiver:
         request = {'type' : 'text/json',
                     'content': content}
 
-        req_pipe = Messaging(s, server_addr, request)
+        req_pipe = Messaging(ssl_sock, server_addr, request)
         req_pipe.queue_request()
         req_pipe.write()
 
@@ -30,6 +35,7 @@ class Receiver:
         #response_header = req_pipe.jsonheader
         response = req_pipe.response
 
+        ssl_sock.close()
         s.close()
 
         if response['status'] == 'success':
@@ -41,7 +47,8 @@ class Receiver:
     def get_permission_to_execute_task(self, job_id):
         global server_addr
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect(server_addr)
+        ssl_sock = self.ssl_context.wrap_socket(s)
+        ssl_sock.connect(server_addr)
 
         content = { 'authToken': self.authToken,
                     'role': 'leaser',
@@ -50,7 +57,7 @@ class Receiver:
         request = {'type' : 'text/json',
                     'content': content}
 
-        req_pipe = Messaging(s, server_addr, request)
+        req_pipe = Messaging(ssl_sock, server_addr, request)
         req_pipe.queue_request()
         req_pipe.write()
 
@@ -58,6 +65,7 @@ class Receiver:
         #response_header = req_pipe.jsonheader
         response = req_pipe.response
 
+        ssl_sock.close()
         s.close()
 
         if response['status'] == 'success':
@@ -123,7 +131,8 @@ class Receiver:
     def get_permission_to_upload_output(self, job_id, path_to_file):
         global server_addr
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect(server_addr)
+        ssl_sock = self.ssl_context.wrap_socket(s)
+        ssl_sock.connect(server_addr)
 
         file_size = os.path.getsize(path_to_file)
 
@@ -135,7 +144,7 @@ class Receiver:
                     'file-type': 'txt'}
         request = {'type' : 'text/json',
                     'content': content}
-        req_pipe = Messaging(s, server_addr, request)
+        req_pipe = Messaging(ssl_sock, server_addr, request)
         req_pipe.queue_request()
         req_pipe.write()
 
@@ -143,6 +152,7 @@ class Receiver:
         #response_header = req_pipe.jsonheader
         response = req_pipe.response
 
+        ssl_sock.close()
         s.close()
 
         if response['status'] == 'success':
@@ -185,10 +195,10 @@ class Receiver:
 
     def send_file(self, conn, path_to_file):
         f = open(path_to_file,'rb')
-        l = f.read(1024)
+        l = f.read(4096)
         while (l):
             conn.send(l)
-            l = f.read(1024)
+            l = f.read(4096)
         f.close()
         print ('Done sending file(s)')
     
@@ -209,4 +219,4 @@ class Receiver:
         if checksum_computed.hexdigest().encode('utf-8') == checksum_received:
             return 'success'
         else:
-            return 'fail'
+            return 'fail' # TODO handle

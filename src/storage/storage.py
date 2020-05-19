@@ -124,7 +124,7 @@ class Storage:
             requested_file_path = f'jobs/toexec{job_id}.zip'
             if os.path.exists(requested_file_path):
                 self.send_file(conn, requested_file_path)
-                self.logger.info(f'successfully sent exec file for job {job_id} to leaser {addr[0]}')
+                self.logger.info(f'sent exec file for job {job_id} to leaser {addr[0]}')
                 return
         
         elif request_content['request-type'] == 'output-upload':
