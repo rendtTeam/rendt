@@ -1,4 +1,4 @@
-import socket
+import socket, ssl
 import sys
 import os
 import logging
@@ -14,18 +14,23 @@ class Storage:
     def __init__(self, port):
         self.BACKLOG = 1024      # size of the queue for pending connections
 
-        self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.s.bind(('', port))          # Bind to the port
+        self.ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        self.ssl_context.load_cert_chain('ssl/certificate.crt', 'ssl/private.key')
+
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.bind(('', port))          # Bind to the port
+
+        self.ssl_socket= self.ssl_context.wrap_socket(s, server_side=True)
 
         self.db_handler = DBHandler()
         self.logger = self.configure_logging()
 
     def run(self):
-        self.s.listen(self.BACKLOG)           # Now wait for client connection.
+        self.ssl_socket.listen(self.BACKLOG)           # Now wait for client connection.
         self.logger.info('Storage up and running.\n')
 
         while True:
-            conn, addr = self.s.accept()
+            conn, addr = self.ssl_socket.accept()
 
             try:
                 Thread(target=self.serve_client, args=(conn, addr)).start()
@@ -93,8 +98,7 @@ class Storage:
             self.recv_file(conn, f'jobs/toexec{job_id}.zip', file_size)
             self.db_handler.changeJobStatus(job_id, 'a')
             self.logger.info(f'successfully received exec files for job {job_id} from renter {addr[0]}')
-            response_content = {'status': 'success',}
-            req_pipe.write(response_content, 'text/json')
+            # TODO send success message somehow
             return
         
         elif request_content['request-type'] == 'output-download':
@@ -124,7 +128,7 @@ class Storage:
             requested_file_path = f'jobs/toexec{job_id}.zip'
             if os.path.exists(requested_file_path):
                 self.send_file(conn, requested_file_path)
-                self.logger.info(f'successfully sent exec file for job {job_id} to leaser {addr[0]}')
+                self.logger.info(f'sent exec file for job {job_id} to leaser {addr[0]}')
                 return
         
         elif request_content['request-type'] == 'output-upload':
@@ -134,15 +138,14 @@ class Storage:
             self.recv_file(conn, f'outputs/output{job_id}.txt', file_size)
             self.db_handler.changeJobStatus(job_id, 'f')
             self.logger.info(f'successfully received output file for job {job_id} from leaser {addr[0]}')
-            response_content = {'status': 'success',}
-            req_pipe.write(response_content, 'text/json')
+            # TODO send success message somehow
             return
 
     def recv_file(self, conn, file_name, size):
         f = open(file_name,'wb')
 
         while True:
-            l = conn.recv(1024)
+            l = conn.recv(4096)
             if not l:
                 break
             f.write(l)

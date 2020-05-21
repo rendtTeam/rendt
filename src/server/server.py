@@ -1,7 +1,7 @@
 # TODO
 # * surround 'send's with try-except clauses
 
-import socket
+import socket, ssl
 import sys, os
 import logging
 import random
@@ -16,8 +16,14 @@ class Server:
     def __init__(self, port):
         self.BACKLOG = 1024      # size of the queue for pending connections
 
+        self.ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        self.ssl_context.load_cert_chain('ssl/certificate.crt', 'ssl/private.key')
+
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.s.bind(('', port))          # Bind to the port
+
+        # self.ssl_sock = self.ssl_context.wrap_socket(self.s, server_side=True)
+        self.s = self.ssl_context.wrap_socket(self.s, server_side=True)
 
         self.db_handler = DBHandler()
         self.auth = Authentication()
@@ -153,8 +159,16 @@ class Server:
 
     def serve_renter_request(self, req_pipe, conn, addr, uid):
         header, request_content = req_pipe.jsonheader, req_pipe.request
-        if request_content['request-type'] == 'submit-permission':
-            self.logger.info(f'connection: renter {uid} from {addr}; request type: submit-permission')
+        if request_content['request-type'] == 'get-job-notifications':
+            self.logger.info(f'connection: leaser from {addr}; request type: get-job-statuses')
+            job_statuses = self.db_handler.getJobStatuses(uid)
+            response_content = {'status': 'success',
+                                'jobs': job_statuses,
+                                }
+            req_pipe.write(response_content, 'text/json')
+            self.logger.info(f'job statuses sent to renter at {addr}')
+        elif request_content['request-type'] == 'executable-upload-permission':
+            self.logger.info(f'connection: renter {uid} from {addr}; request type: executable-upload-permission')
             job_id = self.generate_job_id() # some unique id generator
             db_token = self.generate_db_token()
             job_type = request_content['file-type']
@@ -170,6 +184,27 @@ class Server:
             self.db_handler.addJob(uid, job_id, job_type, file_size, db_token, status='xtbu')
 
             self.logger.info(f'issued permission to renter {uid} to submit job {job_id} via token {db_token}')
+        elif request_content['request-type'] == 'get-available-leasers':
+            self.logger.info(f'connection: renter from {addr}; request type: get-available-leasers')
+            available_leasers = self.db_handler.queryLeasers(status='a')
+            response_content = {'status': 'success',
+                                'leasers': available_leasers,
+                                }
+            req_pipe.write(response_content, 'text/json')
+            self.logger.info(f'available leasers sent to renter at {addr}')
+        elif request_content['request-type'] == 'submit-job-order':
+            self.logger.info(f'connection: renter from {addr}; request type: submit-job-order')
+            job_id = request_content['job-id']
+            job_desription = request_content['job-description']
+            job_mode = request_content['job-mode']
+            leaser_id = request_content['leaser-id']
+            order_id = self.generate_order_id()
+            self.db_handler.submitJobOrder(order_id, uid, job_id, job_desription, job_mode, leaser_id, status='p')
+            response_content = {'status': 'success',
+                                'order-id': order_id
+                                }
+            req_pipe.write(response_content, 'text/json')
+            self.logger.info(f'job order ({job_id}) successfully submitted (from {uid} to {leaser_id})')
         elif request_content['request-type'] == 'output-download-permission':
             self.logger.info(f'connection: renter from {addr}; request type: output-download-permission')
             if 'job-id' not in request_content:
@@ -190,10 +225,10 @@ class Server:
                 self.logger.warning(f'couldn\'t issue permission to renter {uid} to download output of job {requested_job_id}: job doesn\'t belong to this user')
                 return
 
-            finished_jobs = self.db_handler.queryJobs(status='f')
+            job_is_finished = self.db_handler.isFinished(requested_job_id)
             requested_token = self.db_handler.getOutputToken(requested_job_id)
 
-            if requested_job_id in finished_jobs and requested_token:
+            if job_is_finished and requested_token:
                 file_size = self.db_handler.getOutputFileSize(requested_job_id)
                 response_content = {'status': 'success',
                                     'file-size': file_size, 
@@ -218,14 +253,60 @@ class Server:
         header, request_content = req_pipe.jsonheader, req_pipe.request
         if request_content['request-type'] == 'get-available-jobs':
             self.logger.info(f'connection: leaser from {addr}; request type: get-available-jobs')
-            available_jobs = self.db_handler.queryJobs(status='a')
+            available_jobs = self.db_handler.getJobs(status='a')
             response_content = {'status': 'success',
                                 'jobs': available_jobs,
                                 }
             req_pipe.write(response_content, 'text/json')
             self.logger.info(f'available jobs sent to leaser at {addr}')
-        elif request_content['request-type'] == 'execute-permission':
-            self.logger.info(f'connection: leaser from {addr}; request type: execute-permission')
+        elif request_content['request-type'] == 'mark-available':
+            self.logger.info(f'connection: leaser from {addr}; request type: mark-available')
+            self.db_handler.setLeaserStatus(uid, 'a')
+            response_content = {'status': 'success',
+                                }
+            req_pipe.write(response_content, 'text/json')
+            self.logger.info(f'leaser {uid} marked available')
+        elif request_content['request-type'] == 'get-job-requests':
+            self.logger.info(f'connection: leaser from {addr}; request type: get-job-requests')
+            job_requests = self.db_handler.getJobRequests(uid)
+            response_content = {'status': 'success',
+                                'jobs': job_requests,
+                                }
+            req_pipe.write(response_content, 'text/json')
+            self.logger.info(f'job requests sent to leaser at {addr}')
+        elif request_content['request-type'] == 'decline-job-order':
+            self.logger.info(f'connection: leaser from {addr}; request type: decline-job-order')
+            order_id = request_content['order-id']
+
+            self.db_handler.updateJobOrderStatus(order_id, 'd')
+            response_content = {'status': 'success',
+                            }
+            req_pipe.write(response_content, 'text/json')
+            self.logger.info(f'leaser {uid} declined order {order_id}')
+        elif request_content['request-type'] == 'accept-job-order':
+            self.logger.info(f'connection: leaser from {addr}; request type: accept-job-order')
+            order_id = request_content['order-id']
+
+            job_id = self.db_handler.getOrderJobId(order_id)
+            requested_token = self.db_handler.getExecfileToken(job_id)
+            if requested_token: 
+                file_size = self.db_handler.getJobFileSize(job_id)
+                response_content = {'status': 'success',
+                                    'file-size': file_size, 
+                                    'db-token': requested_token
+                                    }
+                req_pipe.write(response_content, 'text/json')
+
+                self.db_handler.updateJobOrderStatus(order_id, 'ix') # TODO introduce a few statuses
+                self.logger.info(f'leaser {uid} accepted order #{order_id}. given permission to download {job_id} via token {requested_token}')
+            else:
+                response_content = {'status': 'error',
+                                    'error-msg': 'no files found for this order'
+                                    }
+                req_pipe.write(response_content, 'text/json')
+                self.logger.warning(f'leaser {uid} couldn\'t accept to download executable of job {job_id}: no files for this job')
+        elif request_content['request-type'] == 'download-job-permission':
+            self.logger.info(f'connection: leaser from {addr}; request type: download-job-permission')
             if 'job-id' not in request_content:
                 response_content = {'status': 'error',
                                     'error-msg': 'no job id provided'
@@ -234,8 +315,6 @@ class Server:
                 return
                 
             requested_job_id = request_content['job-id']
-            available_jobs = self.db_handler.queryJobs(status='a')
-
             # get token of the requested job id
             requested_token = self.db_handler.getExecfileToken(requested_job_id)
             
@@ -303,6 +382,12 @@ class Server:
         while not self.db_handler.checkJobIdAvailability(job_id):
             job_id = int(random.random()*9000000)+1000000
         return job_id
+
+    def generate_order_id(self):
+        order_id = int(random.random()*9000000)+1000000
+        while not self.db_handler.checkOrderIdAvailability(order_id):
+            order_id = int(random.random()*9000000)+1000000
+        return order_id
 
     def shutdown_server(self):
         self.s.close()
