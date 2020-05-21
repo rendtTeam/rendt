@@ -14,29 +14,71 @@ class Receiver:
         self.ssl_context.verify_mode = ssl.CERT_NONE
         self.ssl_context.load_default_certs()
     
-    def get_available_jobs(self):
-        global server_addr
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        ssl_sock = self.ssl_context.wrap_socket(s)
-        ssl_sock.connect(server_addr)
+    def mark_available(self):
+        content = { 'authToken': self.authToken,
+                    'role': 'leaser',
+                    'request-type': 'mark-available',
+                    }
+        
+        response = self.send_request_server(content)
+        
+        if response['status'] == 'success':
+            print('marked as available')
+        elif response['status'] == 'error':
+            print('error:', response['error-msg'])
+        else:
+            print('Something went very wrong')
 
+    def get_job_notifications(self):
+        content = { 'authToken': self.authToken,
+                    'role': 'leaser',
+                    'request-type': 'get-job-requests',
+                    }
+        
+        response = self.send_request_server(content)
+
+        if response['status'] == 'success':
+            print('received list of requests')
+            return response['requests']
+        else:
+            print('error: couldn\'t receive list of requests')
+
+    def accept_order(self, order_id):
+        content = { 'authToken': self.authToken,
+                    'role': 'leaser',
+                    'request-type': 'accept-job-order',
+                    'order-id': order_id,
+                    }
+        
+        response = self.send_request_server(content)
+
+        if response['status'] == 'success':
+            print('successfully accepted order', order_id)
+            return response['db-token'], response['file-size']
+        else:
+            print('error')
+
+    def decline_order(self, order_id):
+        content = { 'authToken': self.authToken,
+                    'role': 'leaser',
+                    'request-type': 'decline-job-order',
+                    'order-id': order_id,
+                    }
+        
+        response = self.send_request_server(content)
+
+        if response['status'] == 'success':
+            print('successfully declined order', order_id)
+        else:
+            print('error')
+
+    def get_available_jobs(self):
         content = { 'authToken': self.authToken,
                     'role': 'leaser',
                     'request-type': 'get-available-jobs',
                     }
-        request = {'type' : 'text/json',
-                    'content': content}
-
-        req_pipe = Messaging(ssl_sock, server_addr, request)
-        req_pipe.queue_request()
-        req_pipe.write()
-
-        req_pipe.read()
-        #response_header = req_pipe.jsonheader
-        response = req_pipe.response
-
-        ssl_sock.close()
-        s.close()
+        
+        response = self.send_request_server(content)
 
         if response['status'] == 'success':
             print('received list of jobs')
@@ -44,29 +86,13 @@ class Receiver:
         else:
             print('error: couldn\'t receive list of jobs')
 
-    def get_permission_to_execute_task(self, job_id):
-        global server_addr
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        ssl_sock = self.ssl_context.wrap_socket(s)
-        ssl_sock.connect(server_addr)
-
+    def get_permission_to_download_job(self, job_id):
         content = { 'authToken': self.authToken,
                     'role': 'leaser',
-                    'request-type': 'execute-permission',
+                    'request-type': 'download-job-permission',
                     'job-id': job_id}
-        request = {'type' : 'text/json',
-                    'content': content}
-
-        req_pipe = Messaging(ssl_sock, server_addr, request)
-        req_pipe.queue_request()
-        req_pipe.write()
-
-        req_pipe.read()
-        #response_header = req_pipe.jsonheader
-        response = req_pipe.response
-
-        ssl_sock.close()
-        s.close()
+        
+        response = self.send_request_server(content)
 
         if response['status'] == 'success':
             print('received db token')
@@ -132,11 +158,6 @@ class Receiver:
         home_dir = os.system("cat " + path_to_output)
 
     def get_permission_to_upload_output(self, job_id, path_to_file):
-        global server_addr
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        ssl_sock = self.ssl_context.wrap_socket(s)
-        ssl_sock.connect(server_addr)
-
         file_size = os.path.getsize(path_to_file)
 
         content = { 'authToken': self.authToken,
@@ -145,18 +166,8 @@ class Receiver:
                     'job-id': job_id,
                     'file-size': file_size,
                     'file-type': 'txt'}
-        request = {'type' : 'text/json',
-                    'content': content}
-        req_pipe = Messaging(ssl_sock, server_addr, request)
-        req_pipe.queue_request()
-        req_pipe.write()
-
-        req_pipe.read()
-        #response_header = req_pipe.jsonheader
-        response = req_pipe.response
-
-        ssl_sock.close()
-        s.close()
+        
+        response = self.send_request_server(content)
 
         if response['status'] == 'success':
             print('received db token')
@@ -190,6 +201,28 @@ class Receiver:
 
         ssl_sock.shutdown(socket.SHUT_RDWR)
         ssl_sock.close()
+
+    def send_request_server(self, request_content):
+        global server_addr
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        ssl_sock = self.ssl_context.wrap_socket(s)
+        ssl_sock.connect(server_addr)
+
+        request = {'type' : 'text/json',
+                    'content': request_content}
+
+        req_pipe = Messaging(ssl_sock, server_addr, request)
+        req_pipe.queue_request()
+        req_pipe.write()
+
+        req_pipe.read()
+        #response_header = req_pipe.jsonheader
+        response = req_pipe.response
+
+        ssl_sock.close()
+        s.close()
+
+        return response
 
     def send_file(self, conn, path_to_file):
         f = open(path_to_file,'rb')

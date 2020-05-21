@@ -2,7 +2,9 @@ import sys
 import json
 import io
 import struct
+import socket, ssl
 
+server_addr = ('18.220.165.22', 23456)
 
 class Messaging:
     def __init__(self, sock, addr, request):

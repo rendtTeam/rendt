@@ -14,32 +14,45 @@ class Sender:
         self.ssl_context.verify_mode = ssl.CERT_NONE
         self.ssl_context.load_default_certs()
 
-    def get_permission_to_submit_task(self, path_to_file):
-        global server_addr
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        ssl_sock = self.ssl_context.wrap_socket(s)
-        ssl_sock.connect(server_addr)
+    def get_job_statuses(self):
+        content = { 'authToken': self.authToken,
+                    'role': 'renter',
+                    'request-type': 'get-job-statuses',
+                    }
+        
+        response = self.send_request_server(content)
 
+        if response['status'] == 'success':
+            print('received list of statuses')
+            return response['statuses']
+        else:
+            print('error: couldn\'t receive list of statuses')
+    
+    def get_available_leasers(self):
+        content = { 'authToken': self.authToken,
+                    'role': 'renter',
+                    'request-type': 'get-available-leasers',
+                    }
+        
+        response = self.send_request_server(content)
+
+        if response['status'] == 'success':
+            print('received list of leasers')
+            return response['leasers']
+        else:
+            print('error: couldn\'t receive list of leasers')
+
+    def get_permission_to_upload_job(self, path_to_file):
         file_size = os.path.getsize(path_to_file)
 
         content = { 'authToken': self.authToken,
                     'role': 'renter',
-                    'request-type': 'submit-permission',
+                    'request-type': 'executable-upload-permission',
                     'file-size': file_size,
                     'file-type': 'py'}
-        request = {'type' : 'text/json',
-                    'content': content}
-        request_pipe = Messaging(ssl_sock, server_addr, request)
-        request_pipe.queue_request()
-        request_pipe.write()
 
-        request_pipe.read()
-        #response_header = request_pipe.jsonheader
-        response = request_pipe.response
-
-        ssl_sock.close()
-        s.close()
-
+        response = self.send_request_server(content)
+        
         if response['status'] == 'success':
             print('received db token')
             return response['job-id'], response['db-token']
@@ -72,29 +85,29 @@ class Sender:
         ssl_sock.shutdown(socket.SHUT_RDWR)
         ssl_sock.close()
 
-    def get_permission_to_download_output(self, job_id):
-        global server_addr
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        ssl_sock = self.ssl_context.wrap_socket(s)
-        ssl_sock.connect(server_addr)
+    def submit_job_order(self, job_id, leaser_id, job_description):
+        content = { 'authToken': self.authToken,
+                    'role': 'renter',
+                    'request-type': 'submit-job-order',
+                    'job-id': job_id,
+                    'leaser-id': leaser_id,
+                    'job-description': job_description
+                    }
         
+        response = self.send_request_server(content)
+
+        if response['status'] == 'success':
+            print('job order submitted')
+        elif response['status'] == 'error':
+            print('error:', response['error-msg'])
+
+    def get_permission_to_download_output(self, job_id):
         content = { 'authToken': self.authToken,
                     'role': 'renter',
                     'request-type': 'output-download-permission',
                     'job-id': job_id}
-        request = {'type' : 'text/json',
-                    'content': content}
-
-        req_pipe = Messaging(ssl_sock, server_addr, request)
-        req_pipe.queue_request()
-        req_pipe.write()
-
-        req_pipe.read()
-        #response_header = req_pipe.jsonheader
-        response = req_pipe.response
-
-        ssl_sock.close()
-        s.close()
+        
+        response = self.send_request_server(content)
 
         if response['status'] == 'success':
             print('received db token')
@@ -125,6 +138,28 @@ class Sender:
 
         ssl_sock.close()
         s.close()
+
+    def send_request_server(self, request_content):
+        global server_addr
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        ssl_sock = self.ssl_context.wrap_socket(s)
+        ssl_sock.connect(server_addr)
+
+        request = {'type' : 'text/json',
+                    'content': request_content}
+
+        req_pipe = Messaging(ssl_sock, server_addr, request)
+        req_pipe.queue_request()
+        req_pipe.write()
+
+        req_pipe.read()
+        #response_header = req_pipe.jsonheader
+        response = req_pipe.response
+
+        ssl_sock.close()
+        s.close()
+
+        return response
 
     def send_file(self, conn, path_to_file):
         f = open(path_to_file,'rb')
