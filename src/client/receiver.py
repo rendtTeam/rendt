@@ -91,16 +91,16 @@ class Receiver:
         # execute job
         f = open("Dockerfile", "a")
 
-        f.write('FROM python\n') 
+
+        f.write('FROM gcc\n')
         f.write('FROM java:8-jdk-alpine\n')
-        f.write('FROM ubuntu\n') 
+        f.write('FROM ubuntu:latest\n') 
+        f.write('FROM python\n') 
         f.write('RUN apt update && apt install -y zip\n')
-        f.write('RUN apt-get -y update && apt-get install -y\n')
-        f.write('RUN apt-get -y install clang\n')
         f.write('ADD /files.zip /\n')
         f.write('RUN unzip files.zip && rm files.zip\n')
-        # f.write('ADD /commands.txt /\n')
-        f.write('RUN chmod +x run.sh')
+        #f.write('RUN chmod +x run.sh\n')
+
 
         f.close()
 
@@ -108,13 +108,16 @@ class Receiver:
         home_dir = os.system("docker run -it -d --name rendtcont rendt")
         home_dir = os.system("rm Dockerfile") 
 
+
+        home_dir = os.system("docker exec -it rendtcont bash -c 'cd files && chmod +x run.sh'")
         a = './run.sh >> sender_output.txt'
         print(a)
-        b = "docker exec -it rendtcont bash -c '" + a + "'"
-
+        b = "docker exec -it rendtcont bash -c 'cd files && " + a + "'"
         home_dir = os.system(b) 
-
-        home_dir = os.system("docker cp rendtcont:/sender_output.txt " + path_to_output)
+        home_dir = os.system("docker exec -it rendtcont bash -c 'mv /files/sender_output.txt /files/output/sender_output.txt'") 
+        home_dir = os.system("docker exec -it rendtcont bash -c 'cd files && zip -r -X output.zip output'") 
+        #home_dir = os.system("docker cp rendtcont:/sender_output.txt " + path_to_output)
+        home_dir = os.system("docker cp rendtcont:/files/output.zip " + path_to_output)
         home_dir = os.system("docker stop rendtcont")
         home_dir = os.system("docker container rm rendtcont")
 
