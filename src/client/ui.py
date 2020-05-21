@@ -553,15 +553,15 @@ class ReceiverWindow(QWidget):
         self.receiver.download_file_from_db('files.zip', db_token, files_size)
 
         # Executing downloaded file
-        self.receiver.execute_job('files.zip', 'sender_output.txt')
+        self.receiver.execute_job('files.zip', 'sender_output.zip')
 
         # Getting permission to upload output from execution
         out_db_token = self.receiver.get_permission_to_upload_output(
-            job_id, 'sender_output.txt')
+            job_id, 'sender_output.zip')
 
         # Uploading execution output
         self.receiver.upload_output_to_db(
-            'sender_output.txt', job_id, out_db_token)
+            'sender_output.zip', job_id, out_db_token)
 
         self.waitingWindow.hide()
         self.taskFinishedWindow.show()
@@ -1003,7 +1003,7 @@ class DownloadWindow(QWidget):
         if perm:
             out_db_token, file_size = perm
             self.container.sender.download_output_from_db(
-                'received_output.txt', out_db_token, file_size)
+                'received_output.zip', out_db_token, file_size)
 
         self.label.hide()
         self.jobId.hide()

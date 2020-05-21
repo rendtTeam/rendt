@@ -104,7 +104,7 @@ class Storage:
         elif request_content['request-type'] == 'output-download':
             self.logger.info(f'connection: renter from {addr}; request type: output-download')
             job_id = self.db_handler.getJobIdFromToken(client_db_token, 'o')
-            requested_file_path = f'outputs/output{job_id}.txt'
+            requested_file_path = f'outputs/output{job_id}.zip'
             if os.path.exists(requested_file_path):
                 self.send_file(conn, requested_file_path)
                 self.logger.info(f'successfully sent output file for job {job_id} to renter {addr[0]}')
@@ -135,7 +135,7 @@ class Storage:
             self.logger.info(f'connection: leaser from {addr}; request type: output-upload')
             job_id = self.db_handler.getJobIdFromToken(client_db_token, 'o')
             file_size = request_content['file-size']
-            self.recv_file(conn, f'outputs/output{job_id}.txt', file_size)
+            self.recv_file(conn, f'outputs/output{job_id}.zip', file_size)
             self.db_handler.changeJobStatus(job_id, 'f')
             self.logger.info(f'successfully received output file for job {job_id} from leaser {addr[0]}')
             # TODO send success message somehow

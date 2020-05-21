@@ -6,3 +6,4 @@ src/server/db_test.py
 .vscode/
 src/update.sh
 src/client/files.zip
+src/client/.DS_Store
