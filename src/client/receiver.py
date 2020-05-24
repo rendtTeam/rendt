@@ -98,7 +98,11 @@ class Receiver(Client):
         global storage_addr
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         ssl_sock = self.ssl_context.wrap_socket(s)
-        ssl_sock.connect(storage_addr)
+        try:
+            ssl_sock.connect(storage_addr)
+        except:
+            print('coulnd\'t download file; server does not respond')
+            return
 
         content = { 'role': 'leaser',
                     'request-type': 'executable-download',
@@ -176,7 +180,11 @@ class Receiver(Client):
         global storage_addr
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         ssl_sock = self.ssl_context.wrap_socket(s)
-        ssl_sock.connect(storage_addr)
+        try:
+            ssl_sock.connect(storage_addr)
+        except:
+            print('coulnd\'t upload output; server does not respond')
+            return
 
         file_size = os.path.getsize(path_to_file)
 

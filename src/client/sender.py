@@ -57,7 +57,11 @@ class Sender(Client):
         global storage_addr
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         ssl_sock = self.ssl_context.wrap_socket(s)
-        ssl_sock.connect(storage_addr)
+        try:
+            ssl_sock.connect(storage_addr)
+        except:
+            print('coulnd\'t upload file; server does not respond')
+            return
 
         files_size = os.path.getsize(path_to_file)
 
@@ -118,7 +122,11 @@ class Sender(Client):
         global storage_addr
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         ssl_sock = self.ssl_context.wrap_socket(s)
-        ssl_sock.connect(storage_addr)
+        try:
+            ssl_sock.connect(storage_addr)
+        except:
+            print('coulnd\'t download ouput; server does not respond')
+            return
 
         content = { 'role': 'renter',
                     'request-type': 'output-download',
