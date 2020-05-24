@@ -1,7 +1,7 @@
 import socket, ssl
 from client_messaging import Messaging
 
-server_addr = ('18.220.165.22', 23457)
+server_addr = ('18.220.165.22', 23456)
 
 class Auth:
     def __init__(self):
@@ -64,7 +64,7 @@ class Auth:
         response = request_pipe.response
         ssl_sock.close()
         s.close()
-        
+
         if response['status'] == 'error':
             print('ERROR:', response['error-msg'])
         else:

@@ -20,17 +20,21 @@ class Storage:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.bind(('', port))          # Bind to the port
 
-        self.ssl_socket= self.ssl_context.wrap_socket(s, server_side=True)
+        self.s = self.ssl_context.wrap_socket(s, server_side=True)
 
         self.db_handler = DBHandler()
         self.logger = self.configure_logging()
 
     def run(self):
-        self.ssl_socket.listen(self.BACKLOG)           # Now wait for client connection.
+        self.s.listen(self.BACKLOG)           # Now wait for client connection.
         self.logger.info('Storage up and running.\n')
 
         while True:
-            conn, addr = self.ssl_socket.accept()
+            try:
+                conn, addr = self.s.accept()
+            except Exception as e:
+                self.logger.error('Error in accepting request:' + str(e))
+                continue
 
             try:
                 Thread(target=self.serve_client, args=(conn, addr)).start()

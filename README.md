@@ -15,3 +15,4 @@ Create a working directory containing all the files you need for the job. Write 
 `otbu`: output file(s) to be uploaded  
 `f`: finished  
 `xuf`: executable upload failed  
+`ouf`: output upload failed  

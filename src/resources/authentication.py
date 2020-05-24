@@ -23,13 +23,20 @@ class Authentication(object):
         else:
             return 1
 
-    def sign_in_user(self, email, password):
-        stored_password = self.db_handler.getStoredPasswordHash(email)
-        if self.__verify_password(stored_password, password):
-            authToken = self.generate_auth_token()
+    def sign_in_user(self, email, password, uid):
+        authToken = self.db_handler.getAuthToken(email)
+        if authToken:
+            print('authToken exists:', authToken)
             return authToken
         else:
-            return 1
+            print('authToken doesnot exist')
+            stored_password = self.db_handler.getStoredPasswordHash(email)
+            if self.__verify_password(stored_password, password):
+                authToken = self.generate_auth_token()
+                self.db_handler.addAuthToken(uid, authToken)
+                return authToken
+            else:
+                return 1
 
     def __hash_password(self, password):
         salt = hashlib.sha256(os.urandom(60)).hexdigest().encode('ascii')
