@@ -159,7 +159,7 @@ class Server:
 
     def serve_renter_request(self, req_pipe, conn, addr, uid):
         header, request_content = req_pipe.jsonheader, req_pipe.request
-        if request_content['request-type'] == 'get-job-notifications':
+        if request_content['request-type'] == 'get-job-statuses':
             self.logger.info(f'connection: leaser from {addr}; request type: get-job-statuses')
             job_statuses = self.db_handler.getJobStatuses(uid)
             response_content = {'status': 'success',
@@ -167,6 +167,15 @@ class Server:
                                 }
             req_pipe.write(response_content, 'text/json')
             self.logger.info(f'job statuses sent to renter at {addr}')
+        elif request_content['request-type'] == 'get-job-status':
+            self.logger.info(f'connection: leaser from {addr}; request type: get-job-status')
+            job_id = request_content['job-id']
+            job_status = self.db_handler.getJobStatus(job_id)
+            response_content = {'status': 'success',
+                                'job-status': job_status,
+                                }
+            req_pipe.write(response_content, 'text/json')
+            self.logger.info(f'job status sent to renter at {addr}')
         elif request_content['request-type'] == 'executable-upload-permission':
             self.logger.info(f'connection: renter {uid} from {addr}; request type: executable-upload-permission')
             job_id = self.generate_job_id() # some unique id generator
@@ -259,6 +268,15 @@ class Server:
                                 }
             req_pipe.write(response_content, 'text/json')
             self.logger.info(f'available jobs sent to leaser at {addr}')
+        elif request_content['request-type'] == 'get-job-status':
+            self.logger.info(f'connection: leaser from {addr}; request type: get-job-status')
+            job_id = request_content['job-id']
+            job_status = self.db_handler.getJobStatus(job_id)
+            response_content = {'status': 'success',
+                                'job-status': job_status,
+                                }
+            req_pipe.write(response_content, 'text/json')
+            self.logger.info(f'job status sent to renter at {addr}')
         elif request_content['request-type'] == 'mark-available':
             self.logger.info(f'connection: leaser from {addr}; request type: mark-available')
             self.db_handler.setLeaserStatus(uid, 'a')

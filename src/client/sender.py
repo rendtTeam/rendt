@@ -2,18 +2,14 @@ import socket, ssl
 import os, sys
 import hashlib
 from client_messaging import Messaging
+from client import Client
 
-server_addr = ('18.220.165.22', 23456)
 storage_addr = ('18.197.19.248', 23456)
 
-class Sender:
+class Sender(Client):
     def __init__(self, authToken):
-        self.authToken = authToken
-        self.ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
-        self.ssl_context.check_hostname = False
-        self.ssl_context.verify_mode = ssl.CERT_NONE
-        self.ssl_context.load_default_certs()
-
+        super().__init__(authToken)
+        
     def get_job_statuses(self):
         content = { 'authToken': self.authToken,
                     'role': 'renter',
@@ -82,8 +78,13 @@ class Sender:
         # send exec file
         self.send_file(ssl_sock, path_to_file)
 
-        ssl_sock.shutdown(socket.SHUT_RDWR)
-        ssl_sock.close()
+        status = self.get_job_status(job_id)
+        if status == 'a':
+            print('File successfully received by server')
+        elif status == 'xuf': 
+            print('Server couldn\'t receive file')
+        else:
+            print('File is being uploaded/processed')
 
     def submit_job_order(self, job_id, leaser_id, job_description):
         content = { 'authToken': self.authToken,
@@ -138,53 +139,3 @@ class Sender:
 
         ssl_sock.close()
         s.close()
-
-    def send_request_server(self, request_content):
-        global server_addr
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        ssl_sock = self.ssl_context.wrap_socket(s)
-        ssl_sock.connect(server_addr)
-
-        request = {'type' : 'text/json',
-                    'content': request_content}
-
-        req_pipe = Messaging(ssl_sock, server_addr, request)
-        req_pipe.queue_request()
-        req_pipe.write()
-
-        req_pipe.read()
-        #response_header = req_pipe.jsonheader
-        response = req_pipe.response
-
-        ssl_sock.close()
-        s.close()
-
-        return response
-
-    def send_file(self, conn, path_to_file):
-        f = open(path_to_file,'rb')
-        l = f.read(4096)
-        while (l):
-            conn.send(l)
-            l = f.read(4096)
-        f.close()
-        print ('Done sending file(s)')
-
-    def receive_file(self, conn, path_to_file, size):
-        # receive checksum
-        checksum_received = conn.recv(32)
-        # receive file
-        checksum_computed = hashlib.md5()
-        f = open(path_to_file, "wb")
-        while True:
-            chunk = conn.recv(4096)
-            if not chunk:
-                break
-            checksum_computed.update(chunk)
-            f.write(chunk)
-        f.close()
-        # check for integrity
-        if checksum_computed.hexdigest().encode('utf-8') == checksum_received:
-            return 'success'
-        else:
-            return 'fail'

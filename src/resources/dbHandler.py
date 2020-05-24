@@ -143,6 +143,12 @@ class DBHandler(object):
         rows = self.__cursor.fetchall()
         return rows
 
+    def getJobStatus(self, job_id):
+        query = f'SELECT job_status FROM jobs WHERE job_id = {job_id}'
+        self._executeQuery(query)
+        rows = self.__cursor.fetchall()
+        return rows[0][0]
+
     def getJobStatuses(self, renter_id):
         query = f'SELECT job_id, job_desc, job_mode, leaser_id FROM job_orders WHERE renter_id = {renter_id}'
         self._executeQuery(query)

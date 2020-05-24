@@ -95,10 +95,13 @@ class Storage:
             self.logger.info(f'connection: renter from {addr}; request type: executable-upload')
             job_id = self.db_handler.getJobIdFromToken(client_db_token, 'x')
             file_size = request_content['file-size']
-            self.recv_file(conn, f'jobs/toexec{job_id}.zip', file_size)
-            self.db_handler.changeJobStatus(job_id, 'a')
-            self.logger.info(f'successfully received exec files for job {job_id} from renter {addr[0]}')
-            # TODO send success message somehow
+            st = self.recv_file(conn, f'jobs/toexec{job_id}.zip', file_size)
+            if st:
+                self.db_handler.changeJobStatus(job_id, 'a')
+                self.logger.info(f'successfully received exec files for job {job_id} from renter {addr[0]}')
+            else:
+                self.db_handler.changeJobStatus(job_id, 'uf')
+                self.logger.info(f'received invalid exec files for job {job_id} from renter {addr[0]}')
             return
         
         elif request_content['request-type'] == 'output-download':
@@ -142,14 +145,23 @@ class Storage:
             return
 
     def recv_file(self, conn, file_name, size):
-        f = open(file_name,'wb')
-
+        # receive checksum
+        checksum_received = conn.recv(32)
+        # receive file
+        checksum_computed = hashlib.md5()
+        f = open(file_name, "wb")
         while True:
-            l = conn.recv(4096)
-            if not l:
+            chunk = conn.recv(4096)
+            if not chunk:
                 break
-            f.write(l)
+            checksum_computed.update(chunk)
+            f.write(chunk)
         f.close()
+        # check for integrity
+        if checksum_computed.hexdigest().encode('utf-8') == checksum_received:
+            return 1
+        else:
+            return 0
 
     def send_file(self, conn, file_name):
         # calculate checksum
