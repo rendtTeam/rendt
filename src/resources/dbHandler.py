@@ -202,11 +202,9 @@ class DBHandler(object):
     def getAuthToken(self, email):
         user_id = self.getUserIdAndType(email)[0]
         if user_id:
-            print('user_id not none')
             query = f'SELECT auth_token FROM active_auth_tokens WHERE user_id = {user_id}'
             self._executeQuery(query)
             rows = self.__cursor.fetchall()
-            print('rows:', rows)
             if len(rows) == 1:
                 return rows[0][0]
             

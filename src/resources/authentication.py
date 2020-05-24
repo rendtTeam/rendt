@@ -26,10 +26,8 @@ class Authentication(object):
     def sign_in_user(self, email, password, uid):
         authToken = self.db_handler.getAuthToken(email)
         if authToken:
-            print('authToken exists:', authToken)
             return authToken
         else:
-            print('authToken doesnot exist')
             stored_password = self.db_handler.getStoredPasswordHash(email)
             if self.__verify_password(stored_password, password):
                 authToken = self.generate_auth_token()
