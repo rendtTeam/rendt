@@ -1,9 +1,8 @@
 import sys
-import os
-import psutil
-import platform
-from fontTools.ttLib import TTFont
 from PyQt5 import QtCore, QtGui, QtWidgets
+<<<<<<< HEAD
+from PyQt5.QtWidgets import QScrollArea, QPushButton, QLabel, QWidget, QVBoxLayout, QStackedWidget, QHBoxLayout, QMainWindow
+=======
 from PyQt5.QtWidgets import QScrollArea, QPushButton, QLabel, QWidget, QVBoxLayout, QStackedWidget
 
 from sender import Sender
@@ -547,21 +546,26 @@ class ReceiverWindow(QWidget):
         job_id = self.sender().jobId
 
         # Getting permission for execution
-        db_token, size = self.receiver.get_permission_to_execute_task(job_id)
+        db_token, files_size = self.receiver.get_permission_to_download_job(job_id)
+        
+        
+        
+        # Cenk fix path
+
 
         # Downloading file to be executed
-        self.receiver.download_file_from_db('sender_job.py', db_token, size)
+        self.receiver.download_file_from_db('files.zip', db_token, files_size)
 
         # Executing downloaded file
-        self.receiver.execute_job('sender_job.py', f'sender_output.txt')
+        self.receiver.execute_job('files.zip', 'sender_output.zip')
 
         # Getting permission to upload output from execution
         out_db_token = self.receiver.get_permission_to_upload_output(
-            job_id, 'sender_output.txt')
+            job_id, 'sender_output.zip')
 
         # Uploading execution output
         self.receiver.upload_output_to_db(
-            'sender_output.txt', job_id, out_db_token)
+            'sender_output.zip', job_id, out_db_token)
 
         self.waitingWindow.hide()
         self.taskFinishedWindow.show()
@@ -1003,7 +1007,7 @@ class DownloadWindow(QWidget):
         if perm:
             out_db_token, file_size = perm
             self.container.sender.download_output_from_db(
-                'received_output.txt', out_db_token, file_size)
+                'received_output.zip', out_db_token, file_size)
 
         self.label.hide()
         self.jobId.hide()
@@ -1257,7 +1261,7 @@ class SenderWindow(QWidget):
         self.loadingWindow.show()
 
         self.scroll.uploadFiles()
-        job_id, db_token = self.sender.get_permission_to_submit_task(
+        job_id, db_token = self.sender.get_permission_to_upload_job(
             filelist[0])
         self.sender.upload_file_to_db(filelist[0], job_id, db_token)
 
@@ -1592,48 +1596,13 @@ class RenterLeaserWindow(QWidget):
             self.senderWindow.downloadWindow.downloadFinishedLabel.setFont(
                 QtGui.QFont(f, 30, 1000))
 
+>>>>>>> master
 
+from LoginWindow import LoginWindow
 
 if __name__ == "__main__":
-    filelist = []
-    QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
+    # QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
     app = QtWidgets.QApplication(sys.argv)
-    QtGui.QFontDatabase.addApplicationFont(
-        '../../assets/fonts/CenturyGothic.ttf')
-    QtGui.QFontDatabase.addApplicationFont(
-        '../../assets/fonts/CenturyGothicBold.ttf')
-
-    # # TODO replace with login UI
-    # authToken, user_type = None, None
-    # auth = Auth()
-    # while True:
-    #     cmd = input('Choose action: L for login, R for register: ')
-    #     if cmd == 'L':
-    #         email = input('Email: ')
-    #         email = email.strip()
-    #         pswd = input('Password: ')
-    #         psdw = pswd.strip()
-    #         cred = auth.sign_in(email, pswd)
-    #         if cred:
-    #             authToken, user_type = cred
-    #             break
-    #     elif cmd == 'R':
-    #         email = input('Email: ')
-    #         email = email.strip()
-    #         pswd = input('Password: ')
-    #         psdw = pswd.strip()
-    #         user_type = input('User Type: [L]easer or [R]enter.')
-    #         while user_type not in ['L', 'R']:
-    #             user_type = input('Please type L or R')
-    #         machine_chars = input('Enter some specs about your machine:')
-    #         cred = auth.sign_up(email, pswd, user_type, machine_chars)
-    #         if cred:
-    #             authToken, user_type = cred
-    #             break
-
-    # authToken, user_type = auth.sign_up('email', 'pswd', 'L', 'machine_chars')
-
     window = LoginWindow()
     window.show()
-
     sys.exit(app.exec_())
