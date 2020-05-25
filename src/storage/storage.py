@@ -20,17 +20,21 @@ class Storage:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.bind(('', port))          # Bind to the port
 
-        self.ssl_socket= self.ssl_context.wrap_socket(s, server_side=True)
+        self.s = self.ssl_context.wrap_socket(s, server_side=True)
 
         self.db_handler = DBHandler()
         self.logger = self.configure_logging()
 
     def run(self):
-        self.ssl_socket.listen(self.BACKLOG)           # Now wait for client connection.
+        self.s.listen(self.BACKLOG)           # Now wait for client connection.
         self.logger.info('Storage up and running.\n')
 
         while True:
-            conn, addr = self.ssl_socket.accept()
+            try:
+                conn, addr = self.s.accept()
+            except Exception as e:
+                self.logger.error('Error in accepting request:' + str(e))
+                continue
 
             try:
                 Thread(target=self.serve_client, args=(conn, addr)).start()
@@ -95,16 +99,19 @@ class Storage:
             self.logger.info(f'connection: renter from {addr}; request type: executable-upload')
             job_id = self.db_handler.getJobIdFromToken(client_db_token, 'x')
             file_size = request_content['file-size']
-            self.recv_file(conn, f'jobs/toexec{job_id}.zip', file_size)
-            self.db_handler.changeJobStatus(job_id, 'a')
-            self.logger.info(f'successfully received exec files for job {job_id} from renter {addr[0]}')
-            # TODO send success message somehow
+            st = self.recv_file(conn, f'jobs/toexec{job_id}.zip', file_size)
+            if st:
+                self.db_handler.changeJobStatus(job_id, 'a')
+                self.logger.info(f'successfully received exec files for job {job_id} from renter {addr[0]}')
+            else:
+                self.db_handler.changeJobStatus(job_id, 'uf')
+                self.logger.info(f'received invalid exec files for job {job_id} from renter {addr[0]}')
             return
         
         elif request_content['request-type'] == 'output-download':
             self.logger.info(f'connection: renter from {addr}; request type: output-download')
             job_id = self.db_handler.getJobIdFromToken(client_db_token, 'o')
-            requested_file_path = f'outputs/output{job_id}.txt'
+            requested_file_path = f'outputs/output{job_id}.zip'
             if os.path.exists(requested_file_path):
                 self.send_file(conn, requested_file_path)
                 self.logger.info(f'successfully sent output file for job {job_id} to renter {addr[0]}')
@@ -135,21 +142,30 @@ class Storage:
             self.logger.info(f'connection: leaser from {addr}; request type: output-upload')
             job_id = self.db_handler.getJobIdFromToken(client_db_token, 'o')
             file_size = request_content['file-size']
-            self.recv_file(conn, f'outputs/output{job_id}.txt', file_size)
+            self.recv_file(conn, f'outputs/output{job_id}.zip', file_size)
             self.db_handler.changeJobStatus(job_id, 'f')
             self.logger.info(f'successfully received output file for job {job_id} from leaser {addr[0]}')
             # TODO send success message somehow
             return
 
     def recv_file(self, conn, file_name, size):
-        f = open(file_name,'wb')
-
+        # receive checksum
+        checksum_received = conn.recv(32)
+        # receive file
+        checksum_computed = hashlib.md5()
+        f = open(file_name, "wb")
         while True:
-            l = conn.recv(4096)
-            if not l:
+            chunk = conn.recv(4096)
+            if not chunk:
                 break
-            f.write(l)
+            checksum_computed.update(chunk)
+            f.write(chunk)
         f.close()
+        # check for integrity
+        if checksum_computed.hexdigest().encode('utf-8') == checksum_received:
+            return 1
+        else:
+            return 0
 
     def send_file(self, conn, file_name):
         # calculate checksum

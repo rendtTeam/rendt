@@ -22,7 +22,6 @@ class Server:
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.s.bind(('', port))          # Bind to the port
 
-        # self.ssl_sock = self.ssl_context.wrap_socket(self.s, server_side=True)
         self.s = self.ssl_context.wrap_socket(self.s, server_side=True)
 
         self.db_handler = DBHandler()
@@ -34,7 +33,11 @@ class Server:
         self.logger.info('Server up and running.\n')
 
         while True:
-            conn, addr = self.s.accept()
+            try:
+                conn, addr = self.s.accept()
+            except Exception as e:
+                self.logger.error('Error in accepting request:' + str(e))
+                continue
             try:
                 Thread(target=self.serve_client, args=(conn, addr)).start()
             except:
@@ -132,22 +135,28 @@ class Server:
             req_pipe.write(response_content, 'text/json')
         else:
             email, pswd = request['email'], request['password']
-            authToken = self.auth.sign_in_user(email, pswd)
-            if authToken == 1:
-                self.logger.warning(f'could not sign in: bad credentials from {addr}.')
+            user_id, user_type = self.db_handler.getUserIdAndType(email)
+            if user_id is None:
+                self.logger.warning(f'could not sign in: email not registered.')
                 response_content = {'status': 'error',
                                     'error-msg': 'bad credentials'
                                         }
                 req_pipe.write(response_content, 'text/json')
             else:
-                user_id, user_type = self.db_handler.getUserIdAndType(email)
-                self.db_handler.addAuthToken(user_id, authToken)
-                self.logger.info(f'successful sign in. uid: {user_id}')
-                response_content = {'status': 'success',
-                                    'authToken': authToken,
-                                    'user-type': user_type
-                                        }
-                req_pipe.write(response_content, 'text/json')                
+                authToken = self.auth.sign_in_user(email, pswd, user_id)
+                if authToken == 1:
+                    self.logger.warning(f'could not sign in: bad credentials from {addr}.')
+                    response_content = {'status': 'error',
+                                        'error-msg': 'bad credentials'
+                                            }
+                    req_pipe.write(response_content, 'text/json')
+                else:
+                    self.logger.info(f'successful sign in. uid: {user_id}')
+                    response_content = {'status': 'success',
+                                        'authToken': authToken,
+                                        'user-type': user_type
+                                            }
+                    req_pipe.write(response_content, 'text/json')                
 
     def refuse_client(self, conn, addr):
         req_pipe = Messaging(conn, addr)
@@ -159,7 +168,7 @@ class Server:
 
     def serve_renter_request(self, req_pipe, conn, addr, uid):
         header, request_content = req_pipe.jsonheader, req_pipe.request
-        if request_content['request-type'] == 'get-job-notifications':
+        if request_content['request-type'] == 'get-job-statuses':
             self.logger.info(f'connection: leaser from {addr}; request type: get-job-statuses')
             job_statuses = self.db_handler.getJobStatuses(uid)
             response_content = {'status': 'success',
@@ -167,6 +176,15 @@ class Server:
                                 }
             req_pipe.write(response_content, 'text/json')
             self.logger.info(f'job statuses sent to renter at {addr}')
+        elif request_content['request-type'] == 'get-job-status':
+            self.logger.info(f'connection: leaser from {addr}; request type: get-job-status')
+            job_id = request_content['job-id']
+            job_status = self.db_handler.getJobStatus(job_id)
+            response_content = {'status': 'success',
+                                'job-status': job_status,
+                                }
+            req_pipe.write(response_content, 'text/json')
+            self.logger.info(f'job status sent to renter at {addr}')
         elif request_content['request-type'] == 'executable-upload-permission':
             self.logger.info(f'connection: renter {uid} from {addr}; request type: executable-upload-permission')
             job_id = self.generate_job_id() # some unique id generator
@@ -259,6 +277,15 @@ class Server:
                                 }
             req_pipe.write(response_content, 'text/json')
             self.logger.info(f'available jobs sent to leaser at {addr}')
+        elif request_content['request-type'] == 'get-job-status':
+            self.logger.info(f'connection: leaser from {addr}; request type: get-job-status')
+            job_id = request_content['job-id']
+            job_status = self.db_handler.getJobStatus(job_id)
+            response_content = {'status': 'success',
+                                'job-status': job_status,
+                                }
+            req_pipe.write(response_content, 'text/json')
+            self.logger.info(f'job status sent to renter at {addr}')
         elif request_content['request-type'] == 'mark-available':
             self.logger.info(f'connection: leaser from {addr}; request type: mark-available')
             self.db_handler.setLeaserStatus(uid, 'a')

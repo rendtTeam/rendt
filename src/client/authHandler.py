@@ -14,7 +14,11 @@ class Auth:
         global server_addr
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         ssl_sock = self.ssl_context.wrap_socket(s)
-        ssl_sock.connect(server_addr)
+        try:
+            ssl_sock.connect(server_addr)
+        except:
+            print('coulnd\'t sign in; server unavailable')
+            return
 
         content = { 'request-type': 'sign-in', 
                     'email': email,
@@ -39,7 +43,11 @@ class Auth:
         global server_addr
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         ssl_sock = self.ssl_context.wrap_socket(s)
-        ssl_sock.connect(server_addr)
+        try:
+            ssl_sock.connect(server_addr)
+        except:
+            print('coulnd\'t sign in; server unavailable')
+            return
 
         content = { 'request-type': 'sign-up',
                     'email': email,
@@ -56,6 +64,7 @@ class Auth:
         response = request_pipe.response
         ssl_sock.close()
         s.close()
+
         if response['status'] == 'error':
             print('ERROR:', response['error-msg'])
         else:
