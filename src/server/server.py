@@ -1,7 +1,7 @@
 # TODO
 # * surround 'send's with try-except clauses
 
-import socket, ssl
+import socket, ssl, smtplib
 import sys, os
 import logging
 import random
@@ -398,6 +398,26 @@ class Server:
                                 }
             req_pipe.write(response_content, 'text/json')
      
+    
+    def sendmail(self, receiver_email, message):
+        port = 587  # For starttls
+        smtp_server = "smtp.gmail.com"
+        sender_email = "rendtus@gmail.com"
+        password = "rendt123C"
+        
+        """\
+        Subject: no-reply Rendt
+
+        
+        """
+        context = ssl.create_default_context()
+        with smtplib.SMTP(smtp_server, port) as server:
+            server.ehlo()  # Can be omitted
+            server.starttls(context=context)
+            server.ehlo()  # Can be omitted
+            server.login(sender_email, password)
+            server.sendmail(sender_email, receiver_email, message)
+    
     def generate_db_token(self):
         token = int(random.random()*90000)+10000
         while not self.db_handler.checkDBTokenAvailability(token):

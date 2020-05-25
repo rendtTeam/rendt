@@ -548,6 +548,11 @@ class ReceiverWindow(QWidget):
 
         # Getting permission for execution
         db_token, files_size = self.receiver.get_permission_to_download_job(job_id)
+        
+        
+        
+        # Cenk fix path
+
 
         # Downloading file to be executed
         self.receiver.download_file_from_db('files.zip', db_token, files_size)
