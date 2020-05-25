@@ -99,11 +99,24 @@ class DBHandler(object):
                 "Could not end session successfully: {}".format(err))
             exit(1)
 
-    def queryJobs(self, status='a'):
+    def getJobs(self, status='a'):
         query = f'SELECT job_id FROM jobs WHERE job_status = "{status}"'
         self._executeQuery(query)
         rows = self.__cursor.fetchall()
         return [row[0] for row in rows]
+
+    def isFinished(self, job_id):
+        query = f'SELECT job_id FROM jobs WHERE job_id = {job_id} AND job_status = "f"'
+        self._executeQuery(query)
+        rows = self.__cursor.fetchall()
+        return len(rows) == 1
+    
+    def queryLeasers(self, status='a'):
+        # TODO return username and reliability score/uptime/last logged in as well
+        query = f'SELECT user_id, machine_details FROM leasers WHERE status = "{status}"'
+        self._executeQuery(query)
+        rows = self.__cursor.fetchall()
+        return rows
 
     def addJob(self, user_id, job_id, job_type, files_size, token, status='a', comments=''):
         # add job to list of jobs
@@ -114,6 +127,33 @@ class DBHandler(object):
         # add tokens to renter jobs table
         query = f'INSERT INTO exec_file_tokens (job_id, db_token, file_size) VALUES ({job_id}, "{token}", {files_size})'
         self._executeQuery(query)
+
+    def submitJobOrder(self, order_id, renter_id, job_id, job_desription, job_mode, leaser_id, status='p'):
+        query = f'INSERT INTO job_orders (order_id, enter_id, job_id, job_desc, job_mode, leaser_id, status) \
+                VALUES ({order_id}, {renter_id}, {job_id}, "{job_desription}", "{job_mode}", {leaser_id}, "{status}")'
+        self._executeQuery(query)
+
+    def updateJobOrderStatus(self, order_id, response):
+        query = f'UPDATE job_orders SET status = "{response}" WHERE order_id = {order_id}'
+        self._executeQuery(query)
+
+    def getJobRequests(self, leaser_id):
+        query = f'SELECT order_id, renter_id, job_id, job_desc, job_mode FROM job_orders WHERE leaser_id = {leaser_id}'
+        self._executeQuery(query)
+        rows = self.__cursor.fetchall()
+        return rows
+
+    def getJobStatus(self, job_id):
+        query = f'SELECT job_status FROM jobs WHERE job_id = {job_id}'
+        self._executeQuery(query)
+        rows = self.__cursor.fetchall()
+        return rows[0][0]
+
+    def getJobStatuses(self, renter_id):
+        query = f'SELECT job_id, job_desc, job_mode, leaser_id FROM job_orders WHERE renter_id = {renter_id}'
+        self._executeQuery(query)
+        rows = self.__cursor.fetchall()
+        return rows
 
     def getExecfileToken(self, job_id):
         query = f'SELECT db_token FROM exec_file_tokens WHERE job_id = {job_id}'
@@ -159,6 +199,15 @@ class DBHandler(object):
         if len(rows) == 1:
             return rows[0][0]
 
+    def getAuthToken(self, email):
+        user_id = self.getUserIdAndType(email)[0]
+        if user_id:
+            query = f'SELECT auth_token FROM active_auth_tokens WHERE user_id = {user_id}'
+            self._executeQuery(query)
+            rows = self.__cursor.fetchall()
+            if len(rows) == 1:
+                return rows[0][0]
+            
     def addAuthToken(self, user_id, token):
         query = f'INSERT INTO active_auth_tokens (user_id, auth_token) VALUES ({user_id}, "{token}")'
         self._executeQuery(query)        
@@ -183,6 +232,13 @@ class DBHandler(object):
         if len(rows) == 1:
             return rows[0][0]
 
+    def setJobFileSize(self, job_id, file_size):
+        query = f'UPDATE exec_file_tokens SET file_size = {file_size} WHERE job_id = {job_id}'
+        self._executeQuery(query)
+
+        query = f'UPDATE jobs SET files_size = {file_size} WHERE job_id = {job_id}'
+        self._executeQuery(query)
+
     def getOutputFileSize(self, job_id):
         query = f'SELECT file_size FROM output_file_tokens WHERE job_id = {job_id}'
         self._executeQuery(query)
@@ -190,10 +246,6 @@ class DBHandler(object):
         if len(rows) == 1:
             return rows[0][0]
 
-    def addAuthToken(self, user_id, token):
-        query = f'INSERT INTO active_auth_tokens (user_id, auth_token) VALUES ({user_id}, "{token}")'
-        self._executeQuery(query)
-    
     # Blacklist holds expired aythentication tokens alongside the user id
     def addAuthTokenToBList(self, user_id, token):
         query = f'INSERT INTO archived_auth_tokens (user_id, auth_token) VALUES ({user_id}, "{token}")'
@@ -207,6 +259,12 @@ class DBHandler(object):
 
     def checkAuthTokenAvailability(self, token):
         query = f'SELECT auth_token FROM active_auth_tokens WHERE auth_token = "{token}"'
+        self._executeQuery(query)
+        rows = self.__cursor.fetchall()
+        return len(rows) == 0
+
+    def checkOrderIdAvailability(self, oid):
+        query = f'SELECT order_id FROM job_orders WHERE order_id = {oid}'
         self._executeQuery(query)
         rows = self.__cursor.fetchall()
         return len(rows) == 0
@@ -267,7 +325,20 @@ class DBHandler(object):
         if len(rows) == 1:
             return rows[0]
 
-    """
-    def getSessionHandler(self):
-        return self.__mySession
-    """
+    def setLeaserStatus(self, uid, status):
+        if self.canLease(uid):
+            query = f'UPDATE leasers SET status = "{status}" WHERE user_id = {uid}'
+            self._executeQuery(query)
+            return True
+        return False
+
+    def canLease(self, uid):
+        '''
+        check if user is a leaser and isn't running any jobs(?)
+        '''
+        query = f'SELECT FROM leasers WHERE user_id = {uid}'
+        self._executeQuery(query)
+        rows = self.__cursor.fetchall()
+        if len(rows) == 1: # user is a leaser
+            # TODO maybe do more checks
+            return True
