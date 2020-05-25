@@ -82,9 +82,11 @@ class Server:
         else:
             self.authHandler = Authentication()
             if req_pipe.request.get('request-type') == 'sign-in':
+                #TODO
                 # check db generate token and send
                 self.signInAuthToken = self.authHandler.createAuthToken()
             elif req_pipe.request.get('request-type') == 'sign-up':
+                #TODO
                 # check db add to db do sth
                 self.signInAuthToken = self.authHandler.createAuthToken()
             else:

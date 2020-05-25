@@ -29,7 +29,7 @@ class Sender:
         self.authToken = response["authToken"]
 
         s.close()
-        
+
     def signUp(self,  email, password):
         global server_addr
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -82,7 +82,8 @@ class Sender:
         s.connect(server_addr)
 
         file_size = os.path.getsize(path_to_file)
-
+        #TODO
+        #content must be changed for every function
         content = { 'role': 'renter',
                     'request-type': 'executable-upload',
                     'job-id': job_id,

@@ -80,7 +80,9 @@ class Receiver:
         global server_addr
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect(server_addr)
-
+        
+        #TODO
+        #content must be changed for every function
         content = {'role': 'leaser',
                     'request-type': 'execute-permission',
                     'job-id': job_id}
