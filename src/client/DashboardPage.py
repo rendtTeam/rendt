@@ -695,6 +695,10 @@ class DashboardPage(QScrollArea):
         else:
             self.classicTheme()
 
+    def addRequests(self):
+        self.rentingList.addRequests()
+        self.leasingList.addRequests()
+
     def darkTheme(self):
         self.container.setStyleSheet( 'background: rgb(57, 57, 57);\n'
                             'color: white;\n'

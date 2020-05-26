@@ -2,6 +2,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QScrollArea, QPushButton, QLabel, QWidget, QVBoxLayout, QStackedWidget, QHBoxLayout, QMainWindow
 
 from LoggedInWindow import LoggedInWidget
+from LoggedInWindow import Sidebar
 
 from sender import Sender
 from receiver import Receiver
@@ -225,9 +226,8 @@ class LoginPage(QWidget):
             authToken, user_type = cred
             self.parent.loggedInWidget = LoggedInWidget()
             self.parent.loggedInWidget.setAuthToken(authToken)
+            self.parent.loggedInWidget.sidebar.selectPage(self.parent.loggedInWidget.sidebar.dashboard, 'Dashboard')
             self.parent.setCentralWidget(self.parent.loggedInWidget)
-            self.parent.loggedInWidget.dashboardPage.rentingList.addRequests()
-            self.parent.loggedInWidget.dashboardPage.leasingList.addRequests()
         
         # self.parent.loggedInWidget = LoggedInWidget()
         # self.parent.setCentralWidget(self.parent.loggedInWidget)
