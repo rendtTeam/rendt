@@ -181,7 +181,7 @@ class LeasersList(QScrollArea):
 
         self.layout = QVBoxLayout()
         self.layout.addWidget(colsRow, alignment = QtCore.Qt.AlignTop)
-        self.layout.setContentsMargins(0, 0, 0, 65)
+        self.layout.setContentsMargins(0, 0, 0, 85)
         self.setLayout(self.layout)
         # self.setMouseTracking(True)
 
@@ -255,14 +255,14 @@ class LeasersList(QScrollArea):
                 widget.setOddStyle()
 
         leaser.setStyleSheet(   'QPushButton {\n'
-                                '  background: rgb(120, 120, 120);'
+                                '  background: rgb(12, 136, 3);'
                                 '  border: 0px solid white;\n'
                                 '}\n'
                                 'QPushButton:hover {\n'
-                                '  background: rgb(120, 120, 120);\n'
+                                '  background: rgb(12, 136, 3);\n'
                                 '}\n'
                                 'QPushButton:pressed {\n'
-                                '  background: rgb(120, 120, 120);\n'
+                                '  background: rgb(12, 136, 3);\n'
                                 '}\n')
 
         self.parent.selectedLeaser = leaser.layout.itemAt(0).widget().text()
@@ -442,7 +442,22 @@ class RentalTypePage(QWidget):
         self.distributedBtn = CustomSquareButton(self)
         self.distributedBtn.setHeader('Distributed')
         self.distributedBtn.setImage('../../assets/img/distributed_w.png')
-        self.distributedBtn.setFooter('Distributed rentals use multiple machines for\n computations to make the execution faster for\nparallel programs')   
+        self.distributedBtn.setFooter('Coming soon')   
+        self.distributedBtn.setStyleSheet( 'QPushButton {\n'
+                                            '   background: rgba(100, 100, 100, 0.6);\n'
+                                            '   border: 0px solid white;\n'
+                                            '   color: white;\n'
+                                            '}\n'
+                                            'QPushButton:hover {\n'
+                                            '   background: rgba(100, 100, 100, 0.6);\n'
+                                            '}\n'
+                                            'QPushButton:pressed {\n'
+                                            '   background: rgba(100, 100, 100, 0.6);\n'
+                                            '}\n'
+                                            'QLabel {\n'
+                                            '   background: transparent;\n'
+                                            '   border: 0px solid white;\n'
+                                            '}\n')
         # self.distributedBtn.setGraphicsEffect(self.shadow)     
 
         self.buttonsRow = QWidget()
@@ -495,6 +510,41 @@ class RentalTypePage(QWidget):
         self.parent.leasersListPage.show()
         self.parent.leasersListPage.getAvalLeasers()
         self.parent.leasersListPage.setJobId(self.jobId)
+
+class SuccessfulRequest(QWidget):
+    def __init__(self):
+        super(SuccessfulRequest, self).__init__()
+
+        self.label = QLabel(self)
+        self.label.setText('Request successfully sent to leaser')
+        self.label.setFont(QtGui.QFont('Arial', 30, 400))
+        self.label.adjustSize()
+        self.label.setAlignment(QtCore.Qt.AlignCenter)
+        self.label.setStyleSheet('background: transparent;\n'
+                                 'border: 0px solid white;\n'
+                                 'font-weight: bold;\n'
+                                 'color: white;\n')
+        
+        self.setStyleSheet( 'background: rgb(44, 108, 52);\n'
+                            'border: 0px solid white;\n'
+                            'color: white;\n')
+
+        layout = QVBoxLayout()
+        layout.addWidget(self.label)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setAlignment(QtCore.Qt.AlignCenter)
+
+        widget = QWidget(self)
+        widget.setLayout(layout)
+        widget.setContentsMargins(0, 0, 0, 0)
+        widget.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+
+        self.layout = QVBoxLayout()
+        self.layout.addWidget(widget)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setAlignment(QtCore.Qt.AlignCenter)
+
+        self.setLayout(self.layout)
 
 class LeasersListPage(QWidget):
     def __init__(self, parent):
@@ -572,6 +622,12 @@ class LeasersListPage(QWidget):
 
     def sendReq(self):
         self.parent.parent.sender.submit_job_order(int(self.jobId), self.selectedLeaser)
+        self.sendReqBtn.hide()
+        self.parent.uploadPage.hide()
+        self.parent.rentalTypePage.hide()
+        self.parent.leasersListPage.hide()
+        self.parent.success.show()
+
         # self.parent.parent.rentPage = RentPage(self.parent.parent)
 
     def setJobId(self, jobId):
@@ -624,8 +680,10 @@ class RentPage(QScrollArea):
         self.uploadPage = UploadPage(self)
         self.rentalTypePage = RentalTypePage(self)
         self.leasersListPage = LeasersListPage(self)
+        self.success = SuccessfulRequest()
         self.rentalTypePage.hide()
         self.leasersListPage.hide()
+        self.success.hide()
 
         widget = QWidget(self)
         layout = QVBoxLayout()
@@ -633,7 +691,8 @@ class RentPage(QScrollArea):
         layout.addWidget(self.uploadPage)
         layout.addWidget(self.rentalTypePage)
         layout.addWidget(self.leasersListPage)
-        layout.setContentsMargins(0, 0, 0, 50)
+        layout.addWidget(self.success)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.setAlignment(QtCore.Qt.AlignHCenter)
         layout.setSpacing(30)
 

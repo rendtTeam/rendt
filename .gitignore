@@ -9,3 +9,4 @@ src/client/files.zip
 **/.DS_Store
 
 src/client/rendt.exe
+*.zip
