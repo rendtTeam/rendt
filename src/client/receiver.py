@@ -24,6 +24,21 @@ class Receiver(Client):
             print('error:', response['error-msg'])
         else:
             print('Something went very wrong')
+    
+    def mark_unavailable(self):
+        content = { 'authToken': self.authToken,
+                    'role': 'leaser',
+                    'request-type': 'mark-unavailable',
+                    }
+        
+        response = self.send_request_server(content)
+        
+        if response['status'] == 'success':
+            print('marked as unavailable')
+        elif response['status'] == 'error':
+            print('error:', response['error-msg'])
+        else:
+            print('Something went very wrong')
 
     def get_job_notifications(self):
         content = { 'authToken': self.authToken,
@@ -67,7 +82,7 @@ class Receiver(Client):
             print('successfully declined order', order_id)
         else:
             print('error')
-            
+
     def download_file_from_db(self, path_to_file, db_token, file_size):
         global storage_addr
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

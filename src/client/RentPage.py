@@ -2,6 +2,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QScrollArea, QPushButton, QLabel, QWidget, QVBoxLayout, QStackedWidget, QHBoxLayout, QMainWindow
 
 import os
+import platform
 
 class CustomSquareButton(QPushButton):
     def __init__(self, parent):
@@ -73,42 +74,34 @@ class CustomSquareButton(QPushButton):
         self.footerLabel.setText(e)
         self.footerLabel.adjustSize()
 
-class LeaserRow(QWidget):
+class LeaserRow(QPushButton):
     def __init__(self, parent):
         super(LeaserRow, self).__init__()
 
         self.parent = parent
-        self.clicked = None
-        self.setMouseTracking(True)
         self.layout = None
 
-    def setClicked(self, e):
-        self.clicked = e
-
-    def mousePressEvent(self, e):
-        self.clicked(self) 
-
     def setOddStyle(self):
-        self.setStyleSheet( 'QWidget {\n'
+        self.setStyleSheet( 'QPushButton {\n'
                             '  background: rgb(58, 58, 58);'
                             '  border: 0px solid white;\n'
                             '}\n'
-                            'QWidget:hover {\n'
+                            'QPushButton:hover {\n'
                             '  background: rgb(48, 48, 48);\n'
                             '}\n'
-                            'QWidget:pressed {\n'
+                            'QPushButton:pressed {\n'
                             '  background: rgb(40, 40, 40);\n'
                             '}\n')
     
     def setEvenStyle(self):
-        self.setStyleSheet( 'QWidget {\n'
+        self.setStyleSheet( 'QPushButton {\n'
                             '  background: rgb(81, 81, 81);'
                             '  border: 0px solid white;\n'
                             '}\n'
-                            'QWidget:hover {\n'
+                            'QPushButton:hover {\n'
                             '  background: rgb(65, 65, 65);\n'
                             '}\n'
-                            'QWidget:pressed {\n'
+                            'QPushButton:pressed {\n'
                             '  background: rgb(50, 50, 50);\n'
                             '}\n')
 
@@ -234,9 +227,9 @@ class LeasersList(QScrollArea):
         # layout.setSpacing(10)
         layout.setAlignment(QtCore.Qt.AlignVCenter)
         widget.layout = layout
-        widget.setLayout(layout)
+        widget.setLayout(widget.layout)
         widget.setFixedHeight(65)
-        widget.setClicked(self.selectLeaser)
+        widget.clicked.connect(self.selectLeaser)
         # widget.setFixedWidth(807)
 
         if (self.form.rowCount() % 2 == 0):
@@ -250,9 +243,9 @@ class LeasersList(QScrollArea):
             self.groupBox.setLayout(self.form)
             self.setWidget(self.groupBox)
     
-    def selectLeaser(self, e):
-        leaser = e
-        print(str(leaser))
+    def selectLeaser(self):
+        leaser = self.sender()
+        # print(str(leaser))
         
         for i in range (self.form.rowCount()):
             widget = self.form.itemAt(i).widget()
@@ -261,14 +254,14 @@ class LeasersList(QScrollArea):
             else:
                 widget.setOddStyle()
 
-        leaser.setStyleSheet(   'QWidget {\n'
+        leaser.setStyleSheet(   'QPushButton {\n'
                                 '  background: rgb(120, 120, 120);'
                                 '  border: 0px solid white;\n'
                                 '}\n'
-                                'QWidget:hover {\n'
+                                'QPushButton:hover {\n'
                                 '  background: rgb(120, 120, 120);\n'
                                 '}\n'
-                                'QWidget:pressed {\n'
+                                'QPushButton:pressed {\n'
                                 '  background: rgb(120, 120, 120);\n'
                                 '}\n')
 
@@ -370,7 +363,10 @@ class UploadPage(QWidget):
         dialog = QtWidgets.QFileDialog()
         fileName = dialog.getOpenFileName(self, 'Open file', '.')
         self.fileName = fileName[0]
-        print('File name: ' + str(self.fileName))
+
+        file_dir, file_name = os.path.split(self.fileName)
+        if (len(file_name) > 0):
+            self.uploadZipBtn.setFooter(file_name)
     
     def uploadFile(self, e):
         if (len(self.fileName) > 0):
