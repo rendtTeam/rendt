@@ -524,6 +524,7 @@ class LeaseIdlePage(QWidget):
 
     def goToDockerSpecificationsPage(self):
         self.parent.changeStatus('not_leasing')
+        # self.parent.parent.receiver.mark_unava
         self.parent.dockerSpecificationsPage.show()
         self.parent.leaseIdlePage.hide()
     
