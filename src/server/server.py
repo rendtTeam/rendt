@@ -289,6 +289,14 @@ class Server:
                                 }
             req_pipe.write(response_content, 'text/json')
             self.logger.info(f'leaser {uid} marked available')
+        elif request_content['request-type'] == 'mark-unavailable':
+            self.logger.info(f'connection: leaser from {addr}; request type: mark-unavailable')
+
+            self.db_handler.markUnavailable(uid)
+            response_content = {'status': 'success',
+                                }
+            req_pipe.write(response_content, 'text/json')
+            self.logger.info(f'leaser {uid} marked unavailable')
         elif request_content['request-type'] == 'get-job-requests':
             self.logger.info(f'connection: leaser from {addr}; request type: get-job-requests')
             job_requests = self.db_handler.getJobRequests(uid)

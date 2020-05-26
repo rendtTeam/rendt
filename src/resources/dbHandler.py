@@ -169,7 +169,7 @@ class DBHandler(object):
         return rows[0][0]
 
     def getJobStatuses(self, renter_id): # TODO delete job_desc from here
-        query = f'SELECT job_id, job_desc, job_mode, leaser_id, status FROM job_orders WHERE renter_id = {renter_id}'
+        query = f'SELECT O.job_id, O.job_desc, O.job_mode, U.username, O.status FROM job_orders O, users U WHERE O.renter_id = {renter_id} AND O.leaser_id = U.user_id'
         self._executeQuery(query)
         rows = self.__cursor.fetchall()
         return rows
@@ -365,6 +365,19 @@ class DBHandler(object):
             self._executeQuery(query)
             return True
 
+    def markUnavailable(self, uid):
+        # if self.canLease(uid): # TODO check if user is a leaser or not
+        query = f'SELECT user_id FROM leasers WHERE user_id = {uid}'
+        self._executeQuery(query)
+        rows = self.__cursor.fetchall()
+        if len(rows) == 1: # user is in the leasers list
+            query = f'UPDATE leasers SET status = "u" WHERE user_id = {uid}'
+            self._executeQuery(query)
+            return True
+        else:
+            query = f'INSERT INTO leasers (user_id, status, machine_details) VALUES ({uid}, "u", "test")'
+            self._executeQuery(query)
+            return True
 
     def canLease(self, uid):
         '''
