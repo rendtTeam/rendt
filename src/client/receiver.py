@@ -24,6 +24,21 @@ class Receiver(Client):
             print('error:', response['error-msg'])
         else:
             print('Something went very wrong')
+    
+    def mark_unavailable(self):
+        content = { 'authToken': self.authToken,
+                    'role': 'leaser',
+                    'request-type': 'mark-unavailable',
+                    }
+        
+        response = self.send_request_server(content)
+        
+        if response['status'] == 'success':
+            print('marked as unavailable')
+        elif response['status'] == 'error':
+            print('error:', response['error-msg'])
+        else:
+            print('Something went very wrong')
 
     def get_job_notifications(self):
         content = { 'authToken': self.authToken,
@@ -35,7 +50,7 @@ class Receiver(Client):
 
         if response['status'] == 'success':
             print('received list of requests')
-            return response['requests']
+            return response['jobs']
         else:
             print('error: couldn\'t receive list of requests')
 
@@ -67,32 +82,6 @@ class Receiver(Client):
             print('successfully declined order', order_id)
         else:
             print('error')
-
-    def get_available_jobs(self):
-        content = { 'authToken': self.authToken,
-                    'role': 'leaser',
-                    'request-type': 'get-available-jobs',
-                    }
-        
-        response = self.send_request_server(content)
-
-        if response['status'] == 'success':
-            print('received list of jobs')
-            return response['jobs']
-        else:
-            print('error: couldn\'t receive list of jobs')
-
-    def get_permission_to_download_job(self, job_id):
-        content = { 'authToken': self.authToken,
-                    'role': 'leaser',
-                    'request-type': 'download-job-permission',
-                    'job-id': job_id}
-        
-        response = self.send_request_server(content)
-
-        if response['status'] == 'success':
-            print('received db token')
-            return response['db-token'], response['file-size']
 
     def download_file_from_db(self, path_to_file, db_token, file_size):
         global storage_addr
@@ -126,7 +115,7 @@ class Receiver(Client):
 
     def execute_job(self, path_to_executable, path_to_output):
         # execute job
-        f = open("Dockerfile", "a")
+        f = open("Dockerfile", "w")
 
 
         f.write('FROM gcc\n')
@@ -143,22 +132,22 @@ class Receiver(Client):
 
         home_dir = os.system("docker build -t rendt .")
         home_dir = os.system("docker run -it -d --name rendtcont rendt")
-        home_dir = os.system("rm Dockerfile") 
+        # home_dir = os.system("DEL Dockerfile") 
 
 
-        home_dir = os.system("docker exec -it rendtcont bash -c 'cd files && chmod +x run.sh'")
+        home_dir = os.system("docker exec -it rendtcont bash -c \"cd files && chmod +x run.sh\"")
         a = './run.sh >> sender_output.txt'
         print(a)
-        b = "docker exec -it rendtcont bash -c 'cd files && " + a + "'"
+        b = "docker exec -it rendtcont bash -c \"cd files && " + a + "\""
         home_dir = os.system(b) 
-        home_dir = os.system("docker exec -it rendtcont bash -c 'mv /files/sender_output.txt /files/output/sender_output.txt'") 
-        home_dir = os.system("docker exec -it rendtcont bash -c 'cd files && zip -r -X output.zip output'") 
+        home_dir = os.system("docker exec -it rendtcont bash -c \"mv /files/sender_output.txt /files/output/sender_output.txt\"") 
+        home_dir = os.system("docker exec -it rendtcont bash -c \"cd files && zip -r -X output.zip output\"") 
         #home_dir = os.system("docker cp rendtcont:/sender_output.txt " + path_to_output)
         home_dir = os.system("docker cp rendtcont:/files/output.zip " + path_to_output)
         home_dir = os.system("docker stop rendtcont")
         home_dir = os.system("docker container rm rendtcont")
 
-        home_dir = os.system("cat " + path_to_output)
+        # home_dir = os.system("cat " + path_to_output)
 
     def get_permission_to_upload_output(self, job_id, path_to_file):
         file_size = os.path.getsize(path_to_file)
@@ -167,8 +156,8 @@ class Receiver(Client):
                     'role': 'leaser',
                     'request-type': 'output-upload-permission',
                     'job-id': job_id,
-                    'file-size': file_size,
-                    'file-type': 'txt'}
+                    'file-size': file_size
+                    }
         
         response = self.send_request_server(content)
 
@@ -186,12 +175,8 @@ class Receiver(Client):
             print('coulnd\'t upload output; server does not respond')
             return
 
-        file_size = os.path.getsize(path_to_file)
-
         content = { 'role': 'leaser',
                     'request-type': 'output-upload',
-                    'file-size': file_size,
-                    'file-type': 'txt',
                     'job-id': job_id,
                     'db-token': db_token
                     }
