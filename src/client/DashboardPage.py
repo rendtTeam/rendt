@@ -3,6 +3,8 @@ from PyQt5.QtWidgets import QScrollArea, QPushButton, QLabel, QWidget, QVBoxLayo
 
 import threading
 
+import os, sys
+
 from RentPage import CustomSquareButton
 
 class LeasingRequest(QWidget):
@@ -160,15 +162,26 @@ class LeasingRequest(QWidget):
             self.parent.parent.parent.leasePage.changeStatus('executing')
             response = self.parent.parent.parent.receiver.accept_order(self.orderId)
 
+            home_dir = os.system("pwd>pwd.txt")
+            f = open("pwd.txt", "r")
+            x = f.readline()
+            x = x.split("/")        
+            y = "/" + x[1] + "/" + x[2] + "/rendt"
+            home_dir = os.system("rm pwd.txt")
+            home_dir = os.system("mkdir " + y)
             if (response is not None):
                 db_token = response[0]
                 f_size = response[1]
 
-                self.parent.parent.parent.receiver.download_file_from_db('files.zip', db_token, f_size)
+                self.parent.parent.parent.receiver.download_file_from_db(y + '/files.zip', db_token, f_size)
 
-                self.parent.parent.parent.receiver.execute_job('files.zip', 'renter_output.zip')
-                db_token = self.parent.parent.parent.receiver.get_permission_to_upload_output(self.jobId, 'renter_output.zip')
-                self.parent.parent.parent.receiver.upload_output_to_db('renter_output.zip', self.jobId, db_token)
+                self.parent.parent.parent.receiver.execute_job(y + '/files.zip', y + '/output.zip')
+                db_token = self.parent.parent.parent.receiver.get_permission_to_upload_output(self.jobId, y + '/output.zip')
+                self.parent.parent.parent.receiver.upload_output_to_db(y + '/output.zip', self.jobId, db_token)
+                home_dir = os.system("rm -R files.zip")
+                home_dir = os.system("rm -R output.zip")
+                self.hide()
+                self.destroy()
                 self.parent.parent.parent.leasePage.changeStatus('idle')
                 self.parent.parent.parent.leasePage.leaseExecPage.hide()
                 self.parent.parent.parent.leasePage.leaseExecPage.destroy()
@@ -497,8 +510,14 @@ class TaskPage(QWidget):
 
         if (response is not None):
             db_token, f_size = response
-
-            self.parent.parent.parent.sender.download_output_from_db('received_output.zip', db_token, f_size)
+            home_dir = os.system("pwd>pwd.txt")
+            f = open("pwd.txt", "r")
+            x = f.readline()
+            x = x.split("/")        
+            y = "/" + x[1] + "/" + x[2] + "/rendt"
+            home_dir = os.system("rm pwd.txt")
+            home_dir = os.system("mkdir " + y)
+            self.parent.parent.parent.sender.download_output_from_db(y + '/output.zip', db_token, f_size)
 
     def calculateFee(self):
         #TODO: Fee calculation
