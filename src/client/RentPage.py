@@ -575,7 +575,7 @@ class LeasersListPage(QWidget):
         self.setLayout(self.layout)
 
     def sendReq(self):
-        self.parent.parent.sender.submit_job_order(int(self.jobId), int(self.selectedLeaser))
+        self.parent.parent.sender.submit_job_order(int(self.jobId), self.selectedLeaser)
         # self.parent.parent.rentPage = RentPage(self.parent.parent)
 
     def setJobId(self, jobId):
