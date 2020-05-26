@@ -1,101 +1,197 @@
 /* Variables */
+:root {
+  --body-color: rgb(247, 250, 252);
+  --button-color: rgb(30, 166, 114);
+  --accent-color: #0a721b;
+  --link-color: #ffffff;
+  --font-color: rgb(105, 115, 134);
+  --body-font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  --radius: 6px;
+  --form-width: 400px;
+}
+
+/* Base */
 * {
   box-sizing: border-box;
 }
-
 body {
-  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: var(--body-font-family);
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
+}
+
+/* Layout */
+.sr-root {
   display: flex;
-  justify-content: center;
-  align-content: center;
-  height: 100vh;
-  width: 100vw;
-}
-
-form {
-  width: 30vw;
-  min-width: 500px;
-  align-self: center;
-  box-shadow: 0px 0px 0px 0.5px rgba(50, 50, 93, 0.1),
-    0px 2px 5px 0px rgba(50, 50, 93, 0.1), 0px 1px 1.5px 0px rgba(0, 0, 0, 0.07);
-  border-radius: 7px;
-  padding: 40px;
-}
-
-input {
-  border-radius: 6px;
-  margin-bottom: 6px;
-  padding: 12px;
-  border: 1px solid rgba(50, 50, 93, 0.1);
-  height: 44px;
-  font-size: 16px;
+  flex-direction: row;
   width: 100%;
-  background: white;
+  max-width: 980px;
+  padding: 48px;
+  align-content: center;
+  justify-content: center;
+  height: auto;
+  min-height: 100vh;
+  margin: 0 auto;
+}
+.sr-main {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 100%;
+  align-self: center;
+  padding: 75px 50px;
+  background: var(--body-color);
+  width: var(--form-width);
+  border-radius: var(--radius);
+  box-shadow: 0px 0px 0px 0.5px rgba(50, 50, 93, 0.1),
+  0px 2px 5px 0px rgba(50, 50, 93, 0.1),
+  0px 1px 1.5px 0px rgba(0, 0, 0, 0.07);
 }
 
-.result-message {
-  line-height: 22px;
-  font-size: 16px;
-}
-
-.result-message a {
-  color: rgb(89, 111, 214);
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.hidden {
-  display: none;
-}
-
-#card-error {
-  color: rgb(105, 115, 134);
+.sr-field-error {
+  color: var(--font-color);
   text-align: left;
   font-size: 13px;
   line-height: 17px;
   margin-top: 12px;
 }
 
-#card-element {
-  border-radius: 4px 4px 0 0 ;
-  padding: 12px;
-  border: 1px solid rgba(50, 50, 93, 0.1);
+/* Inputs */
+.sr-input,
+input[type="text"] {
+  border: 1px solid var(--gray-border);
+  border-radius: var(--radius);
+  padding: 5px 12px;
   height: 44px;
   width: 100%;
+  transition: box-shadow 0.2s ease;
   background: white;
+  -moz-appearance: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.sr-input:focus,
+input[type="text"]:focus,
+button:focus,
+.focused {
+  box-shadow: 0 0 0 1px rgba(50, 151, 211, 0.3), 0 1px 1px 0 rgba(0, 0, 0, 0.07),
+    0 0 0 4px rgba(50, 151, 211, 0.3);
+  outline: none;
+  z-index: 9;
+}
+.sr-input::placeholder,
+input[type="text"]::placeholder {
+  color: var(--gray-light);
+}
+.sr-result {
+  height: 44px;
+  -webkit-transition: height 1s ease;
+  -moz-transition: height 1s ease;
+  -o-transition: height 1s ease;
+  transition: height 1s ease;
+  color: var(--font-color);
+  overflow: auto;
+}
+.sr-result code {
+  overflow: scroll;
+}
+.sr-result.expand {
+  height: 350px;
 }
 
-#payment-request-button {
-  margin-bottom: 32px;
+.sr-combo-inputs-row {
+  box-shadow: 0px 0px 0px 0.5px rgba(50, 50, 93, 0.1),
+    0px 2px 5px 0px rgba(50, 50, 93, 0.1), 0px 1px 1.5px 0px rgba(0, 0, 0, 0.07);
+  border-radius: 7px;
 }
 
 /* Buttons and links */
 button {
-  background: #5469d4;
-  color: #ffffff;
-  font-family: Arial, sans-serif;
-  border-radius: 0 0 4px 4px;
+  background: var(--accent-color);
+  border-radius: var(--radius);
+  color: white;
   border: 0;
   padding: 12px 16px;
-  font-size: 16px;
+  margin-top: 16px;
   font-weight: 600;
   cursor: pointer;
-  display: block;
   transition: all 0.2s ease;
+  display: block;
   box-shadow: 0px 4px 5.5px 0px rgba(0, 0, 0, 0.07);
   width: 100%;
 }
 button:hover {
   filter: contrast(115%);
 }
+button:active {
+  transform: translateY(0px) scale(0.98);
+  filter: brightness(0.9);
+}
 button:disabled {
   opacity: 0.5;
-  cursor: default;
+  cursor: none;
 }
 
-/* spinner/processing state, errors */
+a {
+  color: var(--link-color);
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+a:hover {
+  filter: brightness(0.8);
+}
+
+a:active {
+  filter: brightness(0.5);
+}
+
+/* Code block */
+code,
+pre {
+  font-family: "SF Mono", "IBM Plex Mono", "Menlo", monospace;
+  font-size: 12px;
+}
+
+/* Stripe Element placeholder */
+.sr-card-element {
+  padding-top: 12px;
+}
+
+/* Responsiveness */
+@media (max-width: 720px) {
+  .sr-root {
+    flex-direction: column;
+    justify-content: flex-start;
+    padding: 48px 20px;
+    min-width: 320px;
+  }
+
+  .sr-header__logo {
+    background-position: center;
+  }
+
+  .sr-payment-summary {
+    text-align: center;
+  }
+
+  .sr-content {
+    display: none;
+  }
+
+  .sr-main {
+    width: 100%;
+    height: 305px;
+    background: rgb(247, 250, 252);
+    box-shadow: 0px 0px 0px 0.5px rgba(50, 50, 93, 0.1),
+      0px 2px 5px 0px rgba(50, 50, 93, 0.1),
+      0px 1px 1.5px 0px rgba(0, 0, 0, 0.07);
+    border-radius: 6px;
+  }
+}
+
+/* todo: spinner/processing state, errors, animations */
+
 .spinner,
 .spinner:before,
 .spinner:after {
@@ -122,7 +218,7 @@ button:disabled {
 .spinner:before {
   width: 10.4px;
   height: 20.4px;
-  background: #5469d4;
+  background: var(--accent-color);
   border-radius: 20.4px 0 0 20.4px;
   top: -0.2px;
   left: -0.2px;
@@ -134,7 +230,7 @@ button:disabled {
 .spinner:after {
   width: 10.4px;
   height: 10.2px;
-  background: #5469d4;
+  background: var(--accent-color);
   border-radius: 0 10.2px 10.2px 0;
   top: -0.1px;
   left: 10.2px;
@@ -165,8 +261,36 @@ button:disabled {
   }
 }
 
-@media only screen and (max-width: 600px) {
-  form {
-    width: 80vw;
+/* Animated form */
+
+.sr-root {
+  animation: 0.4s form-in;
+  animation-fill-mode: both;
+  animation-timing-function: ease;
+}
+
+.hidden {
+  display: none;
+}
+
+@keyframes field-in {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0px) scale(1);
+  }
+}
+
+@keyframes form-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
   }
 }
