@@ -67,33 +67,7 @@ class Receiver(Client):
             print('successfully declined order', order_id)
         else:
             print('error')
-
-    def get_available_jobs(self):
-        content = { 'authToken': self.authToken,
-                    'role': 'leaser',
-                    'request-type': 'get-available-jobs',
-                    }
-        
-        response = self.send_request_server(content)
-
-        if response['status'] == 'success':
-            print('received list of jobs')
-            return response['jobs']
-        else:
-            print('error: couldn\'t receive list of jobs')
-
-    def get_permission_to_download_job(self, job_id):
-        content = { 'authToken': self.authToken,
-                    'role': 'leaser',
-                    'request-type': 'download-job-permission',
-                    'job-id': job_id}
-        
-        response = self.send_request_server(content)
-
-        if response['status'] == 'success':
-            print('received db token')
-            return response['db-token'], response['file-size']
-
+            
     def download_file_from_db(self, path_to_file, db_token, file_size):
         global storage_addr
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -126,7 +100,7 @@ class Receiver(Client):
 
     def execute_job(self, path_to_executable, path_to_output):
         # execute job
-        f = open("Dockerfile", "a")
+        f = open("Dockerfile", "w")
 
 
         f.write('FROM gcc\n')
@@ -167,8 +141,8 @@ class Receiver(Client):
                     'role': 'leaser',
                     'request-type': 'output-upload-permission',
                     'job-id': job_id,
-                    'file-size': file_size,
-                    'file-type': 'txt'}
+                    'file-size': file_size
+                    }
         
         response = self.send_request_server(content)
 
@@ -186,12 +160,8 @@ class Receiver(Client):
             print('coulnd\'t upload output; server does not respond')
             return
 
-        file_size = os.path.getsize(path_to_file)
-
         content = { 'role': 'leaser',
                     'request-type': 'output-upload',
-                    'file-size': file_size,
-                    'file-type': 'txt',
                     'job-id': job_id,
                     'db-token': db_token
                     }

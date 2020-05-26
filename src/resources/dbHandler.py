@@ -3,7 +3,6 @@ from mysql.connector import errorcode
 import logging
 import datetime
 
-
 class DBHandler(object):
     def __init__(self):
         self.logger = self.configure_logging()
@@ -113,12 +112,20 @@ class DBHandler(object):
     
     def queryLeasers(self, status='a'):
         # TODO return username and reliability score/uptime/last logged in as well
-        query = f'SELECT user_id, machine_details FROM leasers WHERE status = "{status}"'
+        query = f'SELECT U.username, L.machine_details FROM leasers L, users U WHERE L.user_id=U.user_id AND L.status = "{status}"'
+        # f'SELECT user_id, machine_details FROM leasers WHERE status = "{status}"'
         self._executeQuery(query)
         rows = self.__cursor.fetchall()
         return rows
 
-    def addJob(self, user_id, job_id, job_type, files_size, token, status='a', comments=''):
+    def getUserId(self, username):
+        query = f'SELECT user_id FROM users WHERE username = "{username}"'
+        self._executeQuery(query)
+        rows = self.__cursor.fetchall()
+        if len(rows) == 1:
+            return rows[0][0]
+
+    def addJob(self, user_id, job_id, job_type, files_size, token, comments, status='a'):
         # add job to list of jobs
         query = f'INSERT INTO jobs (user_id, job_id, job_type, files_size, job_status, additional_comments) \
                 VALUES ({user_id}, {job_id}, "{job_type}", {files_size}, "{status}", "{comments}")'
@@ -128,17 +135,17 @@ class DBHandler(object):
         query = f'INSERT INTO exec_file_tokens (job_id, db_token, file_size) VALUES ({job_id}, "{token}", {files_size})'
         self._executeQuery(query)
 
-    def submitJobOrder(self, order_id, renter_id, job_id, job_desription, job_mode, file_size, leaser_id, status='p'):
+    def submitJobOrder(self, order_id, renter_id, job_id, job_mode, leaser_id, status='p'):
         query = f'INSERT INTO job_orders (order_id, renter_id, job_id, job_desc, job_mode, file_size, leaser_id, status) \
-                VALUES ({order_id}, {renter_id}, {job_id}, "{job_desription}", "{job_mode}", {file_size}, {leaser_id}, "{status}")'
+                VALUES ({order_id}, {renter_id}, {job_id}, "to be deleted", "{job_mode}", 0, {leaser_id}, "{status}")'
         self._executeQuery(query)
 
     def updateJobOrderStatus(self, order_id, response):
         query = f'UPDATE job_orders SET status = "{response}" WHERE order_id = {order_id}'
         self._executeQuery(query)
 
-    def getJobRequests(self, leaser_id): # TODO change this to separate jobs of different statuses
-        query = f'SELECT order_id, renter_id, job_id, job_desc, job_mode, status FROM job_orders WHERE leaser_id = {leaser_id}'
+    def getJobRequests(self, leaser_id): # TODO delete job_desc from here
+        query = f'SELECT order_id, renter_id, job_id, job_desc, job_mode, status FROM job_orders WHERE leaser_id = {leaser_id} AND status = "p"'
         self._executeQuery(query)
         rows = self.__cursor.fetchall()
         return rows
@@ -149,13 +156,19 @@ class DBHandler(object):
         rows = self.__cursor.fetchall()
         return rows[0][0]
 
+    def getOrderId(self, job_id):
+        query = f'SELECT order_id FROM job_orders WHERE job_id = {job_id}'
+        self._executeQuery(query)
+        rows = self.__cursor.fetchall()
+        return rows[0][0]
+
     def getJobStatus(self, job_id):
         query = f'SELECT job_status FROM jobs WHERE job_id = {job_id}'
         self._executeQuery(query)
         rows = self.__cursor.fetchall()
         return rows[0][0]
 
-    def getJobStatuses(self, renter_id):
+    def getJobStatuses(self, renter_id): # TODO delete job_desc from here
         query = f'SELECT job_id, job_desc, job_mode, leaser_id, status FROM job_orders WHERE renter_id = {renter_id}'
         self._executeQuery(query)
         rows = self.__cursor.fetchall()
@@ -337,6 +350,21 @@ class DBHandler(object):
             self._executeQuery(query)
             return True
         return False
+
+    def markAvailable(self, uid):
+        # if self.canLease(uid): # TODO check if user is a leaser or not
+        query = f'SELECT user_id FROM leasers WHERE user_id = {uid}'
+        self._executeQuery(query)
+        rows = self.__cursor.fetchall()
+        if len(rows) == 1: # user is in the leasers list
+            query = f'UPDATE leasers SET status = "a" WHERE user_id = {uid}'
+            self._executeQuery(query)
+            return True
+        else:
+            query = f'INSERT INTO leasers (user_id, status, machine_details) VALUES ({uid}, "a", "test")'
+            self._executeQuery(query)
+            return True
+
 
     def canLease(self, uid):
         '''

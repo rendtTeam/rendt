@@ -374,7 +374,7 @@ class UploadPage(QWidget):
     
     def uploadFile(self, e):
         if (len(self.fileName) > 0):
-            job_id, db_token = self.parent.parent.sender.get_permission_to_upload_job(e)
+            job_id, db_token = self.parent.parent.sender.get_permission_to_upload_job(e, 'test')
             self.parent.parent.sender.upload_file_to_db(e, job_id, db_token)
             self.goToRentalTypePage(job_id)
             self.parent.fileName = self.fileName
@@ -575,8 +575,7 @@ class LeasersListPage(QWidget):
         self.setLayout(self.layout)
 
     def sendReq(self):
-        file_size = os.path.getsize(self.parent.fileName)
-        self.parent.parent.sender.submit_job_order(int(self.jobId), int(self.selectedLeaser), file_size, 'test')
+        self.parent.parent.sender.submit_job_order(int(self.jobId), self.selectedLeaser)
         # self.parent.parent.rentPage = RentPage(self.parent.parent)
 
     def setJobId(self, jobId):
