@@ -13,7 +13,7 @@ f.write('RUN apt install -y default-jdk\n')
 f.write('RUN apt-get install -y gcc\n')
 f.write('RUN apt-get install -y python-pip\n')
 f.write('RUN apt-get install -y python3-pip\n')
-f.write('RUN apt-get install -y mpi\n')
+f.write('RUN apt-get install -y openmpi-bin\n')
 
 
 f.close()
