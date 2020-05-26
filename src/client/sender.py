@@ -20,7 +20,7 @@ class Sender(Client):
 
         if response['status'] == 'success':
             print('received list of statuses')
-            return response['jobs']
+            return response['statuses']
         else:
             print('error: couldn\'t receive list of statuses')
     
@@ -38,14 +38,16 @@ class Sender(Client):
         else:
             print('error: couldn\'t receive list of leasers')
 
-    def get_permission_to_upload_job(self, path_to_file):
+    def get_permission_to_upload_job(self, path_to_file, job_description):
         file_size = os.path.getsize(path_to_file)
 
         content = { 'authToken': self.authToken,
                     'role': 'renter',
                     'request-type': 'executable-upload-permission',
                     'file-size': file_size,
-                    'file-type': 'py'}
+                    'job-description': job_description,
+                    'file-type': 'py'
+                    }
 
         response = self.send_request_server(content)
         
@@ -90,15 +92,13 @@ class Sender(Client):
         else:
             print('File is being uploaded/processed')
 
-    def submit_job_order(self, job_id, leaser_id, file_size, job_description, job_mode='n'):
+    def submit_job_order(self, job_id, leaser_id, job_mode='n'):
         content = { 'authToken': self.authToken,
                     'role': 'renter',
                     'request-type': 'submit-job-order',
                     'job-mode': job_mode,
                     'job-id': job_id,
-                    'file-size': file_size,
                     'leaser-id': leaser_id,
-                    'job-description': job_description
                     }
         
         response = self.send_request_server(content)

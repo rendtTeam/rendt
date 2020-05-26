@@ -3,7 +3,6 @@ from mysql.connector import errorcode
 import logging
 import datetime
 
-
 class DBHandler(object):
     def __init__(self):
         self.logger = self.configure_logging()
@@ -118,7 +117,7 @@ class DBHandler(object):
         rows = self.__cursor.fetchall()
         return rows
 
-    def addJob(self, user_id, job_id, job_type, files_size, token, status='a', comments=''):
+    def addJob(self, user_id, job_id, job_type, files_size, token, comments, status='a'):
         # add job to list of jobs
         query = f'INSERT INTO jobs (user_id, job_id, job_type, files_size, job_status, additional_comments) \
                 VALUES ({user_id}, {job_id}, "{job_type}", {files_size}, "{status}", "{comments}")'
@@ -128,17 +127,17 @@ class DBHandler(object):
         query = f'INSERT INTO exec_file_tokens (job_id, db_token, file_size) VALUES ({job_id}, "{token}", {files_size})'
         self._executeQuery(query)
 
-    def submitJobOrder(self, order_id, renter_id, job_id, job_desription, job_mode, file_size, leaser_id, status='p'):
+    def submitJobOrder(self, order_id, renter_id, job_id, job_mode, leaser_id, status='p'):
         query = f'INSERT INTO job_orders (order_id, renter_id, job_id, job_desc, job_mode, file_size, leaser_id, status) \
-                VALUES ({order_id}, {renter_id}, {job_id}, "{job_desription}", "{job_mode}", {file_size}, {leaser_id}, "{status}")'
+                VALUES ({order_id}, {renter_id}, {job_id}, "to be deleted", "{job_mode}", 0, {leaser_id}, "{status}")'
         self._executeQuery(query)
 
     def updateJobOrderStatus(self, order_id, response):
         query = f'UPDATE job_orders SET status = "{response}" WHERE order_id = {order_id}'
         self._executeQuery(query)
 
-    def getJobRequests(self, leaser_id): # TODO change this to separate jobs of different statuses
-        query = f'SELECT order_id, renter_id, job_id, job_desc, job_mode, status FROM job_orders WHERE leaser_id = {leaser_id}'
+    def getJobRequests(self, leaser_id): # TODO delete job_desc from here
+        query = f'SELECT order_id, renter_id, job_id, job_desc, job_mode, status FROM job_orders WHERE leaser_id = {leaser_id} AND status = "p"'
         self._executeQuery(query)
         rows = self.__cursor.fetchall()
         return rows
@@ -149,13 +148,19 @@ class DBHandler(object):
         rows = self.__cursor.fetchall()
         return rows[0][0]
 
+    def getOrderId(self, job_id):
+        query = f'SELECT order_id FROM job_orders WHERE job_id = {job_id}'
+        self._executeQuery(query)
+        rows = self.__cursor.fetchall()
+        return rows[0][0]
+
     def getJobStatus(self, job_id):
         query = f'SELECT job_status FROM jobs WHERE job_id = {job_id}'
         self._executeQuery(query)
         rows = self.__cursor.fetchall()
         return rows[0][0]
 
-    def getJobStatuses(self, renter_id):
+    def getJobStatuses(self, renter_id): # TODO delete job_desc from here
         query = f'SELECT job_id, job_desc, job_mode, leaser_id, status FROM job_orders WHERE renter_id = {renter_id}'
         self._executeQuery(query)
         rows = self.__cursor.fetchall()

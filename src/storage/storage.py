@@ -98,8 +98,8 @@ class Storage:
         if request_content['request-type'] == 'executable-upload':
             self.logger.info(f'connection: renter from {addr}; request type: executable-upload')
             job_id = self.db_handler.getJobIdFromToken(client_db_token, 'x')
-            file_size = request_content['file-size']
-            st = self.recv_file(conn, f'jobs/toexec{job_id}.zip', file_size)
+            # file_size = request_content['file-size']
+            st = self.recv_file(conn, f'jobs/toexec{job_id}.zip')
             if st:
                 self.db_handler.changeJobStatus(job_id, 'a')
                 self.logger.info(f'successfully received exec files for job {job_id} from renter {addr[0]}')
@@ -141,14 +141,15 @@ class Storage:
         elif request_content['request-type'] == 'output-upload':
             self.logger.info(f'connection: leaser from {addr}; request type: output-upload')
             job_id = self.db_handler.getJobIdFromToken(client_db_token, 'o')
-            file_size = request_content['file-size']
-            self.recv_file(conn, f'outputs/output{job_id}.zip', file_size)
+            self.recv_file(conn, f'outputs/output{job_id}.zip')
             self.db_handler.changeJobStatus(job_id, 'f')
+            order_id = self.db_handler.getOrderId(job_id)
+            self.db_handler.updateJobOrderStatus(order_id, 'f')
             self.logger.info(f'successfully received output file for job {job_id} from leaser {addr[0]}')
             # TODO send success message somehow
             return
 
-    def recv_file(self, conn, file_name, size):
+    def recv_file(self, conn, file_name):
         # receive checksum
         checksum_received = conn.recv(32)
         # receive file
