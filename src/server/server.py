@@ -21,6 +21,8 @@ class Server:
 
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.s.bind(('', port))          # Bind to the port
+        self.s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
 
         self.s = self.ssl_context.wrap_socket(self.s, server_side=True)
 

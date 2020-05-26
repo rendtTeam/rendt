@@ -13,7 +13,7 @@ class LeasingRequest(QWidget):
 
         self.jobId = None
         self.orderId = None
-        self.renterId = None
+        self.renterUserName = None
         self.jobDesc = None
         self.jobMode = None
         self.status = None
@@ -134,7 +134,7 @@ class LeasingRequest(QWidget):
         self.setContentsMargins(0, 0, 0, 0)
     
     def setRenter(self, e):
-        self.renterLabel.setText(str(e))
+        self.renterLabel.setText(e)
         self.renterLabel.adjustSize()
         self.acceptBtn.clicked.connect(self.acceptReq)
         self.rejectBtn.clicked.connect(self.rejectReq)
@@ -590,13 +590,13 @@ class LeasingList(QWidget):
         for r in requests:
             request = LeasingRequest(self)
             request.orderId = r[0]
-            request.renterId = r[1]
+            request.renterUserName = r[1]
             request.jobId = r[2]
             request.jobDesc = r[3]
             request.jobMode = r[4]
             request.status = r[5]
             
-            request.setRenter(request.renterId)
+            request.setRenter(request.renterUserName)
 
             self.requests.append(request)
             self.layout.addWidget(request)

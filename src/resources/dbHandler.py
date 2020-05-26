@@ -145,7 +145,7 @@ class DBHandler(object):
         self._executeQuery(query)
 
     def getJobRequests(self, leaser_id): # TODO delete job_desc from here
-        query = f'SELECT order_id, renter_id, job_id, job_desc, job_mode, status FROM job_orders WHERE leaser_id = {leaser_id} AND status = "p"'
+        query = f'SELECT O.order_id, U.username, O.job_id, O.job_desc, O.job_mode, O.status FROM job_orders O, users U WHERE leaser_id = {leaser_id} AND status = "p" AND U.user_id = O.renter_id'
         self._executeQuery(query)
         rows = self.__cursor.fetchall()
         return rows
