@@ -534,6 +534,7 @@ class RentingList(QWidget):
         self.setLayout(self.layout)
     
     def addRequests(self):
+        self.requests = []
         stats = self.parent.parent.sender.get_job_statuses()
 
         for job in stats:
@@ -583,6 +584,7 @@ class LeasingList(QWidget):
         self.setLayout(self.layout)
     
     def addRequests(self):
+        self.requests = []
         requests = self.parent.parent.receiver.get_job_notifications()
 
         for r in requests:

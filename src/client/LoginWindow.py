@@ -226,6 +226,8 @@ class LoginPage(QWidget):
             self.parent.loggedInWidget = LoggedInWidget()
             self.parent.loggedInWidget.setAuthToken(authToken)
             self.parent.setCentralWidget(self.parent.loggedInWidget)
+            self.parent.loggedInWidget.dashboardPage.rentingList.addRequests()
+            self.parent.loggedInWidget.dashboardPage.leasingList.addRequests()
         
         # self.parent.loggedInWidget = LoggedInWidget()
         # self.parent.setCentralWidget(self.parent.loggedInWidget)
