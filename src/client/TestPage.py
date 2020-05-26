@@ -26,13 +26,13 @@ class TestPage(QWidget):
         self.layout.setContentsMargins(0, 0, 0, 0)
 
         
-        # timer = QtCore.QTimer(
-        #     self, 
-        #     interval=1, 
-        #     timeout=self.changeColor
-        # )
+        timer = QtCore.QTimer(
+            self, 
+            interval=1, 
+            timeout=self.changeColor
+        )
 
-        # timer.start()
+        timer.start()
 
     @QtCore.pyqtSlot()
     def changeColor(self):

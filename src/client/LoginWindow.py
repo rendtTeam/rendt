@@ -224,7 +224,11 @@ class LoginPage(QWidget):
         if cred:
             authToken, user_type = cred
             self.parent.loggedInWidget = LoggedInWidget()
+            self.parent.loggedInWidget.setAuthToken(authToken)
             self.parent.setCentralWidget(self.parent.loggedInWidget)
+        
+        # self.parent.loggedInWidget = LoggedInWidget()
+        # self.parent.setCentralWidget(self.parent.loggedInWidget)
 
 # NOTE:
 # Register page with LoginLineEdit and LoginButton instances

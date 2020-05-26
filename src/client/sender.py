@@ -90,11 +90,13 @@ class Sender(Client):
         else:
             print('File is being uploaded/processed')
 
-    def submit_job_order(self, job_id, leaser_id, job_description):
+    def submit_job_order(self, job_id, leaser_id, file_size, job_description, job_mode='n'):
         content = { 'authToken': self.authToken,
                     'role': 'renter',
                     'request-type': 'submit-job-order',
+                    'job-mode': job_mode,
                     'job-id': job_id,
+                    'file-size': file_size,
                     'leaser-id': leaser_id,
                     'job-description': job_description
                     }

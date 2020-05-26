@@ -35,7 +35,7 @@ class Receiver(Client):
 
         if response['status'] == 'success':
             print('received list of requests')
-            return response['requests']
+            return response['jobs']
         else:
             print('error: couldn\'t receive list of requests')
 
@@ -143,22 +143,22 @@ class Receiver(Client):
 
         home_dir = os.system("docker build -t rendt .")
         home_dir = os.system("docker run -it -d --name rendtcont rendt")
-        home_dir = os.system("rm Dockerfile") 
+        # home_dir = os.system("DEL Dockerfile") 
 
 
-        home_dir = os.system("docker exec -it rendtcont bash -c 'cd files && chmod +x run.sh'")
+        home_dir = os.system("docker exec -it rendtcont bash -c \"cd files && chmod +x run.sh\"")
         a = './run.sh >> sender_output.txt'
         print(a)
-        b = "docker exec -it rendtcont bash -c 'cd files && " + a + "'"
+        b = "docker exec -it rendtcont bash -c \"cd files && " + a + "\""
         home_dir = os.system(b) 
-        home_dir = os.system("docker exec -it rendtcont bash -c 'mv /files/sender_output.txt /files/output/sender_output.txt'") 
-        home_dir = os.system("docker exec -it rendtcont bash -c 'cd files && zip -r -X output.zip output'") 
+        home_dir = os.system("docker exec -it rendtcont bash -c \"mv /files/sender_output.txt /files/output/sender_output.txt\"") 
+        home_dir = os.system("docker exec -it rendtcont bash -c \"cd files && zip -r -X output.zip output\"") 
         #home_dir = os.system("docker cp rendtcont:/sender_output.txt " + path_to_output)
         home_dir = os.system("docker cp rendtcont:/files/output.zip " + path_to_output)
         home_dir = os.system("docker stop rendtcont")
         home_dir = os.system("docker container rm rendtcont")
 
-        home_dir = os.system("cat " + path_to_output)
+        # home_dir = os.system("cat " + path_to_output)
 
     def get_permission_to_upload_output(self, job_id, path_to_file):
         file_size = os.path.getsize(path_to_file)

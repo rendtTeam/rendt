@@ -5,6 +5,9 @@ from RentPage import RentPage
 from LeasePage import LeasePage
 from DashboardPage import DashboardPage
 
+from sender import Sender
+from receiver import Receiver
+
 # NOTE: 
 # A page for testing GUI and layouts
 from TestPage import TestPage
@@ -30,7 +33,7 @@ class SidebarElement(QWidget):
         # NOTE:
         # setting text color for the element depending on the theme
         if (parent.current_theme == 'Light'):
-            self.text_color = 'black'
+            self.text_color = 'white'
         else:
             self.text_color = 'white'
 
@@ -177,7 +180,8 @@ class Sidebar(QWidget):
         # class configurations
         self.setMouseTracking(True)
         self.setStyleSheet('background: rgba(0, 0, 0, 0.3);\n'
-                           'border: 0px solid white;\n')
+                           'border: 0px solid white;\n'
+                           'color: white;\n')
 
         # NOTE:
         # Sidebar elements
@@ -257,6 +261,7 @@ class Sidebar(QWidget):
                     e.setPage(self.parent.rentPage)
                 elif (e.page_title == 'Lease'):
                     self.parent.leasePage = LeasePage(self.parent)
+                    self.parent.leasePage.openLeasePage()
                     e.setPage(self.parent.leasePage)
                 elif (e.page_title == 'Dashboard'):
                     self.parent.dashboardPage = DashboardPage(self.parent)
@@ -291,6 +296,11 @@ class LoggedInWidget(QWidget):
         self.pages = []
         self.content = QMainWindow()
 
+        self.lease_status = 'not_leasing'
+
+        self.sender = None
+        self.receiver = None
+
         # NOTE:
         # initializing all the pages
         self.dashboardPage = DashboardPage(self)
@@ -309,7 +319,6 @@ class LoggedInWidget(QWidget):
 
         # NOTE:
         # setting current page
-        # self.content.setCentralWidget(self.testPage)
         self.content.setCentralWidget(self.testPage)
         self.sidebar = Sidebar(self)
 
@@ -329,6 +338,10 @@ class LoggedInWidget(QWidget):
         self.layout.setContentsMargins(0, 0, 0, 0)
 
         self.setLayout(self.layout)
+
+    def setAuthToken(self, auth_token):
+        self.receiver = Receiver(auth_token)
+        self.sender = Sender(auth_token)
 
     # NOTE:
     # setter function to change the theme

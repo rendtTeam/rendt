@@ -1,6 +1,8 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QScrollArea, QPushButton, QLabel, QWidget, QVBoxLayout, QStackedWidget, QHBoxLayout, QMainWindow
 
+import os
+
 class CustomSquareButton(QPushButton):
     def __init__(self, parent):
         super(CustomSquareButton, self).__init__()
@@ -71,9 +73,49 @@ class CustomSquareButton(QPushButton):
         self.footerLabel.setText(e)
         self.footerLabel.adjustSize()
 
+class LeaserRow(QWidget):
+    def __init__(self, parent):
+        super(LeaserRow, self).__init__()
+
+        self.parent = parent
+        self.clicked = None
+        self.setMouseTracking(True)
+        self.layout = None
+
+    def setClicked(self, e):
+        self.clicked = e
+
+    def mousePressEvent(self, e):
+        self.clicked(self) 
+
+    def setOddStyle(self):
+        self.setStyleSheet( 'QWidget {\n'
+                            '  background: rgb(58, 58, 58);'
+                            '  border: 0px solid white;\n'
+                            '}\n'
+                            'QWidget:hover {\n'
+                            '  background: rgb(48, 48, 48);\n'
+                            '}\n'
+                            'QWidget:pressed {\n'
+                            '  background: rgb(40, 40, 40);\n'
+                            '}\n')
+    
+    def setEvenStyle(self):
+        self.setStyleSheet( 'QWidget {\n'
+                            '  background: rgb(81, 81, 81);'
+                            '  border: 0px solid white;\n'
+                            '}\n'
+                            'QWidget:hover {\n'
+                            '  background: rgb(65, 65, 65);\n'
+                            '}\n'
+                            'QWidget:pressed {\n'
+                            '  background: rgb(50, 50, 50);\n'
+                            '}\n')
+
 class LeasersList(QScrollArea):
     def __init__(self, parent):
         super().__init__(parent)
+        self.parent = parent
         self.setWidgetResizable(True)
 
         self.form = QtWidgets.QFormLayout()
@@ -148,9 +190,10 @@ class LeasersList(QScrollArea):
         self.layout.addWidget(colsRow, alignment = QtCore.Qt.AlignTop)
         self.layout.setContentsMargins(0, 0, 0, 65)
         self.setLayout(self.layout)
+        # self.setMouseTracking(True)
 
     def addLeaser(self, user, specs, price):
-        widget = QWidget()
+        widget = LeaserRow(self)
         layout = QHBoxLayout()
         
         leaser = QLabel()
@@ -190,39 +233,49 @@ class LeasersList(QScrollArea):
         layout.setContentsMargins(30, 0, 30, 0)
         # layout.setSpacing(10)
         layout.setAlignment(QtCore.Qt.AlignVCenter)
+        widget.layout = layout
         widget.setLayout(layout)
         widget.setFixedHeight(65)
+        widget.setClicked(self.selectLeaser)
         # widget.setFixedWidth(807)
 
         if (self.form.rowCount() % 2 == 0):
-            widget.setStyleSheet('QWidget {\n'
-                                 '  background: rgb(81, 81, 81);'
-                                 '  border: 0px solid white;\n'
-                                 '}\n'
-                                 'QWidget:hover {\n'
-                                 '  background: rgb(65, 65, 65);\n'
-                                 '}\n'
-                                 'QWidget:pressed {\n'
-                                 '  background: rgb(50, 50, 50);\n'
-                                 '}\n')
+            widget.setEvenStyle()
         else:
-            widget.setStyleSheet('QWidget {\n'
-                                 '  background: rgb(58, 58, 58);'
-                                 '  border: 0px solid white;\n'
-                                 '}\n'
-                                 'QWidget:hover {\n'
-                                 '  background: rgb(48, 48, 48);\n'
-                                 '}\n'
-                                 'QWidget:pressed {\n'
-                                 '  background: rgb(40, 40, 40);\n'
-                                 '}\n')
+            widget.setOddStyle()
 
         self.form.addRow(widget)
 
         if (self.form.rowCount() == 1):
             self.groupBox.setLayout(self.form)
             self.setWidget(self.groupBox)
+    
+    def selectLeaser(self, e):
+        leaser = e
+        print(str(leaser))
+        
+        for i in range (self.form.rowCount()):
+            widget = self.form.itemAt(i).widget()
+            if (i % 2 == 0):
+                widget.setEvenStyle()
+            else:
+                widget.setOddStyle()
 
+        leaser.setStyleSheet(   'QWidget {\n'
+                                '  background: rgb(120, 120, 120);'
+                                '  border: 0px solid white;\n'
+                                '}\n'
+                                'QWidget:hover {\n'
+                                '  background: rgb(120, 120, 120);\n'
+                                '}\n'
+                                'QWidget:pressed {\n'
+                                '  background: rgb(120, 120, 120);\n'
+                                '}\n')
+
+        self.parent.selectedLeaser = leaser.layout.itemAt(0).widget().text()
+        print('Selected Leaser: ' + leaser.layout.itemAt(0).widget().text())
+
+# TODO: Filter and allow only ZIP files
 class UploadPage(QWidget):
     def __init__(self, parent):
         super(UploadPage, self).__init__()
@@ -241,6 +294,8 @@ class UploadPage(QWidget):
             self.lightTheme()
         else:
             self.classicTheme()
+
+        self.fileName = ''
 
         self.shadow = QtWidgets.QGraphicsDropShadowEffect()
         self.shadow.setBlurRadius(30)
@@ -270,6 +325,7 @@ class UploadPage(QWidget):
         self.uploadZipBtn.setImage('../../assets/img/zip_w.png')
 
         self.uploadZipBtn.setFooter('.zip file should include files to be executed\nwith necessary libraries and bash files etc.')   
+        self.uploadZipBtn.clicked.connect(self.chooseFile)
         # self.uploadZipBtn.setGraphicsEffect(self.shadow)     
 
         self.uploadBtn = QPushButton(self)
@@ -289,7 +345,7 @@ class UploadPage(QWidget):
         self.uploadBtn.setText('Upload')
         self.uploadBtn.setFixedHeight(65)
         self.uploadBtn.setFixedWidth(180)
-        self.uploadBtn.clicked.connect(self.goToRentalTypePage)
+        self.uploadBtn.clicked.connect(lambda:self.uploadFile(self.fileName))
 
         layout = QVBoxLayout()
         layout.addWidget(self.uploadFilesLabel, alignment = QtCore.Qt.AlignHCenter)
@@ -310,6 +366,21 @@ class UploadPage(QWidget):
         self.setLayout(self.layout)
         self.layout.setContentsMargins(0, 0, 0, 0)
 
+    def chooseFile(self):
+        dialog = QtWidgets.QFileDialog()
+        fileName = dialog.getOpenFileName(self, 'Open file', '.')
+        self.fileName = fileName[0]
+        print('File name: ' + str(self.fileName))
+    
+    def uploadFile(self, e):
+        if (len(self.fileName) > 0):
+            job_id, db_token = self.parent.parent.sender.get_permission_to_upload_job(e)
+            self.parent.parent.sender.upload_file_to_db(e, job_id, db_token)
+            self.goToRentalTypePage(job_id)
+            self.parent.fileName = self.fileName
+        else:
+            print("Choose file")
+
     def darkTheme(self):
         self.setStyleSheet( 'background: rgb(57, 57, 57);\n'
                             'color: white;\n'
@@ -325,8 +396,9 @@ class UploadPage(QWidget):
                             'color: white;\n'
                             'border: 0px solid white;\n')
     
-    def goToRentalTypePage(self):
+    def goToRentalTypePage(self, jobId):
         self.parent.rentalTypePage.show()
+        self.parent.rentalTypePage.setJobId(jobId)
         self.parent.leasersListPage.hide()
 
 class RentalTypePage(QWidget):
@@ -337,6 +409,7 @@ class RentalTypePage(QWidget):
         self.sizePolicy.setHeightForWidth(True)
 
         self.parent = parent
+        self.jobId = None
 
         self.current_theme = self.parent.current_theme
         self.current_font = self.parent.current_font
@@ -404,6 +477,9 @@ class RentalTypePage(QWidget):
         self.setLayout(self.layout)
         self.layout.setContentsMargins(0, 0, 0, 0)
 
+    def setJobId(self, e):
+        self.jobId = e
+
     def darkTheme(self):
         self.setStyleSheet( 'background: rgb(57, 57, 57);\n'
                             'color: white;\n'
@@ -421,6 +497,8 @@ class RentalTypePage(QWidget):
     
     def goToLeasersListPage(self):
         self.parent.leasersListPage.show()
+        self.parent.leasersListPage.getAvalLeasers()
+        self.parent.leasersListPage.setJobId(self.jobId)
 
 class LeasersListPage(QWidget):
     def __init__(self, parent):
@@ -430,6 +508,8 @@ class LeasersListPage(QWidget):
         self.sizePolicy.setHeightForWidth(True)
 
         self.parent = parent
+        self.jobId = None
+        self.selectedLeaser = None
 
         self.current_theme = self.parent.current_theme
         self.current_font = self.parent.current_font
@@ -465,9 +545,6 @@ class LeasersListPage(QWidget):
         self.leasersLabel.setGraphicsEffect(self.shadow2)
         
         self.leasersList = LeasersList(self)
-        self.leasersList.addLeaser('zxyctn', 'CPU: Intel Core i5 (2x) RAM: 8GB', '3$/h')
-        self.leasersList.addLeaser('zxyctn2', 'CPU: Intel Core i5 (2x) RAM: 8GB', '3$/h')
-        self.leasersList.addLeaser('zxyctn0', 'CPU: Intel Core i5 (2x) RAM: 8GB', '3$/h')
         
         self.sendReqBtn = QPushButton(self)
         self.sendReqBtn.setStyleSheet('QPushButton {\n'
@@ -486,6 +563,7 @@ class LeasersListPage(QWidget):
         self.sendReqBtn.setFixedHeight(55)
         self.sendReqBtn.setFixedWidth(180)
         self.sendReqBtn.setGraphicsEffect(self.shadow)
+        self.sendReqBtn.clicked.connect(self.sendReq)
 
         self.layout = QVBoxLayout()
         self.layout.addWidget(self.leasersLabel)
@@ -495,6 +573,21 @@ class LeasersListPage(QWidget):
         self.layout.setContentsMargins(50, 0, 50, 50)
         self.layout.setAlignment(QtCore.Qt.AlignHCenter)
         self.setLayout(self.layout)
+
+    def sendReq(self):
+        file_size = os.path.getsize(self.parent.fileName)
+        self.parent.parent.sender.submit_job_order(int(self.jobId), int(self.selectedLeaser), file_size, 'test')
+        # self.parent.parent.rentPage = RentPage(self.parent.parent)
+
+    def setJobId(self, jobId):
+        self.jobId = jobId
+
+    def getAvalLeasers(self):
+        leasers = self.parent.parent.sender.get_available_leasers()
+        print('Leasers: \n---------------------\n' + str(leasers))
+        
+        for l in leasers:
+            self.leasersList.addLeaser(str(l[0]), l[1], '3$/h')
 
     def darkTheme(self):
         self.setStyleSheet( 'background: rgb(57, 57, 57);\n'
@@ -523,6 +616,7 @@ class RentPage(QScrollArea):
         self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         self.setWidgetResizable(True)
 
+        self.fileName = None
         self.current_theme = self.parent.current_theme
         self.current_font = self.parent.current_font
 

@@ -1,6 +1,8 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QScrollArea, QPushButton, QLabel, QWidget, QVBoxLayout, QStackedWidget, QHBoxLayout, QMainWindow
 
+import threading
+
 from RentPage import CustomSquareButton
 
 class LeasingRequest(QWidget):
@@ -8,7 +10,14 @@ class LeasingRequest(QWidget):
         super(LeasingRequest, self).__init__()
 
         self.parent = parent
-        self.leasingUser = ''
+
+        self.jobId = None
+        self.orderId = None
+        self.renterId = None
+        self.jobDesc = None
+        self.jobMode = None
+        self.status = None
+
         self.requests = []
 
         self.setStyleSheet( 'background: rgba(255, 255, 255, 0.1);\n'
@@ -25,6 +34,12 @@ class LeasingRequest(QWidget):
                                             'font-weight: bold;\n'
                                             'border: 0px solid white;\n')
         self.requestByLabel.setAlignment(QtCore.Qt.AlignLeft)
+
+        self.shadow = QtWidgets.QGraphicsDropShadowEffect()
+        self.shadow.setBlurRadius(30)
+        self.shadow.setXOffset(0)
+        self.shadow.setYOffset(0)
+        self.shadow.setColor(QtGui.QColor('rgb(0, 0, 0)'))
 
         self.renterLabel = QLabel(self)
         self.renterLabel.setText('')
@@ -108,6 +123,7 @@ class LeasingRequest(QWidget):
         widget.setLayout(layout)
         widget.setContentsMargins(0, 0, 0, 0)
         widget.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        widget.setGraphicsEffect(self.shadow)
 
         self.layout = QVBoxLayout()
         self.layout.addWidget(widget)
@@ -118,10 +134,36 @@ class LeasingRequest(QWidget):
         self.setContentsMargins(0, 0, 0, 0)
     
     def setRenter(self, e):
-        self.renterLabel.setText(e)
+        self.renterLabel.setText(str(e))
         self.renterLabel.adjustSize()
-        #TODO: The function to be linked to Accept button
-        #TODO: The function to be linked to Reject button
+        self.acceptBtn.clicked.connect(self.acceptReq)
+        self.rejectBtn.clicked.connect(self.rejectReq)
+
+    def acceptReq(self, e):
+        self.parent.parent.parent.leasePage.changeStatus('executing')
+        t1 = threading.Thread(target=self.startExec)
+        t1.daemon = True
+        t1.start()
+
+    def startExec(self):
+        response = self.parent.parent.parent.receiver.accept_order(self.orderId)
+
+        if (response is not None):
+            db_token = response[0]
+            f_size = response[1]
+
+            self.parent.parent.parent.receiver.download_file_from_db('files.zip', db_token, f_size)
+
+            self.parent.parent.parent.receiver.execute_job('files.zip', 'renter_output.zip')
+            db_token = self.parent.parent.parent.receiver.get_permission_to_upload_output(self.jobId, 'renter_output.zip')
+            self.parent.parent.parent.receiver.upload_output_to_db('renter_output.zip', self.jobId, db_token)
+            self.hide()
+            self.destroy()
+            self.parent.parent.parent.leasePage.changeStatus('idle')
+
+    def rejectReq(self, e):
+        response = self.parent.parent.parent.receiver.decline_order(self.orderId)
+        self.destroy()
 
 class RentingRequest(QWidget):
     def __init__(self, parent):
@@ -130,9 +172,9 @@ class RentingRequest(QWidget):
         self.parent = parent
         self.taskPage = ''
 
-        self.setStyleSheet( 'background: rgba(255, 255, 255, 0.1);\n'
+        self.setStyleSheet( 'background: rgb(70, 70, 70);\n'
                             'color: white;\n'
-                            'border: 0px solid white;\n')
+                            'border: 0px solid rgb(100, 100, 100);\n')
         self.setFixedHeight(100)
 
         self.requestForLabel = QLabel(self)
@@ -203,8 +245,15 @@ class RentingRequest(QWidget):
         self.layout.setAlignment(QtCore.Qt.AlignTop)
         self.layout.setContentsMargins(0, 0, 0, 0)
 
+        self.shadow = QtWidgets.QGraphicsDropShadowEffect()
+        self.shadow.setBlurRadius(15)
+        self.shadow.setXOffset(0)
+        self.shadow.setYOffset(0)
+        self.shadow.setColor(QtGui.QColor(30, 30, 30))
+
         self.setLayout(self.layout)
         self.setContentsMargins(0, 0, 0, 0)
+        self.setGraphicsEffect(self.shadow)
 
     def setLeaserLabel(self, e):
         self.leaserLabel.setText(e)
@@ -463,8 +512,8 @@ class RentingList(QWidget):
         self.requests = []
 
         self.layout = QVBoxLayout()
-        self.layout.setContentsMargins(0, 0, 0, 50)
-        self.layout.setSpacing(5)
+        self.layout.setContentsMargins(30, 30, 30, 30)
+        self.layout.setSpacing(10)
         self.layout.setAlignment(QtCore.Qt.AlignTop)
         self.setLayout(self.layout)
     
@@ -516,9 +565,20 @@ class LeasingList(QWidget):
         self.layout.setAlignment(QtCore.Qt.AlignTop)
         self.setLayout(self.layout)
     
-    def addRequest(self, renterName):
-        request = LeasingRequest(self)
-        request.setRenter(renterName)
+    def addRequests(self):
+        requests = self.parent.parent.receiver.get_job_notifications()
+
+        for r in requests:
+            request = LeasingRequest(self)
+            request.orderId = r[0]
+            request.renterId = r[1]
+            request.jobId = r[2]
+            request.jobDesc = r[3]
+            request.jobMode = r[4]
+            request.status = r[5]
+            
+            request.setRenter(request.renterId)
+
         self.requests.append(request)
         self.layout.addWidget(request)
 
@@ -571,7 +631,8 @@ class DashboardPage(QScrollArea):
         self.rentingLabel.setAlignment(QtCore.Qt.AlignLeft)
         self.rentingLabel.setStyleSheet('background: transparent;\n'
                                         'border: 0px solid white;\n'
-                                        'font-weight: bold;\n') 
+                                        'font-weight: bold;\n'
+                                        'margin-left: 10px;\n') 
         self.rentingLabel.setGraphicsEffect(self.shadow)
 
         self.rentingList = RentingList(self)
@@ -587,11 +648,13 @@ class DashboardPage(QScrollArea):
         self.leasingLabel.setAlignment(QtCore.Qt.AlignLeft)
         self.leasingLabel.setStyleSheet('background: transparent;\n'
                                         'border: 0px solid white;\n'
-                                        'font-weight: bold;\n') 
+                                        'font-weight: bold;\n'
+                                        'margin-left: 10px;\n') 
         self.leasingLabel.setGraphicsEffect(self.shadow2)
         
         self.leasingList = LeasingList(self)
-        self.leasingList.addRequest('m4hmmd')
+        if (self.parent.sender is not None):
+            self.leasingList.addRequests()
 
         self.layout = QVBoxLayout()
         self.layout.addWidget(self.rentingLabel)
@@ -607,6 +670,28 @@ class DashboardPage(QScrollArea):
         self.container.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
 
         self.setWidget(self.container)
+
+        if (self.current_theme == 'Dark'):
+            self.darkTheme()
+        elif (self.current_theme == 'Light'):
+            self.lightTheme()
+        else:
+            self.classicTheme()
+
+    def darkTheme(self):
+        self.container.setStyleSheet( 'background: rgb(57, 57, 57);\n'
+                            'color: white;\n'
+                            'border: 0px solid white;\n')
+
+    def lightTheme(self):
+        self.container.setStyleSheet( 'background: rgb(204, 204, 204);\n'
+                            'color: white;\n'
+                            'border: 0px solid black;\n')
+
+    def classicTheme(self):
+        self.container.setStyleSheet( 'background: rgb(0, 23, 37);\n'
+                            'color: white;\n'
+                            'border: 0px solid white;\n')
 
     def goToTaskPage(self, taskPage):
         layout = QVBoxLayout()

@@ -94,7 +94,7 @@ class DockerInfo:
     # Get Docker Stats for CPU Usage percentage
     def getCpuUsage(self):
         if (self.exists): 
-            return self.client.containers.get('minikube').stats(stream = False).get('cpu_stats')['cpu_usage']['total_usage'] / self.client.containers.get('minikube').stats(stream = False).get('cpu_stats')['system_cpu_usage'] * 100 
+            return self.client.containers.get('rendtcont').stats(stream = False).get('cpu_stats')['cpu_usage']['total_usage'] / self.client.containers.get('rendtcont').stats(stream = False).get('cpu_stats')['system_cpu_usage'] * 100 
         else:
             return ''
 
@@ -102,7 +102,7 @@ class DockerInfo:
     # Get Docker Stats for Memory Usage percentage
     def getMemUsage(self):
         if (self.exists):
-            self.mem_stats = self.client.containers.get('minikube').stats(stream = False).get('memory_stats')
+            self.mem_stats = self.client.containers.get('rendtcont').stats(stream = False).get('memory_stats')
             return self.mem_stats['usage'] / self.mem_stats['limit'] * 100
         else:
             return ''
@@ -178,12 +178,13 @@ class NoDockerFoundPage(QWidget):
 
         self.noDockerFoundLabel = QLabel(self)
         self.noDockerFoundLabel.setText('Docker is not running')
-        self.noDockerFoundLabel.setFont(QtGui.QFont('Arial', 40, 1000))
+        self.noDockerFoundLabel.setFont(QtGui.QFont('Arial', 40, 400))
         self.noDockerFoundLabel.adjustSize()
         self.noDockerFoundLabel.setAlignment(QtCore.Qt.AlignHCenter)
         self.noDockerFoundLabel.setStyleSheet('background: transparent;\n'
                                               'border: 0px solid white;\n'
-                                              'margin-top: 50px;\n')
+                                              'margin-top: 50px;\n'
+                                              'font-weight: bold;\n')
 
         self.noDockerFoundLabel.setGraphicsEffect(self.shadow)
 
@@ -433,8 +434,11 @@ class DockerSpecificationsPage(QWidget):
                             'border: 0px solid white;\n')
     
     def goToLeaseIdlePage(self):
+        self.parent.parent.receiver.mark_available()
         self.parent.leaseIdlePage.show()
         self.parent.dockerSpecificationsPage.hide()
+        self.parent.leaseIdlePage.startLeasing()
+        self.destroy()
         # self.parent.leaseExecPage.show()
         # self.parent.dockerSpecificationsPage.hide()
 
@@ -515,8 +519,17 @@ class LeaseIdlePage(QWidget):
         self.setLayout(self.layout)
         self.setContentsMargins(0, 0, 0, 0)
     
+    def startLeasing(self):
+        self.parent.changeStatus('idle')
+
     def goToDockerSpecificationsPage(self):
+        self.parent.changeStatus('not_leasing')
         self.parent.dockerSpecificationsPage.show()
+        self.parent.leaseIdlePage.hide()
+    
+    def goToExecPage(self):
+        self.parent.leaseExecPage.show()
+        self.parent.leaseExecPage.startExecuting()
         self.parent.leaseIdlePage.hide()
 
 class LeaseExecPage(QWidget):
@@ -576,8 +589,6 @@ class LeaseExecPage(QWidget):
                                             'font-weight: bold;\n'
                                             'margin-left: 5px;\n')
 
-        self.getRealTimeHWUsage()
-
         layout = QVBoxLayout()
         layout.addWidget(self.execLabel, alignment = QtCore.Qt.AlignHCenter)
         layout.addWidget(self.cpuUsageLabel, alignment = QtCore.Qt.AlignVCenter)
@@ -615,9 +626,9 @@ class LeaseExecPage(QWidget):
                             'color: white;\n'
                             'border: 0px solid white;\n')
     
-    def goToDockerSpecificationsPage(self):
-        self.parent.dockerSpecificationsPage.show()
-        self.parent.leaseIdlePage.hide()
+    def startExecuting(self):
+        self.parent.changeStatus('executing')
+        self.getRealTimeHWUsage()
     
     def getRealTimeHWUsage(self):
         t1 = threading.Thread(target=self.getDockerCpuUsage)
@@ -657,6 +668,11 @@ class LeaseExecPage(QWidget):
 
     def getRealTimeCpuUsage(self):
         self.hardwareUsageLabel.setText('CPU: %.2f' % self.parent.dockerInfo.getCpuUsage())
+    
+    def finishExecuting(self, e):
+        self.parent.changeStatus('idle')
+        self.parent.leaseExecPage.hide()
+        self.parent.leaseIdlePage.show()
 
 class LeasePage(QWidget):
     def __init__(self, parent):
@@ -670,6 +686,8 @@ class LeasePage(QWidget):
         self.current_theme = self.parent.current_theme
         self.current_font = self.parent.current_font
 
+        self.status = self.parent.lease_status
+
         self.dockerInfo = DockerInfo()
 
         self.dockerSpecificationsPage = DockerSpecificationsPage(self)
@@ -677,20 +695,13 @@ class LeasePage(QWidget):
         self.leaseIdlePage = LeaseIdlePage(self)
         self.leaseExecPage = LeaseExecPage(self)
 
-        self.leaseIdlePage.hide()
-        self.leaseExecPage.hide()
-
-        if (self.dockerInfo.dockerExists()):
-            self.noDockerFoundPage.hide()
-        else:
-            self.dockerSpecificationsPage.hide()
-
         layout = QVBoxLayout()
 
         layout.addWidget(self.noDockerFoundPage)
         layout.addWidget(self.dockerSpecificationsPage)
         layout.addWidget(self.leaseIdlePage)
         layout.addWidget(self.leaseExecPage)
+
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setAlignment(QtCore.Qt.AlignHCenter)
         layout.setSpacing(30)
@@ -707,3 +718,28 @@ class LeasePage(QWidget):
 
         self.setLayout(self.layout)
         self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+    
+    def openLeasePage(self):
+        if (self.status == 'idle'):
+            self.dockerSpecificationsPage.goToLeaseIdlePage()
+            self.leaseIdlePage.startLeasing()
+            self.leaseExecPage.hide()
+            self.noDockerFoundPage.hide()
+            self.dockerSpecificationsPage.hide()
+        elif (self.status == 'executing'):
+            self.leaseIdlePage.goToExecPage()
+            self.leaseExecPage.startExecuting()
+            self.leaseIdlePage.hide()
+            self.noDockerFoundPage.hide()
+            self.dockerSpecificationsPage.hide()
+        elif (self.status == 'not_leasing'):
+            self.leaseIdlePage.hide()
+            self.leaseExecPage.hide()
+            if (self.dockerInfo.dockerExists()):
+                self.noDockerFoundPage.hide()
+            else:
+                self.dockerSpecificationsPage.hide()
+
+    def changeStatus(self, e):
+        self.parent.lease_status = e
+        self.status = e
