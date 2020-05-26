@@ -140,36 +140,39 @@ class LeasingRequest(QWidget):
         self.rejectBtn.clicked.connect(self.rejectReq)
 
     def acceptReq(self, e):
-        self.parent.parent.parent.leasePage.changeStatus('executing')
         t1 = threading.Thread(target=self.startExec)
         t1.daemon = True
         t1.start()
 
     def startExec(self):
-        response = self.parent.parent.parent.receiver.accept_order(self.orderId)
+        if (self.parent.parent.parent.leasePage.dockerInfo.dockerExists()):
+            self.parent.parent.parent.leasePage.changeStatus('executing')
+            response = self.parent.parent.parent.receiver.accept_order(self.orderId)
 
-        if (response is not None):
-            db_token = response[0]
-            f_size = response[1]
+            if (response is not None):
+                db_token = response[0]
+                f_size = response[1]
 
-            self.parent.parent.parent.receiver.download_file_from_db('files.zip', db_token, f_size)
+                self.parent.parent.parent.receiver.download_file_from_db('files.zip', db_token, f_size)
 
-            self.parent.parent.parent.receiver.execute_job('files.zip', 'renter_output.zip')
-            db_token = self.parent.parent.parent.receiver.get_permission_to_upload_output(self.jobId, 'renter_output.zip')
-            self.parent.parent.parent.receiver.upload_output_to_db('renter_output.zip', self.jobId, db_token)
-            self.hide()
-            self.destroy()
-            self.parent.parent.parent.leasePage.changeStatus('idle')
+                self.parent.parent.parent.receiver.execute_job('files.zip', 'renter_output.zip')
+                db_token = self.parent.parent.parent.receiver.get_permission_to_upload_output(self.jobId, 'renter_output.zip')
+                self.parent.parent.parent.receiver.upload_output_to_db('renter_output.zip', self.jobId, db_token)
+                self.hide()
+                self.destroy()
+                self.parent.parent.parent.leasePage.changeStatus('idle')
 
     def rejectReq(self, e):
         response = self.parent.parent.parent.receiver.decline_order(self.orderId)
+        self.hide()
         self.destroy()
 
 class RentingRequest(QWidget):
-    def __init__(self, parent):
+    def __init__(self, parent, jobInfo):
         super(RentingRequest, self).__init__()
 
         self.parent = parent
+        self.jobInfo = jobInfo
         self.taskPage = ''
 
         self.setStyleSheet( 'background: rgb(70, 70, 70);\n'
@@ -226,7 +229,9 @@ class RentingRequest(QWidget):
         self.requestBtn.setText('Status')
         self.requestBtn.setFixedWidth(130)
         self.requestBtn.setFixedHeight(100)
-        # self.requestBtn.clicked.connect(self.goToRentalTypePage)
+        
+        self.setRequestStatus(self.jobInfo[4])
+        self.setLeaserLabel(self.jobInfo[3])
 
         layout = QHBoxLayout()
         layout.addWidget(self.requestLabel, alignment = QtCore.Qt.AlignLeft)
@@ -256,14 +261,14 @@ class RentingRequest(QWidget):
         self.setGraphicsEffect(self.shadow)
 
     def setLeaserLabel(self, e):
-        self.leaserLabel.setText(e)
+        self.leaserLabel.setText(str(e))
         self.leaserLabel.adjustSize()
     
     def setRequestStatus(self, e):
-        self.taskPage = TaskPage(self.parent)
+        self.taskPage = TaskPage(self.parent, self.jobInfo[0])
         self.requestBtn.clicked.connect(lambda:self.parent.parent.goToTaskPage(self.taskPage))
 
-        if (e == 'Pending'):
+        if (e == 'p'):
             self.requestBtn.setText('Pending')
             self.requestBtn.setStyleSheet(  'QPushButton {\n'
                                             '   background: rgba(80, 80, 80, 0.9);\n'
@@ -276,7 +281,7 @@ class RentingRequest(QWidget):
                                             'QPushButton:pressed {\n'
                                             '   background: rgba(80, 80, 80, 0.3);\n'
                                             '}\n')
-        elif (e == 'Executing'):
+        elif (e == 'x'):
             self.requestBtn.setText('Executing')
             self.requestBtn.setStyleSheet(  'QPushButton {\n'
                                             '   background: rgba(0, 149, 20, 0.7);\n'
@@ -290,7 +295,7 @@ class RentingRequest(QWidget):
                                             '   background: rgba(0, 75, 10, 0.7);\n'
                                             '}\n')
             # TODO: Set function to be linked to the button
-        elif (e == 'Rejected'):
+        elif (e == 'd'):
             self.requestBtn.setText('Rejected')
             self.requestBtn.setStyleSheet(  'QPushButton {\n'
                                             '   background: rgba(246, 49, 49, 0.7);\n'
@@ -304,7 +309,7 @@ class RentingRequest(QWidget):
                                             '   background: rgba(123, 25, 25, 0.7);\n'
                                             '}\n')
             # TODO: Set function to be linked to the button
-        elif (e == 'Finished'):
+        elif (e == 'f'):
             self.requestBtn.setText('Finished')
             self.requestBtn.setStyleSheet(  'QPushButton {\n'
                                             '   background: rgba(186, 63, 205, 0.7);\n'
@@ -320,10 +325,11 @@ class RentingRequest(QWidget):
             # TODO: Set function to be linked to the button
 
 class TaskPage(QWidget):
-    def __init__(self, parent):
+    def __init__(self, parent, jobId):
         super(TaskPage, self).__init__()
 
         self.parent = parent
+        self.jobId = jobId
 
         self.current_theme = self.parent.current_theme
         self.current_font = self.parent.current_font
@@ -374,8 +380,10 @@ class TaskPage(QWidget):
         self.statusLabel.setGraphicsEffect(self.shadow)
 
         self.downloadZipBtn = CustomSquareButton(self)
-        self.downloadZipBtn.setHeader('Uploaded files')
+        self.downloadZipBtn.setHeader('Output files')
         self.downloadZipBtn.setImage('../../assets/img/zip_w.png')
+        self.downloadZipBtn.setFooter('Output of the uploaded execution files.\nFiles will be available to download after payment.')
+        # self.downloadZipBtn.clicked.connect(self.downloadOutput)
         self.downloadZipBtn.setGraphicsEffect(self.shadow2)
 
         self.statusInfoLabel = QLabel(self)
@@ -472,6 +480,9 @@ class TaskPage(QWidget):
 
         self.setLayout(self.layout)
         
+    # def downloadOutput(self):
+
+
     def calculateFee(self):
         #TODO: Fee calculation
         return ''
@@ -517,12 +528,13 @@ class RentingList(QWidget):
         self.layout.setAlignment(QtCore.Qt.AlignTop)
         self.setLayout(self.layout)
     
-    def addRequest(self, leaserName, reqStatus):
-        request = RentingRequest(self)
-        request.setLeaserLabel(leaserName)
-        request.setRequestStatus(reqStatus)
-        self.requests.append(request)
-        self.layout.addWidget(request)
+    def addRequests(self):
+        stats = self.parent.parent.sender.get_job_statuses()
+
+        for job in stats:
+            request = RentingRequest(self, job)
+            self.requests.append(request)
+            self.layout.addWidget(request)
 
     def darkTheme(self):
         self.setStyleSheet( 'background: rgb(69, 69, 69);\n'
@@ -579,8 +591,8 @@ class LeasingList(QWidget):
             
             request.setRenter(request.renterId)
 
-        self.requests.append(request)
-        self.layout.addWidget(request)
+            self.requests.append(request)
+            self.layout.addWidget(request)
 
     def darkTheme(self):
         self.setStyleSheet( 'background: rgb(69, 69, 69);\n'
@@ -636,10 +648,8 @@ class DashboardPage(QScrollArea):
         self.rentingLabel.setGraphicsEffect(self.shadow)
 
         self.rentingList = RentingList(self)
-        self.rentingList.addRequest('zxyctn', 'Pending')
-        self.rentingList.addRequest('zxyctn2', 'Executing')
-        self.rentingList.addRequest('zxyctn0', 'Rejected')
-        self.rentingList.addRequest('zxyctn1', 'Finished')
+        if (self.parent.sender is not None):
+            self.rentingList.addRequests()
 
         self.leasingLabel = QLabel(self)
         self.leasingLabel.setText('Leasing')
@@ -653,7 +663,7 @@ class DashboardPage(QScrollArea):
         self.leasingLabel.setGraphicsEffect(self.shadow2)
         
         self.leasingList = LeasingList(self)
-        if (self.parent.sender is not None):
+        if (self.parent.receiver is not None):
             self.leasingList.addRequests()
 
         self.layout = QVBoxLayout()

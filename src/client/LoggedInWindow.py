@@ -319,7 +319,7 @@ class LoggedInWidget(QWidget):
 
         # NOTE:
         # setting current page
-        self.content.setCentralWidget(self.testPage)
+        self.content.setCentralWidget(self.dashboardPage)
         self.sidebar = Sidebar(self)
 
         # NOTE:

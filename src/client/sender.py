@@ -20,7 +20,7 @@ class Sender(Client):
 
         if response['status'] == 'success':
             print('received list of statuses')
-            return response['statuses']
+            return response['jobs']
         else:
             print('error: couldn\'t receive list of statuses')
     
