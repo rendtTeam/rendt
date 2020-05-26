@@ -67,6 +67,7 @@ class Receiver(Client):
             print('successfully declined order', order_id)
         else:
             print('error')
+            
     def download_file_from_db(self, path_to_file, db_token, file_size):
         global storage_addr
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

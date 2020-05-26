@@ -98,7 +98,6 @@ class Storage:
         if request_content['request-type'] == 'executable-upload':
             self.logger.info(f'connection: renter from {addr}; request type: executable-upload')
             job_id = self.db_handler.getJobIdFromToken(client_db_token, 'x')
-            # file_size = request_content['file-size']
             st = self.recv_file(conn, f'jobs/toexec{job_id}.zip')
             if st:
                 self.db_handler.changeJobStatus(job_id, 'a')

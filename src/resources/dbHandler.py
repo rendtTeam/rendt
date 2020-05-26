@@ -112,10 +112,18 @@ class DBHandler(object):
     
     def queryLeasers(self, status='a'):
         # TODO return username and reliability score/uptime/last logged in as well
-        query = f'SELECT user_id, machine_details FROM leasers WHERE status = "{status}"'
+        query = f'SELECT U.username, L.machine_details FROM leasers L, users U WHERE L.user_id=U.user_id AND L.status = "{status}"'
+        # f'SELECT user_id, machine_details FROM leasers WHERE status = "{status}"'
         self._executeQuery(query)
         rows = self.__cursor.fetchall()
         return rows
+
+    def getUserId(self, username):
+        query = f'SELECT user_id FROM users WHERE username = "{username}"'
+        self._executeQuery(query)
+        rows = self.__cursor.fetchall()
+        if len(rows) == 1:
+            return rows[0][0]
 
     def addJob(self, user_id, job_id, job_type, files_size, token, comments, status='a'):
         # add job to list of jobs
@@ -342,6 +350,21 @@ class DBHandler(object):
             self._executeQuery(query)
             return True
         return False
+
+    def markAvailable(self, uid):
+        # if self.canLease(uid): # TODO check if user is a leaser or not
+        query = f'SELECT user_id FROM leasers WHERE user_id = {uid}'
+        self._executeQuery(query)
+        rows = self.__cursor.fetchall()
+        if len(rows) == 1: # user is in the leasers list
+            query = f'UPDATE leasers SET status = "a" WHERE user_id = {uid}'
+            self._executeQuery(query)
+            return True
+        else:
+            query = f'INSERT INTO leasers (user_id, status, machine_details) VALUES ({uid}, "a", "test")'
+            self._executeQuery(query)
+            return True
+
 
     def canLease(self, uid):
         '''

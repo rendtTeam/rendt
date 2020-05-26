@@ -215,8 +215,9 @@ class Server:
             self.logger.info(f'connection: renter from {addr}; request type: submit-job-order')
             job_id = request_content['job-id']
             job_mode = request_content['job-mode']
-            leaser_id = request_content['leaser-id']
+            leaser_username = request_content['leaser']
             order_id = self.generate_order_id()
+            leaser_id = self.db_handler.getUserId(leaser_username)
             self.db_handler.submitJobOrder(order_id, uid, job_id, job_mode, leaser_id, status='p')
             response_content = {'status': 'success',
                                 'order-id': order_id
@@ -280,7 +281,8 @@ class Server:
             self.logger.info(f'job status sent to renter at {addr}')
         elif request_content['request-type'] == 'mark-available':
             self.logger.info(f'connection: leaser from {addr}; request type: mark-available')
-            self.db_handler.setLeaserStatus(uid, 'a')
+
+            self.db_handler.markAvailable(uid)
             response_content = {'status': 'success',
                                 }
             req_pipe.write(response_content, 'text/json')
