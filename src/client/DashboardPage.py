@@ -383,7 +383,7 @@ class TaskPage(QWidget):
         self.downloadZipBtn.setHeader('Output files')
         self.downloadZipBtn.setImage('../../assets/img/zip_w.png')
         self.downloadZipBtn.setFooter('Output of the uploaded execution files.\nFiles will be available to download after payment.')
-        # self.downloadZipBtn.clicked.connect(self.downloadOutput)
+        self.downloadZipBtn.clicked.connect(self.downloadOutput)
         self.downloadZipBtn.setGraphicsEffect(self.shadow2)
 
         self.statusInfoLabel = QLabel(self)
@@ -480,8 +480,13 @@ class TaskPage(QWidget):
 
         self.setLayout(self.layout)
         
-    # def downloadOutput(self):
+    def downloadOutput(self):
+        response = self.parent.parent.parent.sender.get_permission_to_download_output(self.jobId)
 
+        if (response is not None):
+            db_token, f_size = response
+
+            self.parent.parent.parent.sender.download_output_from_db('received_output.zip', db_token, f_size)
 
     def calculateFee(self):
         #TODO: Fee calculation
