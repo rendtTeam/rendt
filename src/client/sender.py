@@ -1,149 +1,132 @@
-import socket
+import socket, ssl
+import os, sys
+import hashlib
 from client_messaging import Messaging
-import os
-import sys
-import time
+from client import Client
 
-server_addr = ('18.220.165.22', 23456)
-class Sender:
+storage_addr = ('18.197.19.248', 23456)
 
-    def __init__(self, email, password):
-        self.usrEmail = email
-        self.usrPass = password
+class Sender(Client):
+    def __init__(self, authToken):
+        super().__init__(authToken)
+        
+    def get_job_statuses(self):
+        content = { 'authToken': self.authToken,
+                    'role': 'renter',
+                    'request-type': 'get-job-statuses',
+                    }
+        
+        response = self.send_request_server(content)
+
+        if response['status'] == 'success':
+            print('received list of statuses')
+            return response['statuses']
+        else:
+            print('error: couldn\'t receive list of statuses')
     
-    def signIn(self,  email, password):
-        global server_addr
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect(server_addr)
+    def get_available_leasers(self):
+        content = { 'authToken': self.authToken,
+                    'role': 'renter',
+                    'request-type': 'get-available-leasers',
+                    }
+        
+        response = self.send_request_server(content)
 
-        content = {'emailAddr': self.usrEmail,
-                    'password': self.usrPass,
-                    'request-type': 'sign-in'}
-        request = {'type' : 'text/json',
-                    'content': content}
-        request_pipe = Messaging(s, server_addr, request)
-        request_pipe.queue_request()
-        request_pipe.write()
-        request_pipe.read()
-        response = request_pipe.response
-        self.authToken = response["authToken"]
+        if response['status'] == 'success':
+            print('received list of leasers')
+            return response['leasers']
+        else:
+            print('error: couldn\'t receive list of leasers')
 
-        s.close()
-
-    def signUp(self,  email, password):
-        global server_addr
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect(server_addr)
-
-        content = {'emailAddr': self.usrEmail,
-                    'password': self.usrPass,
-                    'request-type': 'sign-up'}
-        request = {'type' : 'text/json',
-                    'content': content}
-        request_pipe = Messaging(s, server_addr, request)
-        request_pipe.queue_request()
-        request_pipe.write()
-        request_pipe.read()
-        response = request_pipe.response
-        self.authToken = response["authToken"]
-
-        s.close()
-
-    def get_permission_to_submit_task(self, path_to_file):
-        global server_addr
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect(server_addr)
-
+    def get_permission_to_upload_job(self, path_to_file):
         file_size = os.path.getsize(path_to_file)
 
-        content = {'role': 'renter',
-                    'request-type': 'submit-permission',
-                    'size': file_size,
+        content = { 'authToken': self.authToken,
+                    'role': 'renter',
+                    'request-type': 'executable-upload-permission',
+                    'file-size': file_size,
                     'file-type': 'py'}
-        request = {'type' : 'text/json',
-                    'content': content}
-        request_pipe = Messaging(s, server_addr, request)
-        request_pipe.queue_request()
-        request_pipe.write()
 
-        request_pipe.read()
-        #response_header = request_pipe.jsonheader
-        response = request_pipe.response
-
-        s.close()
-
+        response = self.send_request_server(content)
+        
         if response['status'] == 'success':
             print('received db token')
             return response['job-id'], response['db-token']
 
-    def upload_file_to_db(self,path_to_file, job_id, db_token):
-        global server_addr
+    def upload_file_to_db(self, path_to_file, job_id, db_token):
+        global storage_addr
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect(server_addr)
+        ssl_sock = self.ssl_context.wrap_socket(s)
+        try:
+            ssl_sock.connect(storage_addr)
+        except:
+            print('coulnd\'t upload file; server does not respond')
+            return
 
-        file_size = os.path.getsize(path_to_file)
-        #TODO
-        #content must be changed for every function
+        files_size = os.path.getsize(path_to_file)
+
         content = { 'role': 'renter',
                     'request-type': 'executable-upload',
                     'job-id': job_id,
+                    'file-size': files_size,
                     'db-token': db_token
                     }
         request = { 'type' : 'text/json',
                     'content': content
                     }
 
-        req_pipe = Messaging(s, server_addr, request)
+        req_pipe = Messaging(ssl_sock, storage_addr, request)
         req_pipe.queue_request()
         req_pipe.write()
 
         # send exec file
-        f = open(path_to_file,'rb')
-        l = f.read(1024)
-        while (l):
-            s.send(l)
-            l = f.read(1024)
-        f.close()
-        print ('Done Sending')
-        s.shutdown(socket.SHUT_WR)
+        self.send_file(ssl_sock, path_to_file)
 
-        req_pipe.read()
-        response_header = req_pipe.jsonheader
-        response = req_pipe.response
+        status = self.get_job_status(job_id)
+        if status == 'a':
+            print('File successfully received by server')
+        elif status == 'xuf': 
+            print('Server couldn\'t receive file')
+        else:
+            print('File is being uploaded/processed')
 
-        print('- server response:', response_header, response['status'])
+    def submit_job_order(self, job_id, leaser_id, job_description):
+        content = { 'authToken': self.authToken,
+                    'role': 'renter',
+                    'request-type': 'submit-job-order',
+                    'job-id': job_id,
+                    'leaser-id': leaser_id,
+                    'job-description': job_description
+                    }
+        
+        response = self.send_request_server(content)
 
-        s.close()
+        if response['status'] == 'success':
+            print('job order submitted')
+        elif response['status'] == 'error':
+            print('error:', response['error-msg'])
 
     def get_permission_to_download_output(self, job_id):
-        global server_addr
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect(server_addr)
-
-        content = {'role': 'renter',
+        content = { 'authToken': self.authToken,
+                    'role': 'renter',
                     'request-type': 'output-download-permission',
                     'job-id': job_id}
-        request = {'type' : 'text/json',
-                    'content': content}
-
-        req_pipe = Messaging(s, server_addr, request)
-        req_pipe.queue_request()
-        req_pipe.write()
-
-        req_pipe.read()
-        #response_header = req_pipe.jsonheader
-        response = req_pipe.response
-
-        s.close()
+        
+        response = self.send_request_server(content)
 
         if response['status'] == 'success':
             print('received db token')
             return response['db-token'], response['file-size']
 
     def download_output_from_db(self, path_to_file, db_token, file_size):
-        global server_addr
+        global storage_addr
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect(server_addr)
+        ssl_sock = self.ssl_context.wrap_socket(s)
+        try:
+            ssl_sock.connect(storage_addr)
+        except:
+            print('coulnd\'t download ouput; server does not respond')
+            return
 
         content = { 'role': 'renter',
                     'request-type': 'output-download',
@@ -153,33 +136,14 @@ class Sender:
                     'content': content
                     }
 
-        req_pipe = Messaging(s, server_addr, request)
+        req_pipe = Messaging(ssl_sock, storage_addr, request)
         req_pipe.queue_request()
         req_pipe.write()
 
         # receive exec file
-        f = open(path_to_file, "wb")
-        data = None
-        while True:
-            received = 0
-            chunk = min(1024, file_size-received)
-            m = s.recv(chunk)
-            data = m
-            received += chunk
-            while received < file_size:
-                # break
-                m = s.recv(chunk)
-                data += m
-                received += chunk
-            break
-        f.write(data)
-        f.close()
+        status = self.receive_file(ssl_sock, path_to_file, file_size)
 
-        req_pipe.read()
-        #response_header = req_pipe.jsonheader
-        response = req_pipe.response
+        print("- receiving execution file status:", status)
 
-        print("- receiving output file status:", response['status'])
-
+        ssl_sock.close()
         s.close()
-

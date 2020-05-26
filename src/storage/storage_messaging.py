@@ -2,26 +2,22 @@ import sys
 import json
 import io
 import struct
-import socket, ssl
 
-server_addr = ('18.220.165.22', 23456)
 
 class Messaging:
-    def __init__(self, sock, addr, request):
+    def __init__(self, sock, addr):
         self.sock = sock
         self.addr = addr
-        self.request = request
         self._recv_buffer = b''
         self._send_buffer = b''
-        self._request_queued = False
         self._jsonheader_len = None
         self.jsonheader = None
-        self.response = None
+        self.request = None
         # self.response_created = False
 
     def _read(self):
         try:
-            data = self.sock.recv(16384)
+            data = self.sock.recv(4096)
         except BlockingIOError:
             # Resource temporarily unavailable (errno EWOULDBLOCK)
             pass
@@ -42,7 +38,9 @@ class Messaging:
                 pass
             else:
                 self._send_buffer = self._send_buffer[sent:]
-
+                # Close when the buffer is drained. The response has been sent.
+                if sent and not self._send_buffer:
+                    self.close()
 
     def _json_encode(self, obj):
         return json.dumps(obj, ensure_ascii=False).encode('utf-8')
@@ -75,31 +73,13 @@ class Messaging:
                 self.process_jsonheader()
 
         if self.jsonheader:
-            if self.response is None:
-                self.process_response()
+            if self.request is None:
+                self.process_request()
 
-    def write(self):
-        if not self._request_queued:
-            self.queue_request()
-
+    def write(self, content, content_type):
+        content_bytes = self._json_encode(content)
+        self._send_buffer = self._create_message(content_bytes, content_type)
         self._write()
-
-    def queue_request(self):
-        content = self.request["content"]
-        content_type = self.request["type"]
-        if content_type == "text/json":
-            req = {
-                "content_bytes": self._json_encode(content),
-                "content_type": content_type,
-            }
-        else:
-            req = {
-                "content_bytes": content,
-                "content_type": content_type,
-            }
-        message = self._create_message(**req)
-        self._send_buffer += message
-        self._request_queued = True
 
     def process_protoheader(self):
         hdrlen = 2
@@ -120,19 +100,19 @@ class Messaging:
                 if reqhdr not in self.jsonheader:
                     raise ValueError(f'Missing required header {reqhdr}.')
 
-    def process_response(self):
+    def process_request(self):
         content_len = self.jsonheader['content-length']
         if not len(self._recv_buffer) >= content_len:
             return # TODO
         data = self._recv_buffer[:content_len]
         self._recv_buffer = self._recv_buffer[content_len:]
         if self.jsonheader['content-type'] == 'text/json':
-            self.response = self._json_decode(data)
-            print('received response', repr(self.response), 'from', self.addr)
+            self.request = self._json_decode(data)
+            print('received request', repr(self.request), 'from', self.addr)
         else:
             # Binary or unknown content-type
-            self.response = data
-            print(f'received {self.jsonheader["content-type"]} response from', self.addr)
+            self.request = data
+            print(f'received {self.jsonheader["content-type"]} request from', self.addr)
 
     def close(self):
         print('closing connection to', self.addr)
