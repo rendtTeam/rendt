@@ -128,20 +128,26 @@ class DBHandler(object):
         query = f'INSERT INTO exec_file_tokens (job_id, db_token, file_size) VALUES ({job_id}, "{token}", {files_size})'
         self._executeQuery(query)
 
-    def submitJobOrder(self, order_id, renter_id, job_id, job_desription, job_mode, leaser_id, status='p'):
-        query = f'INSERT INTO job_orders (order_id, enter_id, job_id, job_desc, job_mode, leaser_id, status) \
-                VALUES ({order_id}, {renter_id}, {job_id}, "{job_desription}", "{job_mode}", {leaser_id}, "{status}")'
+    def submitJobOrder(self, order_id, renter_id, job_id, job_desription, job_mode, file_size, leaser_id, status='p'):
+        query = f'INSERT INTO job_orders (order_id, renter_id, job_id, job_desc, job_mode, file_size, leaser_id, status) \
+                VALUES ({order_id}, {renter_id}, {job_id}, "{job_desription}", "{job_mode}", {file_size}, {leaser_id}, "{status}")'
         self._executeQuery(query)
 
     def updateJobOrderStatus(self, order_id, response):
         query = f'UPDATE job_orders SET status = "{response}" WHERE order_id = {order_id}'
         self._executeQuery(query)
 
-    def getJobRequests(self, leaser_id):
-        query = f'SELECT order_id, renter_id, job_id, job_desc, job_mode FROM job_orders WHERE leaser_id = {leaser_id}'
+    def getJobRequests(self, leaser_id): # TODO change this to separate jobs of different statuses
+        query = f'SELECT order_id, renter_id, job_id, job_desc, job_mode, status FROM job_orders WHERE leaser_id = {leaser_id}'
         self._executeQuery(query)
         rows = self.__cursor.fetchall()
         return rows
+
+    def getOrderJobId(self, order_id):
+        query = f'SELECT job_id FROM job_orders WHERE order_id = {order_id}'
+        self._executeQuery(query)
+        rows = self.__cursor.fetchall()
+        return rows[0][0]
 
     def getJobStatus(self, job_id):
         query = f'SELECT job_status FROM jobs WHERE job_id = {job_id}'
@@ -150,7 +156,7 @@ class DBHandler(object):
         return rows[0][0]
 
     def getJobStatuses(self, renter_id):
-        query = f'SELECT job_id, job_desc, job_mode, leaser_id FROM job_orders WHERE renter_id = {renter_id}'
+        query = f'SELECT job_id, job_desc, job_mode, leaser_id, status FROM job_orders WHERE renter_id = {renter_id}'
         self._executeQuery(query)
         rows = self.__cursor.fetchall()
         return rows
@@ -336,7 +342,7 @@ class DBHandler(object):
         '''
         check if user is a leaser and isn't running any jobs(?)
         '''
-        query = f'SELECT FROM leasers WHERE user_id = {uid}'
+        query = f'SELECT user_id FROM leasers WHERE user_id = {uid}'
         self._executeQuery(query)
         rows = self.__cursor.fetchall()
         if len(rows) == 1: # user is a leaser

@@ -216,8 +216,9 @@ class Server:
             job_desription = request_content['job-description']
             job_mode = request_content['job-mode']
             leaser_id = request_content['leaser-id']
+            file_size = request_content['file-size']
             order_id = self.generate_order_id()
-            self.db_handler.submitJobOrder(order_id, uid, job_id, job_desription, job_mode, leaser_id, status='p')
+            self.db_handler.submitJobOrder(order_id, uid, job_id, job_desription, job_mode, file_size, leaser_id, status='p')
             response_content = {'status': 'success',
                                 'order-id': order_id
                                 }
