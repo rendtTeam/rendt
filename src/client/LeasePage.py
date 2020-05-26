@@ -66,6 +66,20 @@ class DockerInfo:
         else:
             return ""
 
+    def containerExists(self):
+        try:
+            self.client.containers.get('rendtcont')
+            return True
+        except:
+            return False
+
+    def imageExists(self):
+        try:
+            self.client.images.get('rendt')
+            return True
+        except:
+            return False
+
     # NOTE:
     # Get total number of logical cores of the CPU
     def getCPUTotalNum(self):
@@ -297,6 +311,10 @@ class DockerSpecificationsPage(QWidget):
 
         self.current_theme = self.parent.current_theme
         self.current_font = self.parent.current_font
+        self.machine_details = 'CPU: ' + str(self.dockerInfo.getCPUModel()) + '(' + str(self.dockerInfo.getNumCPU()) + 'x)' + ' RAM: ' + str('%.3fGB' % self.dockerInfo.getMemTotalGB())
+        self.machine_details_full = str(self.dockerInfo.getFullInfoJSON())
+        print('oneliner: ' + self.machine_details)
+        print('full: ' + self.machine_details_full)
 
         if (self.current_theme == 'Dark'):
             self.darkTheme()
@@ -322,6 +340,12 @@ class DockerSpecificationsPage(QWidget):
         self.shadow3.setXOffset(0)
         self.shadow3.setYOffset(0)
         self.shadow3.setColor(QtGui.QColor('rgb(0, 0, 0)'))
+
+        self.shadow4 = QtWidgets.QGraphicsDropShadowEffect()
+        self.shadow4.setBlurRadius(30)
+        self.shadow4.setXOffset(0)
+        self.shadow4.setYOffset(0)
+        self.shadow4.setColor(QtGui.QColor('rgb(0, 0, 0)'))
 
         self.dockerSpecsLabel = QLabel(self)
         self.dockerSpecsLabel.setText('Docker specifications')
@@ -367,6 +391,54 @@ class DockerSpecificationsPage(QWidget):
 
         self.specsList.setLayout(self.specsListLayout)
 
+        self.tmpLayout = QHBoxLayout()
+        self.tmpLayout.addWidget(self.dockerLogo, alignment = QtCore.Qt.AlignVCenter)
+        self.tmpLayout.addWidget(self.specsList, alignment = QtCore.Qt.AlignVCenter)
+        self.tmpLayout.setAlignment(QtCore.Qt.AlignCenter)
+        self.tmpLayout.setContentsMargins(30, 30, 30, 30)
+        self.tmpLayout.setSpacing(30)
+
+        self.tmpWidget = QWidget(self)
+        self.tmpWidget.setStyleSheet('background: transparent;\n'
+                                     'border: 0px solid white;\n')
+        self.tmpWidget.setLayout(self.tmpLayout)
+
+        self.priceField = QtWidgets.QLineEdit(self)
+        self.priceField.setStyleSheet(  'background: transparent;\n'
+                                        'color: white;\n'
+                                        'border: 0px solid white;\n'
+                                        'padding: 5px 10px;\n'
+                                        'margin: 0px 0px 0px 0px;\n')
+        self.priceField.setFont(QtGui.QFont('Arial', 13, 400))
+        self.priceField.setFixedHeight(55)
+        self.priceField.setPlaceholderText('for ex: 5 - meaning 5$ per hour will be charged')
+
+        self.pf = QWidget(self)
+        self.pf.setStyleSheet( 'background: rgb(71, 71, 71);\n'
+                                    'color: white;\n'
+                                    'border: 0px solid white;\n'
+                                    'margin: 20px;\n')
+
+        self.pf.setFixedHeight(120)
+        self.pf.setMinimumWidth(800)
+
+        self.pflabel = QLabel(self)
+        self.pflabel.setText('Price per hour: ')
+        self.pflabel.setFont(QtGui.QFont('Arial', 15, 400))
+        self.pflabel.setStyleSheet( 'background: transparent:\n'
+                                    'color: white;\n'
+                                    'border: 0px solid white;\n'
+                                    'font-weight: bold;\n')
+        self.pflabel.adjustSize()
+
+        self.pfl = QHBoxLayout()
+        self.pfl.addWidget(self.pflabel)
+        self.pfl.addWidget(self.priceField)
+        self.pfl.setContentsMargins(30, 20, 30, 20)
+        self.pf.setContentsMargins(0, 0, 0, 0)
+        self.pf.setLayout(self.pfl)
+        self.pf.setGraphicsEffect(self.shadow4)
+
         self.infoBox = QWidget(self)
         self.infoBox.setStyleSheet( 'background: rgb(71, 71, 71);\n'
                                     'color: white;\n'
@@ -376,12 +448,12 @@ class DockerSpecificationsPage(QWidget):
         self.infoBox.setMinimumHeight(400)
         self.infoBox.setMinimumWidth(800)
         
-        self.infoBoxLayout = QHBoxLayout()
-        self.infoBoxLayout.addWidget(self.dockerLogo, alignment = QtCore.Qt.AlignVCenter)
-        self.infoBoxLayout.addWidget(self.specsList, alignment = QtCore.Qt.AlignVCenter)
+        self.infoBoxLayout = QVBoxLayout()
+        self.infoBoxLayout.addWidget(self.tmpWidget, alignment = QtCore.Qt.AlignVCenter)
+        # self.infoBoxLayout.addWidget(self.priceField, alignment = QtCore.Qt.AlignCenter)
         self.infoBoxLayout.setAlignment(QtCore.Qt.AlignCenter)
         self.infoBoxLayout.setContentsMargins(30, 30, 30, 30)
-        self.infoBoxLayout.setSpacing(30)
+        self.infoBoxLayout.setSpacing(10)
         self.infoBox.setLayout(self.infoBoxLayout)
 
         self.infoBox.setGraphicsEffect(self.shadow2)
@@ -411,10 +483,11 @@ class DockerSpecificationsPage(QWidget):
         self.layout = QVBoxLayout()
         self.layout.addWidget(self.dockerSpecsLabel)
         self.layout.addWidget(self.infoBox, alignment = QtCore.Qt.AlignTop)
+        self.layout.addWidget(self.pf, alignment = QtCore.Qt.AlignCenter)
         self.layout.addWidget(self.leaseBtn, alignment = QtCore.Qt.AlignRight)
         self.layout.setAlignment(QtCore.Qt.AlignTop)
-        self.layout.setContentsMargins(0, 0, 0, 0)
-        self.layout.setSpacing(30)
+        self.layout.setContentsMargins(0, 0, 0, 50)
+        self.layout.setSpacing(10)
 
         self.setLayout(self.layout)
 
@@ -434,7 +507,7 @@ class DockerSpecificationsPage(QWidget):
                             'border: 0px solid white;\n')
     
     def goToLeaseIdlePage(self):
-        self.parent.parent.receiver.mark_available()
+        self.parent.parent.receiver.mark_available(self.parent.machine_details, self.parent.machine_details_full, str('%.2f' % float(self.priceField.text())))
         self.parent.leaseIdlePage.show()
         self.parent.dockerSpecificationsPage.hide()
         self.parent.leaseIdlePage.startLeasing()
@@ -524,7 +597,7 @@ class LeaseIdlePage(QWidget):
 
     def goToDockerSpecificationsPage(self):
         self.parent.changeStatus('not_leasing')
-        # self.parent.parent.receiver.mark_unava
+        self.parent.parent.receiver.mark_unavailable()
         self.parent.dockerSpecificationsPage.show()
         self.parent.leaseIdlePage.hide()
     

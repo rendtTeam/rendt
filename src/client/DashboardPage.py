@@ -20,9 +20,9 @@ class LeasingRequest(QWidget):
 
         self.requests = []
 
-        self.setStyleSheet( 'background: rgba(255, 255, 255, 0.1);\n'
+        self.setStyleSheet( 'background: rgb(70, 70, 70);\n'
                             'color: white;\n'
-                            'border: 0px solid white;\n')
+                            'border: 0px solid rgb(100, 100, 100);\n')
         self.setFixedHeight(100)
 
         self.requestByLabel = QLabel(self)
@@ -125,6 +125,12 @@ class LeasingRequest(QWidget):
         widget.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         widget.setGraphicsEffect(self.shadow)
 
+        self.shadow = QtWidgets.QGraphicsDropShadowEffect()
+        self.shadow.setBlurRadius(15)
+        self.shadow.setXOffset(0)
+        self.shadow.setYOffset(0)
+        self.shadow.setColor(QtGui.QColor(30, 30, 30))
+
         self.layout = QVBoxLayout()
         self.layout.addWidget(widget)
         self.layout.setAlignment(QtCore.Qt.AlignTop)
@@ -132,6 +138,7 @@ class LeasingRequest(QWidget):
 
         self.setLayout(self.layout)
         self.setContentsMargins(0, 0, 0, 0)
+        self.setGraphicsEffect(self.shadow)
     
     def setRenter(self, e):
         self.renterLabel.setText(e)
@@ -140,12 +147,16 @@ class LeasingRequest(QWidget):
         self.rejectBtn.clicked.connect(self.rejectReq)
 
     def acceptReq(self, e):
+        self.hide()
+        self.destroy()
         t1 = threading.Thread(target=self.startExec)
         t1.daemon = True
         t1.start()
 
     def startExec(self):
         if (self.parent.parent.parent.leasePage.dockerInfo.dockerExists()):
+            if(not self.parent.parent.parent.leasePage.dockerInfo.imageExists()):
+                self.parent.parent.parent.receiver.build_docker
             self.parent.parent.parent.leasePage.changeStatus('executing')
             response = self.parent.parent.parent.receiver.accept_order(self.orderId)
 
@@ -158,9 +169,10 @@ class LeasingRequest(QWidget):
                 self.parent.parent.parent.receiver.execute_job('files.zip', 'renter_output.zip')
                 db_token = self.parent.parent.parent.receiver.get_permission_to_upload_output(self.jobId, 'renter_output.zip')
                 self.parent.parent.parent.receiver.upload_output_to_db('renter_output.zip', self.jobId, db_token)
-                self.hide()
-                self.destroy()
                 self.parent.parent.parent.leasePage.changeStatus('idle')
+                self.parent.parent.parent.leasePage.leaseExecPage.hide()
+                self.parent.parent.parent.leasePage.leaseExecPage.destroy()
+                self.parent.parent.parent.leasePage.leaseIdlePage.show()
 
     def rejectReq(self, e):
         response = self.parent.parent.parent.receiver.decline_order(self.orderId)
@@ -578,8 +590,8 @@ class LeasingList(QWidget):
         self.requests = []
 
         self.layout = QVBoxLayout()
-        self.layout.setContentsMargins(0, 0, 0, 50)
-        self.layout.setSpacing(5)
+        self.layout.setContentsMargins(30, 30, 30, 50)
+        self.layout.setSpacing(10)
         self.layout.setAlignment(QtCore.Qt.AlignTop)
         self.setLayout(self.layout)
     
