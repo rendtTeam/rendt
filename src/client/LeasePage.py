@@ -61,6 +61,10 @@ class DockerInfo:
         if (self.exists):
             if (platform.system() == 'Windows'):
                 return cpuinfo.cpu.info[0]['ProcessorNameString']
+            elif (platform.system() == 'Darwin'):
+                print(cpuinfo.cpu.info)
+                print(type(cpuinfo.cpu.info['arch'].decode()))
+                return cpuinfo.cpu.info['arch'].decode()
             else:
                 return cpuinfo.cpu.info[0]['model name']
         else:

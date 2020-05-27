@@ -112,7 +112,7 @@ class DBHandler(object):
     
     def queryLeasers(self, status='a'):
         # TODO return username and reliability score/uptime/last logged in as well
-        query = f'SELECT U.username, L.machine_details FROM leasers L, users U WHERE L.user_id=U.user_id AND L.status = "{status}"'
+        query = f'SELECT U.username, L.short_info, L.machine_details, L.price FROM leasers L, users U WHERE L.user_id=U.user_id AND L.status = "{status}"'
         # f'SELECT user_id, machine_details FROM leasers WHERE status = "{status}"'
         self._executeQuery(query)
         rows = self.__cursor.fetchall()
@@ -351,7 +351,7 @@ class DBHandler(object):
             return True
         return False
 
-    def markAvailable(self, uid):
+    def markAvailable(self, uid, oneliner, full_machine_info, hourly_rate):
         # if self.canLease(uid): # TODO check if user is a leaser or not
         query = f'SELECT user_id FROM leasers WHERE user_id = {uid}'
         self._executeQuery(query)
@@ -359,9 +359,15 @@ class DBHandler(object):
         if len(rows) == 1: # user is in the leasers list
             query = f'UPDATE leasers SET status = "a" WHERE user_id = {uid}'
             self._executeQuery(query)
+            query = f'UPDATE leasers SET short_info = "{oneliner}" WHERE user_id = {uid}'
+            self._executeQuery(query)
+            query = f'UPDATE leasers SET machine_details = "{full_machine_info}" WHERE user_id = {uid}'
+            self._executeQuery(query)
+            query = f'UPDATE leasers SET price = {hourly_rate} WHERE user_id = {uid}'
+            self._executeQuery(query)
             return True
         else:
-            query = f'INSERT INTO leasers (user_id, status, machine_details) VALUES ({uid}, "a", "test")'
+            query = f'INSERT INTO leasers (user_id, status, short_info, machine_details, price) VALUES ({uid}, "a", "{oneliner}", "{full_machine_info}", {hourly_rate})'
             self._executeQuery(query)
             return True
 

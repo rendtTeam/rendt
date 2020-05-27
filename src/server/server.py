@@ -23,7 +23,6 @@ class Server:
         self.s.bind(('', port))          # Bind to the port
         self.s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-
         self.s = self.ssl_context.wrap_socket(self.s, server_side=True)
 
         self.db_handler = DBHandler()
@@ -283,8 +282,11 @@ class Server:
             self.logger.info(f'job status sent to renter at {addr}')
         elif request_content['request-type'] == 'mark-available':
             self.logger.info(f'connection: leaser from {addr}; request type: mark-available')
-
-            self.db_handler.markAvailable(uid)
+            oneliner = request_content['oneline-machine-info']
+            full_machine_info = request_content['full-machine-info']
+            hourly_price = request_content['price']
+            
+            self.db_handler.markAvailable(uid, oneliner, full_machine_info, hourly_price)
             response_content = {'status': 'success',
                                 }
             req_pipe.write(response_content, 'text/json')
