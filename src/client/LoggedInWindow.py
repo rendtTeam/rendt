@@ -10,7 +10,7 @@ from receiver import Receiver
 
 # NOTE: 
 # A page for testing GUI and layouts
-from TestPage import TestPage
+# from TestPage import TestPage
 
 # NOTE:
 # class for Sidebar elements/members
@@ -190,9 +190,9 @@ class Sidebar(QWidget):
         self.dashboard.setLabel('Dashboard')
         self.dashboard.setPage(self.parent.dashboardPage)
 
-        self.profile = SidebarElement(self)
-        self.profile.setIcon('../../assets/img/profile_w.png')
-        self.profile.setLabel('Profile')
+        # self.profile = SidebarElement(self)
+        # self.profile.setIcon('../../assets/img/profile_w.png')
+        # self.profile.setLabel('Profile')
         # self.profile.setPage(self.parent.profilePage)
 
         self.rent = SidebarElement(self)
@@ -205,32 +205,32 @@ class Sidebar(QWidget):
         self.lease.setLabel('Lease')
         self.lease.setPage(self.parent.leasePage)
 
-        self.settings = SidebarElement(self)
-        self.settings.setIcon('../../assets/img/settings_w.png')
-        self.settings.setLabel('Settings')
+        # self.settings = SidebarElement(self)
+        # self.settings.setIcon('../../assets/img/settings_w.png')
+        # self.settings.setLabel('Settings')
         # self.settings.setPage(self.parent.settingsPage)
 
-        self.test = SidebarElement(self)
-        self.test.setIcon('../../assets/img/edit_w.png')
-        self.test.setLabel('Test')
-        self.test.setPage(self.parent.testPage)
+        # self.test = SidebarElement(self)
+        # self.test.setIcon('../../assets/img/edit_w.png')
+        # self.test.setLabel('Test')
+        # self.test.setPage(self.parent.testPage)
 
         self.elements.append(self.dashboard)
-        self.elements.append(self.profile)
+        # self.elements.append(self.profile)
         self.elements.append(self.rent)
         self.elements.append(self.lease)
-        self.elements.append(self.settings)
-        self.elements.append(self.test)
+        # self.elements.append(self.settings)
+        # self.elements.append(self.test)
 
         # NOTE
         # layout is Vertical
         layout = QVBoxLayout()
         layout.addWidget(self.dashboard, alignment=QtCore.Qt.AlignLeft)
-        layout.addWidget(self.profile, alignment=QtCore.Qt.AlignLeft)
+        # layout.addWidget(self.profile, alignment=QtCore.Qt.AlignLeft)
         layout.addWidget(self.rent, alignment=QtCore.Qt.AlignLeft)
         layout.addWidget(self.lease, alignment=QtCore.Qt.AlignLeft)
-        layout.addWidget(self.settings, alignment=QtCore.Qt.AlignLeft)
-        layout.addWidget(self.test, alignment=QtCore.Qt.AlignLeft)
+        # layout.addWidget(self.settings, alignment=QtCore.Qt.AlignLeft)
+        # layout.addWidget(self.test, alignment=QtCore.Qt.AlignLeft)
 
         layout.setAlignment(QtCore.Qt.AlignTop)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -253,10 +253,10 @@ class Sidebar(QWidget):
             if (e != sender):
                 e.unSelectPage()
             else:
-                if (e.page_title == 'Test'):
-                    self.parent.testPage = TestPage()
-                    e.setPage(self.parent.testPage)
-                elif (e.page_title == 'Rent'):
+                # if (e.page_title == 'Test'):
+                #     self.parent.testPage = TestPage()
+                #     e.setPage(self.parent.testPage)
+                if (e.page_title == 'Rent'):
                     self.parent.rentPage = RentPage(self.parent)
                     e.setPage(self.parent.rentPage)
                 elif (e.page_title == 'Lease'):
@@ -308,14 +308,14 @@ class LoggedInWidget(QWidget):
         self.rentPage = RentPage(self)
         self.leasePage = LeasePage(self)
         # self.settingsPage = SettingsPage()
-        self.testPage = TestPage()
+        # self.testPage = TestPage()
 
         self.pages.append(self.dashboardPage)
         # self.pages.append(self.profilePage)
         self.pages.append(self.rentPage)
         self.pages.append(self.leasePage)
         # self.pages.append(self.settingsPage)
-        self.pages.append(self.testPage)
+        # self.pages.append(self.testPage)
 
         # NOTE:
         # setting current page
