@@ -184,26 +184,28 @@ class LeasingRequest(QWidget):
                 db_token = response[0]
                 f_size = response[1]
 
+                path_to_executable = y + '/files.zip'
+                path_to_output = y + '/output.zip'
                 print('1------------------------------------------------------------------------------------------')
 
-                self.parent.parent.parent.receiver.download_file_from_db(y + '/files.zip', db_token, f_size)
+                self.parent.parent.parent.receiver.download_file_from_db(path_to_executable, db_token, f_size)
                 print('2------------------------------------------------------------------------------------------')
 
-                self.parent.parent.parent.receiver.execute_job(y + '/files.zip', y + '/output.zip')
+                self.parent.parent.parent.receiver.execute_job(path_to_executable, path_to_output)
                 print('3------------------------------------------------------------------------------------------')
 
-                db_token = self.parent.parent.parent.receiver.get_permission_to_upload_output(self.jobId, y + '/output.zip')
+                db_token = self.parent.parent.parent.receiver.get_permission_to_upload_output(self.jobId, path_to_output)
                 print('4------------------------------------------------------------------------------------------')
 
-                self.parent.parent.parent.receiver.upload_output_to_db(y + '/output.zip', self.jobId, db_token)
+                self.parent.parent.parent.receiver.upload_output_to_db(path_to_output, self.jobId, db_token)
                 print('5------------------------------------------------------------------------------------------')
 
                 if (platform.system() == 'Windows'):
                     home_dir = os.system("DEL files.zip")
                     home_dir = os.system("DEL output.zip")
                 else:
-                    home_dir = os.system("rm -R files.zip")
-                    home_dir = os.system("rm -R output.zip")
+                    home_dir = os.system("rm -R " + path_to_executable)
+                    home_dir = os.system("rm -R " + path_to_output)
 
                 self.hide()
                 self.destroy()
