@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import QScrollArea, QPushButton, QLabel, QWidget, QVBoxLayo
 
 import threading
 
-import os, sys
+import os, sys, platform
 
 from RentPage import CustomSquareButton
 
@@ -157,18 +157,29 @@ class LeasingRequest(QWidget):
 
     def startExec(self):
         if (self.parent.parent.parent.leasePage.dockerInfo.dockerExists()):
-            if(not self.parent.parent.parent.leasePage.dockerInfo.imageExists()):
-                self.parent.parent.parent.receiver.build_docker
+            if (not self.parent.parent.parent.leasePage.dockerInfo.imageExists()):
+                self.parent.parent.parent.receiver.build_docker('.')
             self.parent.parent.parent.leasePage.changeStatus('executing')
             response = self.parent.parent.parent.receiver.accept_order(self.orderId)
 
-            home_dir = os.system("pwd>pwd.txt")
-            f = open("pwd.txt", "r")
-            x = f.readline()
-            x = x.split("/")        
-            y = "/" + x[1] + "/" + x[2] + "/rendt"
-            home_dir = os.system("rm pwd.txt")
-            home_dir = os.system("mkdir " + y)
+            if (platform.system() == 'Windows'):
+                home_dir = os.system("(echo %" + "cd%)>pwd.txt")
+
+                f = open("pwd.txt", "r")
+                x = f.readline()
+                x = x.split("\\")        
+                y = x[0] + '/' + x[1] + "/" + x[2] + "/rendt"
+                home_dir = os.system("DEL pwd.txt")
+                home_dir = os.system("mkdir " + y)
+            else:
+                home_dir = os.system("pwd>pwd.txt")
+
+                f = open("pwd.txt", "r")
+                x = f.readline()
+                x = x.split("/")        
+                y = "/" + x[1] + "/" + x[2] + "/rendt"
+                home_dir = os.system("rm pwd.txt")
+                home_dir = os.system("mkdir " + y)
             if (response is not None):
                 db_token = response[0]
                 f_size = response[1]

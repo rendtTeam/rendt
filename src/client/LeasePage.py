@@ -76,6 +76,7 @@ class DockerInfo:
     def imageExists(self):
         try:
             self.client.images.get('rendt')
+            print(self.client.images.get('rendt'))
             return True
         except:
             return False
@@ -507,7 +508,8 @@ class DockerSpecificationsPage(QWidget):
                             'border: 0px solid white;\n')
     
     def goToLeaseIdlePage(self):
-        self.parent.parent.receiver.mark_available(self.parent.machine_details, self.parent.machine_details_full, str('%.2f' % float(self.priceField.text())))
+        self.price = float(str(self.priceField.text()))
+        self.parent.parent.receiver.mark_available(self.machine_details, self.machine_details_full, self.price)
         self.parent.leaseIdlePage.show()
         self.parent.dockerSpecificationsPage.hide()
         self.parent.leaseIdlePage.startLeasing()
