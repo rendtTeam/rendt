@@ -184,18 +184,31 @@ class LeasingRequest(QWidget):
                 db_token = response[0]
                 f_size = response[1]
 
+                print('1------------------------------------------------------------------------------------------')
+
                 self.parent.parent.parent.receiver.download_file_from_db(y + '/files.zip', db_token, f_size)
+                print('2------------------------------------------------------------------------------------------')
 
                 self.parent.parent.parent.receiver.execute_job(y + '/files.zip', y + '/output.zip')
+                print('3------------------------------------------------------------------------------------------')
+
                 db_token = self.parent.parent.parent.receiver.get_permission_to_upload_output(self.jobId, y + '/output.zip')
+                print('4------------------------------------------------------------------------------------------')
+
                 self.parent.parent.parent.receiver.upload_output_to_db(y + '/output.zip', self.jobId, db_token)
-                home_dir = os.system("rm -R files.zip")
-                home_dir = os.system("rm -R output.zip")
+                print('5------------------------------------------------------------------------------------------')
+
+                if (platform.system() == 'Windows'):
+                    home_dir = os.system("DEL files.zip")
+                    home_dir = os.system("DEL output.zip")
+                else:
+                    home_dir = os.system("rm -R files.zip")
+                    home_dir = os.system("rm -R output.zip")
+
                 self.hide()
                 self.destroy()
                 self.parent.parent.parent.leasePage.changeStatus('idle')
                 self.parent.parent.parent.leasePage.leaseExecPage.hide()
-                self.parent.parent.parent.leasePage.leaseExecPage.destroy()
                 self.parent.parent.parent.leasePage.leaseIdlePage.show()
 
     def rejectReq(self, e):

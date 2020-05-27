@@ -512,7 +512,7 @@ class DockerSpecificationsPage(QWidget):
                             'border: 0px solid white;\n')
     
     def goToLeaseIdlePage(self):
-        self.price = float(str(self.priceField.text()))
+        self.price = str('%.2f' % float(str(self.priceField.text())))
         self.parent.parent.receiver.mark_available(self.machine_details, self.machine_details_full, self.price)
         self.parent.leaseIdlePage.show()
         self.parent.dockerSpecificationsPage.hide()
