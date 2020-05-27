@@ -351,6 +351,14 @@ class DBHandler(object):
             return True
         return False
 
+    def setExecStartTime(self, order_id, formatted_date):
+        query = f'UPDATE job_orders SET exec_start_time = "{formatted_date}" WHERE order_id = {order_id}'
+        self._executeQuery(query)
+
+    def setExecFinishTime(self, order_id, formatted_date):
+        query = f'UPDATE job_orders SET exec_finish_time = "{formatted_date}" WHERE order_id = {order_id}'
+        self._executeQuery(query)
+
     def markAvailable(self, uid, oneliner, full_machine_info, hourly_rate):
         # if self.canLease(uid): # TODO check if user is a leaser or not
         query = f'SELECT user_id FROM leasers WHERE user_id = {uid}'

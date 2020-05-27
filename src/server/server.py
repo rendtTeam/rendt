@@ -336,6 +336,9 @@ class Server:
                                     'db-token': requested_token
                                     }
                 req_pipe.write(response_content, 'text/json')
+                now = datetime.datetime.now()
+                formatted_date = now.strftime('%Y-%m-%d %H:%M:%S')
+                self.db_handler.setExecStartTime(order_id, formatted_date)
 
                 self.db_handler.updateJobOrderStatus(order_id, 'x')
                 self.logger.info(f'leaser {uid} accepted order #{order_id}. given permission to download {job_id} via token {requested_token}')
@@ -359,6 +362,10 @@ class Server:
                                 'db-token': db_token
                                 }
             req_pipe.write(response_content, 'text/json')
+
+            now = datetime.datetime.now()
+            formatted_date = now.strftime('%Y-%m-%d %H:%M:%S')
+            self.db_handler.setExecFinishTime(self.db_handler.getOrderId(job_id), formatted_date)
         
             # TODO tie this job id to its corresponding token so that the file can be accessed knowing job id            
             self.logger.info(f'issued permission to leaser {uid} to upload output of job {job_id} via token {db_token}')
