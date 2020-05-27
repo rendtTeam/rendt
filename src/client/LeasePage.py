@@ -61,6 +61,10 @@ class DockerInfo:
         if (self.exists):
             if (platform.system() == 'Windows'):
                 return cpuinfo.cpu.info[0]['ProcessorNameString']
+            elif (platform.system() == 'Darwin'):
+                print(cpuinfo.cpu.info)
+                print(type(cpuinfo.cpu.info['arch'].decode()))
+                return cpuinfo.cpu.info['arch'].decode()
             else:
                 return cpuinfo.cpu.info[0]['model name']
         else:
@@ -507,7 +511,7 @@ class DockerSpecificationsPage(QWidget):
                             'border: 0px solid white;\n')
     
     def goToLeaseIdlePage(self):
-        self.parent.parent.receiver.mark_available(self.parent.machine_details, self.parent.machine_details_full, str('%.2f' % float(self.priceField.text())))
+        self.parent.parent.receiver.mark_available(self.machine_details, self.machine_details_full, str('%.2f' % float(self.priceField.text())))
         self.parent.leaseIdlePage.show()
         self.parent.dockerSpecificationsPage.hide()
         self.parent.leaseIdlePage.startLeasing()

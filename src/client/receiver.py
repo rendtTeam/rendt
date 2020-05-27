@@ -10,10 +10,13 @@ class Receiver(Client):
     def __init__(self, authToken):
         super().__init__(authToken)
         
-    def mark_available(self):
+    def mark_available(self, oneline_machine_info, full_machine_info, price):
         content = { 'authToken': self.authToken,
                     'role': 'leaser',
                     'request-type': 'mark-available',
+                    'oneline-machine-info': oneline_machine_info,
+                    'full-machine-info': full_machine_info,
+                    'price': price
                     }
         
         response = self.send_request_server(content)

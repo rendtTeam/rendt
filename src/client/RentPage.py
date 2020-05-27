@@ -638,7 +638,7 @@ class LeasersListPage(QWidget):
         print('Leasers: \n---------------------\n' + str(leasers))
         
         for l in leasers:
-            self.leasersList.addLeaser(str(l[0]), l[1], '3$/h')
+            self.leasersList.addLeaser(str(l[0]), l[1], str(l[3]))
 
     def darkTheme(self):
         self.setStyleSheet( 'background: rgb(57, 57, 57);\n'
