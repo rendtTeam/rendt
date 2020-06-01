@@ -62,9 +62,9 @@ class DockerInfo:
             if (platform.system() == 'Windows'):
                 return cpuinfo.cpu.info[0]['ProcessorNameString']
             elif (platform.system() == 'Darwin'):
-                os.environ['PATH'] = os.environ['PATH'] + os.pathsep + '/usr/sbin'
                 command ="sysctl -n machdep.cpu.brand_string"
-                return subprocess.check_output(command).strip()
+                info = subprocess.check_output(command.split()).strip().decode()
+                return info
             else:
                 return cpuinfo.cpu.info[0]['model name']
         else:
@@ -775,7 +775,7 @@ class LeaseExecPage(QWidget):
         t2.daemon = True
         t2.start()
 
-        t3 = threading.Thread(target=self.getElapsedTime)
+        t3 = threading.Thread(target=lambda:self.getElapsedTime(self.parent.dockerInfo))
         t3.daemon = True
         t3.start()
 
@@ -795,12 +795,12 @@ class LeaseExecPage(QWidget):
             self.memUsageLabel.adjustSize()
             time.sleep(1)
     
-    def getElapsedTime(self):
+    def getElapsedTime(self, dockerInfo):
         starttime=time.time()
         while True:
             self.elapsedTimeLabel.setText('ET: ' + str(datetime.now() - self.parent.parent.start_time))
             self.elapsedTimeLabel.adjustSize()
-            if (not self.parent.dockerInfo.containerExists()):
+            if (not dockerInfo.containerExists()):
                 self.finishExecuting()
                 break
             time.sleep(1)
