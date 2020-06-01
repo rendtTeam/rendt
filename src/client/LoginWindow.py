@@ -16,11 +16,17 @@ class LoginLineEdit(QtWidgets.QLineEdit):
         
         # NOTE:
         # class configurations
-        self.setStyleSheet( 'background: rgb(73, 73, 73);\n'
-                            'color: white;\n'
-                            'border: 0px solid white;\n'
-                            'padding: 5px 10px;\n'
-                            'margin: 10px 0px 0px 0px;\n')
+        self.setStyleSheet( 'QLineEdit {\n'
+                            '   background: rgb(73, 73, 73);\n'
+                            '   color: white;\n'
+                            '   border: 0px solid white;\n'
+                            '   padding: 5px 10px;\n'
+                            '   margin: 10px 0px 0px 0px;\n'
+                            '}\n'
+                            'QLineEdit:focus {\n'
+                            '   border: 0px solid white;\n'
+                            '}\n'
+                            )
         self.setFont(QtGui.QFont('Arial', 12, 800))
         
         # NOTE:
