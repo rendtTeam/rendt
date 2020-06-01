@@ -283,7 +283,7 @@ class LeasersList(QScrollArea):
         # leaserSpecs.setFixedHeight(50)
 
         leaserPrice = QLabel()
-        leaserPrice.setText(price)
+        leaserPrice.setText(price + '$')
         leaserPrice.setFont(QtGui.QFont(self.current_font, 14, 1000))
         leaserPrice.adjustSize()
         leaserPrice.setStyleSheet('background: transparent;\n'
@@ -577,9 +577,21 @@ class SuccessfulRequest(QWidget):
         self.parent = parent
         self.current_font = self.parent.current_font
 
+        self.shadow = QtWidgets.QGraphicsDropShadowEffect()
+        self.shadow.setBlurRadius(30)
+        self.shadow.setXOffset(0)
+        self.shadow.setYOffset(0)
+        self.shadow.setColor(QtGui.QColor(20, 20, 20))
+        
+        self.shadow1 = QtWidgets.QGraphicsDropShadowEffect()
+        self.shadow1.setBlurRadius(30)
+        self.shadow1.setXOffset(0)
+        self.shadow1.setYOffset(0)
+        self.shadow1.setColor(QtGui.QColor(20, 20, 20))
+
         self.label = QLabel(self)
         self.label.setText('Request successfully sent to leaser')
-        self.label.setFont(QtGui.QFont(self.current_font, 36, 400))
+        self.label.setFont(QtGui.QFont(self.current_font, 30, 400))
         self.label.adjustSize()
         self.label.setAlignment(QtCore.Qt.AlignCenter)
         self.label.setStyleSheet('background: transparent;\n'
@@ -587,12 +599,47 @@ class SuccessfulRequest(QWidget):
                                  'font-weight: bold;\n'
                                  'color: white;\n')
         
-        self.setStyleSheet( 'background: rgb(44, 108, 52);\n'
+        self.setStyleSheet( 'background: rgb(0, 77, 64);\n'
                             'border: 0px solid white;\n'
                             'color: white;\n')
 
+        self.infoBox = QWidget(self)
+        self.infoBox.setStyleSheet( 'background: rgb(0, 105, 92);\n'
+                                    'border: 0px solid white;\n'
+                                    'margin: 20px;\n'
+                                    'padding: 100px;\n')
+        self.infoBox.setGraphicsEffect(self.shadow)
+
+        self.ibl = QVBoxLayout()
+        self.ibl.addWidget(self.label, alignment = QtCore.Qt.AlignCenter)
+        self.ibl.setContentsMargins(0, 0, 0, 0)
+        self.ibl.setAlignment(QtCore.Qt.AlignCenter)
+        self.infoBox.setLayout(self.ibl)
+
+        self.backBtn = QPushButton(self)
+        self.backBtn.setStyleSheet('QPushButton {\n'
+                                    '   background: rgb(2, 129, 138);\n'
+                                    '   color: white;\n'
+                                    '   border: 0px solid black;\n'
+                                    '   margin: 20px;\n'
+                                    '}\n'
+                                    'QPushButton:hover {\n'
+                                    '   background: rgb(1, 100, 105);\n'
+                                    '}\n'
+                                    'QPushButton:pressed {\n'
+                                    '   background: rgb(0, 65, 69);\n'
+                                    '}\n')
+        self.backBtn.setFont(QtGui.QFont(self.current_font, 14, 900))
+        self.backBtn.setText('Back')
+        self.backBtn.setFixedHeight(105)
+        self.backBtn.setFixedWidth(225)
+        self.backBtn.setGraphicsEffect(self.shadow1)
+        self.backBtn.clicked.connect(self.goBack)
+
         layout = QVBoxLayout()
-        layout.addWidget(self.label)
+        layout.addWidget(self.infoBox)
+        layout.addWidget(self.backBtn)
+        layout.setSpacing(10)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setAlignment(QtCore.Qt.AlignCenter)
 
@@ -607,6 +654,12 @@ class SuccessfulRequest(QWidget):
         self.layout.setAlignment(QtCore.Qt.AlignCenter)
 
         self.setLayout(self.layout)
+
+    def goBack(self):
+        self.hide()
+        self.parent.parent.rentPage = RentPage(self.parent.parent)
+        self.parent.parent.sidebar.selectPage(self.parent.parent.sidebar.rent, 'Rent')
+
 
 class LeasersListPage(QWidget):
     def __init__(self, parent):
@@ -699,6 +752,8 @@ class LeasersListPage(QWidget):
         leasers = self.parent.parent.sender.get_available_leasers()
         print('Leasers: \n---------------------\n' + str(leasers))
         
+        self.leasersList.leasers = []
+
         for l in leasers:
             self.leasersList.addLeaser(str(l[0]), l[1], str(l[3]))
 
@@ -743,6 +798,7 @@ class RentPage(QScrollArea):
         self.rentalTypePage = RentalTypePage(self)
         self.leasersListPage = LeasersListPage(self)
         self.success = SuccessfulRequest(self)
+        # self.uploadPage.hide()
         self.rentalTypePage.hide()
         self.leasersListPage.hide()
         self.success.hide()

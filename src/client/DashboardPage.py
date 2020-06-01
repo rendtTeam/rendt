@@ -177,6 +177,7 @@ class LeasingRequest(QWidget):
     def acceptReq(self, e):
         self.hide()
         self.destroy()
+        self.parent.addRequests()
 
         self.parent.parent.parent.start_time = datetime.now()
 
@@ -244,6 +245,7 @@ class LeasingRequest(QWidget):
         response = self.parent.parent.parent.receiver.decline_order(self.orderId)
         self.hide()
         self.destroy()
+        self.parent.addRequests()
 
 class RentingRequest(QWidget):
     def __init__(self, parent, jobInfo):
@@ -404,15 +406,15 @@ class RentingRequest(QWidget):
         elif (e == 'd'):
             self.requestBtn.setText('Rejected')
             self.requestBtn.setStyleSheet(  'QPushButton {\n'
-                                            '   background: rgba(246, 49, 49, 0.7);\n'
+                                            '   background: rgba(239, 83, 80, 0.7);\n'
                                             '   color: white;\n'
                                             '   border: 0px solid black;\n'
                                             '}\n'
                                             'QPushButton:hover {\n'
-                                            '   background: rgba(200, 39, 39, 0.7);\n'
+                                            '   background: rgba(200, 70, 68, 0.7);\n'
                                             '}\n'
                                             'QPushButton:pressed {\n'
-                                            '   background: rgba(123, 25, 25, 0.7);\n'
+                                            '   background: rgba(120, 42, 40, 0.7);\n'
                                             '}\n')
             self.taskPage = TaskPage(self.parent, self.jobInfo[0], 'Rejected')
             # TODO: Set function to be linked to the button
@@ -431,6 +433,78 @@ class RentingRequest(QWidget):
                                             '}\n')
             self.taskPage = TaskPage(self.parent, self.jobInfo[0], 'Finished')
             # TODO: Set function to be linked to the button
+
+class EmptyRequest(QWidget):
+    def __init__(self, parent):
+        super(EmptyRequest, self).__init__()
+
+        self.parent = parent
+
+        self.current_theme = self.parent.current_theme
+        self.current_font = self.parent.current_font
+
+        self.setStyleSheet( 'background: rgb(70, 70, 70);\n'
+                            'color: white;\n'
+                            'border: 0px solid rgb(100, 100, 100);\n')
+        self.setFixedHeight(200)
+
+        self.requestLabel = QLabel(self)
+        self.requestLabel.setText('You have no new requests')
+        self.requestLabel.setFont(QtGui.QFont(self.current_font, 24, 800))
+        self.requestLabel.adjustSize()
+        self.requestLabel.setStyleSheet( 'background: transparent;\n'
+                                            'color: white;\n'
+                                            'font-weight: bold;\n'
+                                            'border: 0px solid white;\n')
+        self.requestLabel.setAlignment(QtCore.Qt.AlignCenter)
+
+        self.shadow = QtWidgets.QGraphicsDropShadowEffect()
+        self.shadow.setBlurRadius(30)
+        self.shadow.setXOffset(0)
+        self.shadow.setYOffset(0)
+        self.shadow.setColor(QtGui.QColor(30, 30, 30))
+        
+        layout = QHBoxLayout()
+        layout.addWidget(self.requestLabel, alignment = QtCore.Qt.AlignHCenter)
+        layout.setAlignment(QtCore.Qt.AlignVCenter)
+        layout.setSpacing(0)
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        self.widget = QWidget(self)
+        self.widget.setLayout(layout)
+        self.widget.setContentsMargins(0, 0, 0, 0)
+        self.widget.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+
+        self.layout = QVBoxLayout()
+        self.layout.addWidget(self.widget)
+        self.layout.setAlignment(QtCore.Qt.AlignTop)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+
+        self.setLayout(self.layout)
+        self.setContentsMargins(0, 0, 0, 0)
+        self.setGraphicsEffect(self.shadow)
+
+        if (self.current_theme == 'Dark'):
+            self.darkTheme()
+        elif (self.current_theme == 'Light'):
+            self.lightTheme()
+        else:
+            self.classicTheme()
+    
+    def darkTheme(self):
+        self.widget.setStyleSheet(  'background: rgb(71, 71, 71);\n'
+                                    'color: white;\n'
+                                    'border: 0px solid white;\n')
+
+    def lightTheme(self):
+        self.widget.setStyleSheet(  'background: rgb(184, 184, 184);\n'
+                                    'color: white;\n'
+                                    'border: 0px solid black;\n')
+
+    def classicTheme(self):
+        self.widget.setStyleSheet(  'background: rgba(154, 154, 154, 0.2);\n'
+                                    'color: white;\n'
+                                    'border: 0px solid white;\n')
 
 class TaskPage(QWidget):
     def __init__(self, parent, jobId, status):
@@ -537,7 +611,7 @@ class TaskPage(QWidget):
                                             'border: 0px solid white;\n')
         
         elif (status == 'Rejected'):
-            self.statusBox.setStyleSheet(   'background: rgb(213, 0, 0);\n'
+            self.statusBox.setStyleSheet(   'background: rgb(239, 83, 80);\n'
                                             'color: white;\n'
                                             'border: 0px solid white;\n')
         
@@ -754,6 +828,16 @@ class RentingList(QWidget):
             request = RentingRequest(self, job)
             self.requests.append(request)
             self.layout.addWidget(request, alignment = QtCore.Qt.AlignTop)
+        
+        if (len(self.requests) == 0):
+            request = EmptyRequest(self)
+            request.requestLabel.setText('You have no renting requests')
+            self.requests.append(request)
+            self.layout.addWidget(request, alignment = QtCore.Qt.AlignTop)
+        
+            return 0
+
+        return len(self.requests)
 
     def darkTheme(self):
         self.setStyleSheet( 'background: rgb(69, 69, 69);\n'
@@ -799,6 +883,10 @@ class LeasingList(QWidget):
     
     def addRequests(self):
         self.requests = []
+
+        while (not self.layout.isEmpty()):
+            self.layout.removeWidget()
+
         requests = self.parent.parent.receiver.get_job_notifications()
 
         for r in requests:
@@ -814,6 +902,16 @@ class LeasingList(QWidget):
 
             self.requests.append(request)
             self.layout.addWidget(request)
+        
+        if (len(self.requests) == 0):
+            request = EmptyRequest(self)
+            request.requestLabel.setText('You have no leasing requests')
+            self.requests.append(request)
+            self.layout.addWidget(request, alignment = QtCore.Qt.AlignTop)
+        
+            return 0
+            
+        return len(self.requests)
 
     def darkTheme(self):
         self.setStyleSheet( 'background: rgb(69, 69, 69);\n'

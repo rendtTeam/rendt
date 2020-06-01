@@ -233,7 +233,7 @@ class LoginPage(QWidget):
             self.parent.loggedInWidget = LoggedInWidget()
             self.parent.loggedInWidget.setAuthToken(authToken)
             self.parent.loggedInWidget.sidebar.selectPage(self.parent.loggedInWidget.sidebar.dashboard, 'Dashboard')
-            self.parent.loggedInWidget.setAccount(self.emailField.text())
+            self.parent.loggedInWidget.setAccount(username, email)
             self.parent.setCentralWidget(self.parent.loggedInWidget)
         
         # self.parent.loggedInWidget = LoggedInWidget()

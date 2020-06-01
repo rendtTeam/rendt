@@ -5,9 +5,12 @@ from RentPage import RentPage
 from LeasePage import LeasePage
 from DashboardPage import DashboardPage
 from SettingsPage import SettingsPage
+from ProfilePage import ProfilePage
 
 from sender import Sender
 from receiver import Receiver
+
+import threading, time
 
 # NOTE: 
 # A page for testing GUI and layouts
@@ -30,6 +33,7 @@ class SidebarElement(QWidget):
         self.page_font = parent.current_font
         self.page = ""
         self.isSelected = False
+        self.openedNotf = False
 
         # NOTE:
         # setting text color for the element depending on the theme
@@ -59,10 +63,10 @@ class SidebarElement(QWidget):
 
         # NOTE:
         # Widget to include both icon and label
-        widget = QWidget()
-        widget.setLayout(layout)
-        widget.setFixedWidth(200)
-        widget.setFixedHeight(70)
+        self.widget = QWidget()
+        self.widget.setLayout(layout)
+        self.widget.setFixedWidth(200)
+        self.widget.setFixedHeight(70)
 
         self.shadow = QtWidgets.QGraphicsDropShadowEffect()
         self.shadow.setBlurRadius(10)
@@ -71,18 +75,32 @@ class SidebarElement(QWidget):
         self.shadow.setColor(QtGui.QColor(20, 20, 20))
 
         # self.setGraphicsEffect(self.shadow)
-        widget.setGraphicsEffect(self.shadow)
+        self.widget.setGraphicsEffect(self.shadow)
 
         # NOTE:
         # Layout of the class
         self.layout = QHBoxLayout()
-        self.layout.addWidget(widget)
+        self.layout.addWidget(self.widget)
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self.layout)
 
         # NOTE:
         # Enabling MouseTracking to listen to hovers
         self.setMouseTracking(True)
+
+    # NOTE:
+    # A function to change the element's behavior if an update is received
+    def notify(self, flag):
+        if (not flag):
+            self.setStyleSheet('background: rgba(255, 255, 255, 0.1);\n'
+                            'border: 0px solid black;\n'
+                            'color: white;\n')
+            self.openedNotf = True
+        else:
+            self.setStyleSheet('background: rgba(255, 167, 38, 1);\n'
+                           'border: 0px solid black;\n'
+                           'color: white;\n')
+            self.openedNotf = False
 
     # NOTE:
     # getter function to get element text
@@ -194,7 +212,7 @@ class Sidebar(QWidget):
         self.profile = SidebarElement(self)
         self.profile.setIcon('../../assets/img/profile_w.png')
         self.profile.setLabel('Profile')
-        # self.profile.setPage(self.parent.profilePage)
+        self.profile.setPage(self.parent.profilePage)
 
         self.rent = SidebarElement(self)
         self.rent.setIcon('../../assets/img/cloud_w_no_border.png')
@@ -259,15 +277,23 @@ class Sidebar(QWidget):
                 #     e.setPage(self.parent.testPage)
                 if (e.page_title == 'Rent'):
                     self.parent.rentPage = RentPage(self.parent)
+                    self.rent.notify(False)
                     e.setPage(self.parent.rentPage)
                 elif (e.page_title == 'Lease'):
+                    self.lease.notify(False)
                     self.parent.leasePage = LeasePage(self.parent)
                     self.parent.leasePage.openLeasePage()
                     e.setPage(self.parent.leasePage)
                 elif (e.page_title == 'Dashboard'):
+                    self.dashboard.notify(False)
                     self.parent.dashboardPage = DashboardPage(self.parent)
                     e.setPage(self.parent.dashboardPage)
+                elif (e.page_title == 'Profile'):
+                    self.dashboard.notify(False)
+                    self.parent.profilePage = ProfilePage(self.parent)
+                    e.setPage(self.parent.profilePage)
                 elif (e.page_title == 'Settings'):
+                    self.settings.notify(False)
                     self.parent.settingsPage = SettingsPage(self.parent)
                     self.parent.settingsPage.accountLabel.setText(self.parent.account)
                     self.parent.settingsPage.setCurrentSettings(self.parent.current_theme, self.parent.current_font)
@@ -300,6 +326,7 @@ class LoggedInWidget(QWidget):
 
         self.setStyleSheet('background: rgba(40, 40, 40, 1)')
         self.account = ''
+        self.accountEmail = ''
         self.price_saved = None
         self.start_time = None
 
@@ -307,7 +334,7 @@ class LoggedInWidget(QWidget):
         # class state variables
         self.current_page = "Dashboard"
         self.current_font = "Arial"
-        self.current_theme = "Dark"
+        self.current_theme = "Classic"
         self.pages = []
         self.content = QMainWindow()
 
@@ -319,14 +346,14 @@ class LoggedInWidget(QWidget):
         # NOTE:
         # initializing all the pages
         self.dashboardPage = DashboardPage(self)
-        # self.profilePage = ProfilePage()
+        self.profilePage = ProfilePage(self)
         self.rentPage = RentPage(self)
         self.leasePage = LeasePage(self)
         self.settingsPage = SettingsPage(self)
         # self.testPage = TestPage()
 
         self.pages.append(self.dashboardPage)
-        # self.pages.append(self.profilePage)
+        self.pages.append(self.profilePage)
         self.pages.append(self.rentPage)
         self.pages.append(self.leasePage)
         self.pages.append(self.settingsPage)
@@ -361,24 +388,54 @@ class LoggedInWidget(QWidget):
         else:
             self.classicTheme()
 
+    def sendNotificationDashboard(self):
+        numberOfReqsR = self.sender.get_job_statuses()
+        numberOfReqsL = self.receiver.get_job_notifications()
+
+        while (True):
+            newNumberOfReqsR = self.sender.get_job_statuses()
+            # print('------------RENT------------------\n' + str(numberOfReqsR) + '\n++++++++++++++++++++++++++++++++++\n' + str(newNumberOfReqsR))
+
+            if (len(numberOfReqsR) != len(newNumberOfReqsR)):
+                self.sidebar.dashboard.notify(True)
+                numberOfReqsR = newNumberOfReqs
+            else:
+                for i in range(len(newNumberOfReqsR)) :
+                    if (numberOfReqsR[i][4] != newNumberOfReqsR[i][4]):
+                        self.sidebar.dashboard.notify(True)
+                        numberOfReqsR = newNumberOfReqs
+                        break
+
+            newNumberOfReqsL = self.receiver.get_job_notifications()
+            # print('------------LEASE-----------------\n' + str(numberOfReqsL) + '\n++++++++++++++++++++++++++++++++++\n' + str(newNumberOfReqsL))
+
+            if (len(numberOfReqsL) != len(newNumberOfReqsL)):
+                self.sidebar.dashboard.notify(True)
+                numberOfReqsL = newNumberOfReqs
+            time.sleep(1)
+
     def darkTheme(self):
-        self.setStyleSheet(  'background: rgb(40, 40, 40);\n'
-                                    'color: white;\n'
-                                    'border: 0px solid white;\n')
+        self.setStyleSheet( 'background: rgb(40, 40, 40);\n'
+                            'color: white;\n'
+                            'border: 0px solid white;\n')
 
     def lightTheme(self):
-        self.setStyleSheet(  'background: rgb(154, 154, 154);\n'
-                                    'color: white;\n'
-                                    'border: 0px solid black;\n')
+        self.setStyleSheet( 'background: rgb(154, 154, 154);\n'
+                            'color: white;\n'
+                            'border: 0px solid black;\n')
 
     def classicTheme(self):
-        self.setStyleSheet(  'background: rgb(0, 13, 27);\n'
-                                    'color: white;\n'
-                                    'border: 0px solid white;\n')
+        self.setStyleSheet( 'background: rgb(0, 13, 27);\n'
+                            'color: white;\n'
+                            'border: 0px solid white;\n')
 
     def setAuthToken(self, auth_token):
         self.receiver = Receiver(auth_token)
         self.sender = Sender(auth_token)
+
+        t1 = threading.Thread(target=self.sendNotificationDashboard)
+        t1.daemon = True
+        t1.start()
 
     # NOTE:
     # setter function to change the theme
@@ -392,8 +449,9 @@ class LoggedInWidget(QWidget):
     
     # NOTE:
     # setter function for account
-    def setAccount(self, e):
+    def setAccount(self, e, e2):
         self.account = e
+        self.accountEmail = e2
 
 # NOTE:
 # MainWindow class which will display all the pages inside

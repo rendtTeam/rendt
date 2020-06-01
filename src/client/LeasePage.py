@@ -563,16 +563,26 @@ class DockerSpecificationsPage(QWidget):
                                     'font-weight: bold;\n')
     
     def goToLeaseIdlePage(self):
-        if (self.parent.parent.price_saved is None):
+        if (self.parent.parent.price_saved is None and len(self.priceField.text())):
             self.price = str('%.2f' % float(str(self.priceField.text())))
             self.parent.parent.price_saved = float(self.price)
-        else:
+
+            self.parent.parent.receiver.mark_available(self.machine_details, self.machine_details_full, self.price)
+            self.parent.leaseIdlePage.show()
+            self.parent.dockerSpecificationsPage.hide()
+            self.parent.leaseIdlePage.startLeasing()
+            self.destroy()
+        elif (len(self.priceField.text())):
             self.price = self.parent.parent.price_saved
-        self.parent.parent.receiver.mark_available(self.machine_details, self.machine_details_full, self.price)
-        self.parent.leaseIdlePage.show()
-        self.parent.dockerSpecificationsPage.hide()
-        self.parent.leaseIdlePage.startLeasing()
-        self.destroy()
+
+            self.parent.parent.receiver.mark_available(self.machine_details, self.machine_details_full, self.price)
+            self.parent.leaseIdlePage.show()
+            self.parent.dockerSpecificationsPage.hide()
+            self.parent.leaseIdlePage.startLeasing()
+            self.destroy()
+        else:
+            self.priceField.focusWidget()
+    
         # self.parent.leaseExecPage.show()
         # self.parent.dockerSpecificationsPage.hide()
 
