@@ -169,7 +169,7 @@ class DBHandler(object):
         return rows[0][0]
 
     def getJobStatuses(self, renter_id): # TODO delete job_desc from here
-        query = f'SELECT O.job_id, O.job_desc, O.job_mode, U.username, O.status FROM job_orders O, users U WHERE O.renter_id = {renter_id} AND O.leaser_id = U.user_id'
+        query = f'SELECT O.job_id, O.job_desc, O.job_mode, U.username, O.status, O.exec_start_time FROM job_orders O, users U WHERE O.renter_id = {renter_id} AND O.leaser_id = U.user_id'
         self._executeQuery(query)
         rows = self.__cursor.fetchall()
         return rows
