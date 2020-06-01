@@ -8,6 +8,7 @@ from SettingsPage import SettingsPage
 
 from sender import Sender
 from receiver import Receiver
+import threading
 
 # NOTE: 
 # A page for testing GUI and layouts
@@ -259,19 +260,23 @@ class Sidebar(QWidget):
                 #     e.setPage(self.parent.testPage)
                 if (e.page_title == 'Rent'):
                     self.parent.rentPage = RentPage(self.parent)
-                    e.setPage(self.parent.rentPage)
+                    t1 = threading.Thread(target=lambda: e.setPage(self.parent.rentPage))
+                    t1.start()
                 elif (e.page_title == 'Lease'):
                     self.parent.leasePage = LeasePage(self.parent)
                     self.parent.leasePage.openLeasePage()
-                    e.setPage(self.parent.leasePage)
+                    t1 = threading.Thread(target=lambda: e.setPage(self.parent.leasePage))
+                    t1.start()
                 elif (e.page_title == 'Dashboard'):
                     self.parent.dashboardPage = DashboardPage(self.parent)
-                    e.setPage(self.parent.dashboardPage)
+                    t1 = threading.Thread(target=lambda: e.setPage(self.parent.dashboardPage))
+                    t1.start()
                 elif (e.page_title == 'Settings'):
                     self.parent.settingsPage = SettingsPage(self.parent)
                     self.parent.settingsPage.accountLabel.setText(self.parent.account)
                     self.parent.settingsPage.setCurrentSettings(self.parent.current_theme, self.parent.current_font)
-                    e.setPage(self.parent.settingsPage)
+                    t1 = threading.Thread(target=lambda: e.setPage(self.parent.settingsPage))
+                    t1.start()
                 self.parent.content.setCentralWidget(e.page)
         self.current_page = sender.getText()
         self.parent.current_page = sender.getText()
