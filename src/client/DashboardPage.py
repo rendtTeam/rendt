@@ -2,8 +2,8 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QScrollArea, QPushButton, QLabel, QWidget, QVBoxLayout, QStackedWidget, QHBoxLayout, QMainWindow
 
 import threading
-
 import os, sys, platform
+from datetime import datetime
 
 from RentPage import CustomSquareButton
 
@@ -12,6 +12,9 @@ class LeasingRequest(QWidget):
         super(LeasingRequest, self).__init__()
 
         self.parent = parent
+
+        self.current_theme = self.parent.current_theme
+        self.current_font = self.parent.current_font
 
         self.jobId = None
         self.orderId = None
@@ -29,7 +32,7 @@ class LeasingRequest(QWidget):
 
         self.requestByLabel = QLabel(self)
         self.requestByLabel.setText('Request by ')
-        self.requestByLabel.setFont(QtGui.QFont('Arial', 20, 800))
+        self.requestByLabel.setFont(QtGui.QFont(self.current_font, 24, 800))
         self.requestByLabel.adjustSize()
         self.requestByLabel.setStyleSheet( 'background: transparent;\n'
                                             'color: white;\n'
@@ -41,11 +44,11 @@ class LeasingRequest(QWidget):
         self.shadow.setBlurRadius(30)
         self.shadow.setXOffset(0)
         self.shadow.setYOffset(0)
-        self.shadow.setColor(QtGui.QColor('rgb(0, 0, 0)'))
+        self.shadow.setColor(QtGui.QColor(30, 30, 30))
 
         self.renterLabel = QLabel(self)
         self.renterLabel.setText('')
-        self.renterLabel.setFont(QtGui.QFont('Arial', 20, 800))
+        self.renterLabel.setFont(QtGui.QFont(self.current_font, 20, 800))
         self.renterLabel.adjustSize()
         self.renterLabel.setStyleSheet( 'background: transparent;\n'
                                         'color: rgb(197, 0, 255);\n'
@@ -78,10 +81,11 @@ class LeasingRequest(QWidget):
                                         'QPushButton:pressed {\n'
                                         '   background: rgba(0, 75, 10, 0.7);\n'
                                         '}\n')
-        self.acceptBtn.setFont(QtGui.QFont('Arial', 12, 800))
+        self.acceptBtn.setFont(QtGui.QFont(self.current_font, 14, 800))
         self.acceptBtn.setText('Accept')
         self.acceptBtn.setFixedWidth(130)
         self.acceptBtn.setFixedHeight(100)
+
         # self.acceptBtn.clicked.connect(self.goToRentalTypePage)
 
         self.rejectBtn = QPushButton(self)
@@ -96,11 +100,13 @@ class LeasingRequest(QWidget):
                                         'QPushButton:pressed {\n'
                                         '   background: rgba(123, 25, 25, 0.7);\n'
                                         '}\n')
-        self.rejectBtn.setFont(QtGui.QFont('Arial', 12, 800))
+        self.rejectBtn.setFont(QtGui.QFont(self.current_font, 14, 800))
         self.rejectBtn.setText('Reject')
         self.rejectBtn.setFixedWidth(130)
         self.rejectBtn.setFixedHeight(100)
         # self.rejectBtn.clicked.connect(self.goToRentalTypePage)
+        if (self.parent.parent.parent.leasePage.status != 'idle'):
+            self.acceptBtn.setDisabled(True)
         
         self.buttonsGroup = QWidget(self)
         self.buttonsGroup.setStyleSheet('background: transparent;\n'
@@ -121,48 +127,71 @@ class LeasingRequest(QWidget):
         layout.setSpacing(0)
         layout.setContentsMargins(30, 0, 0, 0)
 
-        widget = QWidget(self)
-        widget.setLayout(layout)
-        widget.setContentsMargins(0, 0, 0, 0)
-        widget.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-        widget.setGraphicsEffect(self.shadow)
-
-        self.shadow = QtWidgets.QGraphicsDropShadowEffect()
-        self.shadow.setBlurRadius(15)
-        self.shadow.setXOffset(0)
-        self.shadow.setYOffset(0)
-        self.shadow.setColor(QtGui.QColor(30, 30, 30))
+        self.widget = QWidget(self)
+        self.widget.setLayout(layout)
+        self.widget.setContentsMargins(0, 0, 0, 0)
+        self.widget.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
 
         self.layout = QVBoxLayout()
-        self.layout.addWidget(widget)
+        self.layout.addWidget(self.widget)
         self.layout.setAlignment(QtCore.Qt.AlignTop)
         self.layout.setContentsMargins(0, 0, 0, 0)
 
         self.setLayout(self.layout)
         self.setContentsMargins(0, 0, 0, 0)
         self.setGraphicsEffect(self.shadow)
+
+        if (self.current_theme == 'Dark'):
+            self.darkTheme()
+        elif (self.current_theme == 'Light'):
+            self.lightTheme()
+        else:
+            self.classicTheme()
     
+    def darkTheme(self):
+        self.widget.setStyleSheet(  'background: rgb(71, 71, 71);\n'
+                                    'color: white;\n'
+                                    'border: 0px solid white;\n')
+
+    def lightTheme(self):
+        self.widget.setStyleSheet(  'background: rgb(184, 184, 184);\n'
+                                    'color: white;\n'
+                                    'border: 0px solid black;\n')
+
+    def classicTheme(self):
+        self.widget.setStyleSheet(  'background: rgba(154, 154, 154, 0.2);\n'
+                                    'color: white;\n'
+                                    'border: 0px solid white;\n')
+
     def setRenter(self, e):
         self.renterLabel.setText(e)
         self.renterLabel.adjustSize()
         self.acceptBtn.clicked.connect(self.acceptReq)
         self.rejectBtn.clicked.connect(self.rejectReq)
+        
+        if (self.parent.parent.parent.leasePage.status != 'idle'):
+            self.acceptBtn.setDisabled(True)
+        else:
+            self.acceptBtn.setDisabled(False)
 
     def acceptReq(self, e):
         self.hide()
         self.destroy()
+
+        self.parent.parent.parent.start_time = datetime.now()
+
         if (self.parent.parent.parent.leasePage.dockerInfo.dockerExists()):
             self.parent.parent.parent.leasePage.changeStatus('executing')
-            t1 = threading.Thread(target=self.startExec)
+            t1 = threading.Thread(target=lambda:self.startExec( self.parent.parent.parent.leasePage.dockerInfo, 
+                                                                self.parent.parent.parent.receiver,
+                                                                self.orderId, self.jobId))
             t1.daemon = True
             t1.start()
 
-    def startExec(self):
-        if (self.parent.parent.parent.leasePage.dockerInfo.dockerExists()):
-            if (not self.parent.parent.parent.leasePage.dockerInfo.imageExists()):
-                self.parent.parent.parent.receiver.build_docker('.')
-            self.parent.parent.parent.leasePage.changeStatus('executing')
-            response = self.parent.parent.parent.receiver.accept_order(self.orderId)
+    def startExec(self, dockerInfo, receiver, orderId, jobId):
+            if (not dockerInfo.imageExists()):
+                receiver.build_docker('.')
+            response = receiver.accept_order(orderId)
 
             if (platform.system() == 'Windows'):
                 home_dir = os.system("(echo %" + "cd%)>pwd.txt")
@@ -190,17 +219,19 @@ class LeasingRequest(QWidget):
                 path_to_output = y + '/output.zip'
                 print('1------------------------------------------------------------------------------------------')
 
-                self.parent.parent.parent.receiver.download_file_from_db(path_to_executable, db_token, f_size)
+                receiver.download_file_from_db(path_to_executable, db_token, f_size)
                 print('2------------------------------------------------------------------------------------------')
 
-                self.parent.parent.parent.receiver.execute_job(path_to_executable, path_to_output)
+                receiver.execute_job(path_to_executable, path_to_output)
                 print('3------------------------------------------------------------------------------------------')
 
-                db_token = self.parent.parent.parent.receiver.get_permission_to_upload_output(self.jobId, path_to_output)
+                db_token = receiver.get_permission_to_upload_output(jobId, path_to_output)
                 print('4------------------------------------------------------------------------------------------')
 
-                self.parent.parent.parent.receiver.upload_output_to_db(path_to_output, self.jobId, db_token)
+                receiver.upload_output_to_db(path_to_output, jobId, db_token)
                 print('5------------------------------------------------------------------------------------------')
+
+                # execPage.finishExecuting()
 
                 if (platform.system() == 'Windows'):
                     home_dir = os.system("DEL files.zip")
@@ -208,12 +239,6 @@ class LeasingRequest(QWidget):
                 else:
                     home_dir = os.system("rm -R " + path_to_executable)
                     home_dir = os.system("rm -R " + path_to_output)
-
-                self.hide()
-                self.destroy()
-                self.parent.parent.parent.leasePage.changeStatus('idle')
-                self.parent.parent.parent.leasePage.leaseExecPage.hide()
-                self.parent.parent.parent.leasePage.leaseIdlePage.show()
 
     def rejectReq(self, e):
         response = self.parent.parent.parent.receiver.decline_order(self.orderId)
@@ -228,6 +253,9 @@ class RentingRequest(QWidget):
         self.jobInfo = jobInfo
         self.taskPage = ''
 
+        self.current_theme = self.parent.current_theme
+        self.current_font = self.parent.current_font
+
         self.setStyleSheet( 'background: rgb(70, 70, 70);\n'
                             'color: white;\n'
                             'border: 0px solid rgb(100, 100, 100);\n'
@@ -236,7 +264,7 @@ class RentingRequest(QWidget):
 
         self.requestForLabel = QLabel(self)
         self.requestForLabel.setText('Request for ')
-        self.requestForLabel.setFont(QtGui.QFont('Arial', 20, 800))
+        self.requestForLabel.setFont(QtGui.QFont(self.current_font, 24, 800))
         self.requestForLabel.adjustSize()
         self.requestForLabel.setStyleSheet( 'background: transparent;\n'
                                             'color: white;\n'
@@ -246,7 +274,7 @@ class RentingRequest(QWidget):
 
         self.leaserLabel = QLabel(self)
         self.leaserLabel.setText('')
-        self.leaserLabel.setFont(QtGui.QFont('Arial', 20, 800))
+        self.leaserLabel.setFont(QtGui.QFont(self.current_font, 24, 800))
         self.leaserLabel.adjustSize()
         self.leaserLabel.setStyleSheet( 'background: transparent;\n'
                                         'color: rgb(0, 200, 56);\n'
@@ -279,7 +307,7 @@ class RentingRequest(QWidget):
                                         'QPushButton:pressed {\n'
                                         '   background: rgb(0, 75, 10);\n'
                                         '}\n')
-        self.requestBtn.setFont(QtGui.QFont('Arial', 12, 800))
+        self.requestBtn.setFont(QtGui.QFont(self.current_font, 14, 800))
         self.requestBtn.setText('Status')
         self.requestBtn.setFixedWidth(130)
         self.requestBtn.setFixedHeight(100)
@@ -294,13 +322,13 @@ class RentingRequest(QWidget):
         layout.setSpacing(0)
         layout.setContentsMargins(30, 0, 0, 0)
 
-        widget = QWidget(self)
-        widget.setLayout(layout)
-        widget.setContentsMargins(0, 0, 0, 0)
-        widget.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        self.widget = QWidget(self)
+        self.widget.setLayout(layout)
+        self.widget.setContentsMargins(0, 0, 0, 0)
+        self.widget.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
 
         self.layout = QVBoxLayout()
-        self.layout.addWidget(widget, alignment = QtCore.Qt.AlignTop)
+        self.layout.addWidget(self.widget, alignment = QtCore.Qt.AlignTop)
         self.layout.setAlignment(QtCore.Qt.AlignTop)
         self.layout.setContentsMargins(0, 0, 0, 0)
 
@@ -313,6 +341,28 @@ class RentingRequest(QWidget):
         self.setLayout(self.layout)
         self.setContentsMargins(0, 0, 0, 0)
         self.setGraphicsEffect(self.shadow)
+
+        if (self.current_theme == 'Dark'):
+            self.darkTheme()
+        elif (self.current_theme == 'Light'):
+            self.lightTheme()
+        else:
+            self.classicTheme()
+    
+    def darkTheme(self):
+        self.widget.setStyleSheet(  'background: rgb(71, 71, 71);\n'
+                                    'color: white;\n'
+                                    'border: 0px solid white;\n')
+
+    def lightTheme(self):
+        self.widget.setStyleSheet(  'background: rgb(184, 184, 184);\n'
+                                    'color: white;\n'
+                                    'border: 0px solid black;\n')
+
+    def classicTheme(self):
+        self.widget.setStyleSheet(  'background: rgba(154, 154, 154, 0.2);\n'
+                                    'color: white;\n'
+                                    'border: 0px solid white;\n')
 
     def setLeaserLabel(self, e):
         self.leaserLabel.setText(str(e))
@@ -392,18 +442,11 @@ class TaskPage(QWidget):
         self.current_theme = self.parent.current_theme
         self.current_font = self.parent.current_font
 
-        if (self.current_theme == 'Dark'):
-            self.darkTheme()
-        elif (self.current_theme == 'Light'):
-            self.lightTheme()
-        else:
-            self.classicTheme()
-
         self.shadow = QtWidgets.QGraphicsDropShadowEffect()
         self.shadow.setBlurRadius(30)
         self.shadow.setXOffset(0)
         self.shadow.setYOffset(0)
-        self.shadow.setColor(QtGui.QColor('rgb(0, 0, 0)'))
+        self.shadow.setColor(QtGui.QColor(20, 20, 20))
 
         self.requestStatus = status
         self.requestStarted = '' #TODO: get execution start time
@@ -412,29 +455,29 @@ class TaskPage(QWidget):
         self.shadow2.setBlurRadius(30)
         self.shadow2.setXOffset(0)
         self.shadow2.setYOffset(0)
-        self.shadow2.setColor(QtGui.QColor('rgb(0, 0, 0)'))
+        self.shadow2.setColor(QtGui.QColor(20, 20, 20))
 
         self.shadow3 = QtWidgets.QGraphicsDropShadowEffect()
         self.shadow3.setBlurRadius(30)
         self.shadow3.setXOffset(0)
         self.shadow3.setYOffset(0)
-        self.shadow3.setColor(QtGui.QColor('rgb(0, 0, 0)'))
+        self.shadow3.setColor(QtGui.QColor(20, 20, 20))
 
         self.shadow4 = QtWidgets.QGraphicsDropShadowEffect()
         self.shadow4.setBlurRadius(30)
         self.shadow4.setXOffset(0)
         self.shadow4.setYOffset(0)
-        self.shadow4.setColor(QtGui.QColor('rgb(0, 0, 0)'))
+        self.shadow4.setColor(QtGui.QColor(20, 20, 20))
 
         self.shadow5 = QtWidgets.QGraphicsDropShadowEffect()
         self.shadow5.setBlurRadius(30)
         self.shadow5.setXOffset(0)
         self.shadow5.setYOffset(0)
-        self.shadow5.setColor(QtGui.QColor('rgb(0, 0, 0)'))
+        self.shadow5.setColor(QtGui.QColor(20, 20, 20))
 
         self.statusLabel = QLabel(self)
         self.statusLabel.setText('Status')
-        self.statusLabel.setFont(QtGui.QFont('Arial', 40, 1000))
+        self.statusLabel.setFont(QtGui.QFont(self.current_font, 48, 1000))
         self.statusLabel.adjustSize()
         self.statusLabel.setAlignment(QtCore.Qt.AlignHCenter)
         self.statusLabel.setStyleSheet( 'background: transparent;\n'
@@ -449,10 +492,11 @@ class TaskPage(QWidget):
         self.downloadZipBtn.setFooter('Output of the uploaded execution files.\nFiles will be available to download after payment.')
         self.downloadZipBtn.clicked.connect(self.downloadOutput)
         self.downloadZipBtn.setGraphicsEffect(self.shadow2)
+        self.downloadZipBtn.setDisabled(True)
 
         self.statusInfoLabel = QLabel(self)
         self.statusInfoLabel.setText('Status: ' + self.requestStatus)
-        self.statusInfoLabel.setFont(QtGui.QFont('Arial', 20, 1000))
+        self.statusInfoLabel.setFont(QtGui.QFont(self.current_font, 24, 1000))
         self.statusInfoLabel.adjustSize()
         self.statusInfoLabel.setAlignment(QtCore.Qt.AlignLeft)
         self.statusInfoLabel.setStyleSheet( 'background: transparent;\n'
@@ -462,7 +506,7 @@ class TaskPage(QWidget):
         # if (self.requestStatus == 'Executing'):
         self.elapsedTimeLabel = QLabel(self)
         self.elapsedTimeLabel.setText('ET: ')
-        self.elapsedTimeLabel.setFont(QtGui.QFont('Arial', 20, 1000))
+        self.elapsedTimeLabel.setFont(QtGui.QFont(self.current_font, 24, 1000))
         self.elapsedTimeLabel.adjustSize()
         self.elapsedTimeLabel.setAlignment(QtCore.Qt.AlignLeft)
         self.elapsedTimeLabel.setStyleSheet('background: transparent;\n'
@@ -472,7 +516,7 @@ class TaskPage(QWidget):
 
         self.feeLabel = QLabel(self)
         self.feeLabel.setText('Fee: ' + self.calculateFee())
-        self.feeLabel.setFont(QtGui.QFont('Arial', 20, 1000))
+        self.feeLabel.setFont(QtGui.QFont(self.current_font, 24, 1000))
         self.feeLabel.adjustSize()
         self.feeLabel.setAlignment(QtCore.Qt.AlignLeft)
         self.feeLabel.setStyleSheet('background: transparent;\n'
@@ -488,17 +532,17 @@ class TaskPage(QWidget):
                                             'color: white;\n'
                                             'border: 0px solid white;\n')
         elif (status == 'Executing'):
-            self.statusBox.setStyleSheet(   'background: rgb(1, 91, 19);\n'
+            self.statusBox.setStyleSheet(   'background: rgb(76, 175, 80);\n'
                                             'color: white;\n'
                                             'border: 0px solid white;\n')
         
         elif (status == 'Rejected'):
-            self.statusBox.setStyleSheet(   'background: rgb(163, 0, 0);\n'
+            self.statusBox.setStyleSheet(   'background: rgb(213, 0, 0);\n'
                                             'color: white;\n'
                                             'border: 0px solid white;\n')
         
         elif (status == 'Finished'):
-            self.statusBox.setStyleSheet(   'background: rgb(131, 0, 123);\n'
+            self.statusBox.setStyleSheet(   'background: rgb(149, 117, 205);\n'
                                             'color: white;\n'
                                             'border: 0px solid white;\n')
 
@@ -544,7 +588,7 @@ class TaskPage(QWidget):
                                     'QPushButton:pressed {\n'
                                     '   background: rgb(75, 30, 80);\n'
                                     '}\n')
-        self.proceedToPaymentBtn.setFont(QtGui.QFont('Arial', 12, 900))
+        self.proceedToPaymentBtn.setFont(QtGui.QFont(self.current_font, 14, 900))
         self.proceedToPaymentBtn.setText('Proceed to Payment')
         self.proceedToPaymentBtn.setFixedHeight(105)
         self.proceedToPaymentBtn.setFixedWidth(325)
@@ -564,7 +608,7 @@ class TaskPage(QWidget):
                                     'QPushButton:pressed {\n'
                                     '   background: rgb(0, 65, 69);\n'
                                     '}\n')
-        self.backBtn.setFont(QtGui.QFont('Arial', 12, 900))
+        self.backBtn.setFont(QtGui.QFont(self.current_font, 14, 900))
         self.backBtn.setText('Back')
         self.backBtn.setFixedHeight(105)
         self.backBtn.setFixedWidth(225)
@@ -599,15 +643,32 @@ class TaskPage(QWidget):
         if (status != 'Finished'):
             self.proceedToPaymentBtn.hide()
 
-        self.layout = QVBoxLayout()
-        self.layout.addWidget(self.statusLabel, alignment = QtCore.Qt.AlignHCenter)
-        self.layout.addWidget(self.centerWidget, alignment = QtCore.Qt.AlignHCenter)
+        layout = QVBoxLayout(self)
+        layout.addWidget(self.statusLabel, alignment = QtCore.Qt.AlignHCenter)
+        layout.addWidget(self.centerWidget, alignment = QtCore.Qt.AlignHCenter)
         # self.layout.addWidget(self.proceedToPaymentBtn, alignment = QtCore.Qt.AlignRight)
-        self.layout.setAlignment(QtCore.Qt.AlignTop)
-        self.layout.setContentsMargins(0, 0, 0, 50)
-        self.layout.setSpacing(30)
+        layout.setAlignment(QtCore.Qt.AlignTop)
+        layout.setContentsMargins(0, 0, 0, 50)
+        layout.setSpacing(30)
 
+        self.widget = QWidget(self)
+        self.widget.setLayout(layout)
+        self.widget.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+
+        self.layout = QVBoxLayout()
+        self.layout.addWidget(self.widget)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setAlignment(QtCore.Qt.AlignTop)
+
+        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         self.setLayout(self.layout)
+
+        if (self.current_theme == 'Dark'):
+            self.darkTheme()
+        elif (self.current_theme == 'Light'):
+            self.lightTheme()
+        else:
+            self.classicTheme()
     
     def goBack(self):
         self.hide()
@@ -632,16 +693,25 @@ class TaskPage(QWidget):
         return ''
 
     def darkTheme(self):
-        self.setStyleSheet( 'background: rgb(57, 57, 57);\n'
+        self.widget.setStyleSheet( 'background: rgb(69, 69, 69);\n'
+                            'color: white;\n'
+                            'border: 0px solid white;\n')
+        self.setStyleSheet( 'background: rgb(69, 69, 69);\n'
                             'color: white;\n'
                             'border: 0px solid white;\n')
 
     def lightTheme(self):
+        self.widget.setStyleSheet( 'background: rgb(204, 204, 204);\n'
+                            'color: white;\n'
+                            'border: 0px solid black;\n')
         self.setStyleSheet( 'background: rgb(204, 204, 204);\n'
                             'color: white;\n'
                             'border: 0px solid black;\n')
 
     def classicTheme(self):
+        self.widget.setStyleSheet( 'background: rgb(0, 23, 37);\n'
+                            'color: white;\n'
+                            'border: 0px solid white;\n')
         self.setStyleSheet( 'background: rgb(0, 23, 37);\n'
                             'color: white;\n'
                             'border: 0px solid white;\n')
@@ -779,24 +849,23 @@ class DashboardPage(QScrollArea):
         self.shadow.setBlurRadius(30)
         self.shadow.setXOffset(0)
         self.shadow.setYOffset(0)
-        self.shadow.setColor(QtGui.QColor('rgb(0, 0, 0)'))
+        self.shadow.setColor(QtGui.QColor(20, 20, 20))
 
         self.shadow2 = QtWidgets.QGraphicsDropShadowEffect()
         self.shadow2.setBlurRadius(30)
         self.shadow2.setXOffset(0)
         self.shadow2.setYOffset(0)
-        self.shadow2.setColor(QtGui.QColor('rgb(0, 0, 0)'))
+        self.shadow2.setColor(QtGui.QColor(20, 20, 20))
 
         self.rentingLabel = QLabel(self)
         self.rentingLabel.setText('Renting')
-        self.rentingLabel.setFont(QtGui.QFont('Arial', 40, 400))
+        self.rentingLabel.setFont(QtGui.QFont(self.current_font, 48, 400))
         self.rentingLabel.adjustSize()
         self.rentingLabel.setAlignment(QtCore.Qt.AlignLeft)
         self.rentingLabel.setStyleSheet('background: transparent;\n'
                                         'border: 0px solid white;\n'
                                         'font-weight: bold;\n'
-                                        'margin-left: 10px;\n'
-                                        'margin-bottom: 10px\n') 
+                                        'margin-left: 10px;\n') 
         self.rentingLabel.setGraphicsEffect(self.shadow)
 
         self.rentingList = RentingList(self)
@@ -805,7 +874,7 @@ class DashboardPage(QScrollArea):
 
         self.leasingLabel = QLabel(self)
         self.leasingLabel.setText('Leasing')
-        self.leasingLabel.setFont(QtGui.QFont('Arial', 40, 400))
+        self.leasingLabel.setFont(QtGui.QFont(self.current_font, 48, 400))
         self.leasingLabel.adjustSize()
         self.leasingLabel.setAlignment(QtCore.Qt.AlignLeft)
         self.leasingLabel.setStyleSheet('background: transparent;\n'
@@ -867,7 +936,7 @@ class DashboardPage(QScrollArea):
         self.leasingList.addRequests()
 
     def darkTheme(self):
-        self.container.setStyleSheet( 'background: rgb(57, 57, 57);\n'
+        self.container.setStyleSheet( 'background: rgb(69, 69, 69);\n'
                             'color: white;\n'
                             'border: 0px solid white;\n')
 

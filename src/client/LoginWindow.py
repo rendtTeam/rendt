@@ -21,7 +21,7 @@ class LoginLineEdit(QtWidgets.QLineEdit):
                             'border: 0px solid white;\n'
                             'padding: 5px 10px;\n'
                             'margin: 10px 0px 0px 0px;\n')
-        self.setFont(QtGui.QFont('Arial', 10, 800))
+        self.setFont(QtGui.QFont('Arial', 12, 800))
         
         # NOTE:
         # setting drop shadow effect
@@ -29,7 +29,7 @@ class LoginLineEdit(QtWidgets.QLineEdit):
         self.shadow.setBlurRadius(20)
         self.shadow.setXOffset(0)
         self.shadow.setYOffset(0)
-        self.shadow.setColor(QtGui.QColor('rgba(100, 100, 100, 0.5)'))
+        self.shadow.setColor(QtGui.QColor(20, 20, 20))
 
         self.setGraphicsEffect(self.shadow)
 
@@ -64,7 +64,7 @@ class LoginButton(QPushButton):
                             'QPushButton:pressed {\n'
                             '   background: rgb(50, 25, 25);\n'
                             '}\n')
-        self.setFont(QtGui.QFont('Arial', 10, 800))
+        self.setFont(QtGui.QFont('Arial', 12, 800))
         
         # NOTE:
         # setting drop shadow effect
@@ -72,7 +72,7 @@ class LoginButton(QPushButton):
         self.shadow.setBlurRadius(20)
         self.shadow.setXOffset(0)
         self.shadow.setYOffset(0)
-        self.shadow.setColor(QtGui.QColor('rgba(0, 0, 0, 1)'))
+        self.shadow.setColor(QtGui.QColor(20, 20, 20))
 
         self.setGraphicsEffect(self.shadow)
 
@@ -127,7 +127,7 @@ class LoginPage(QWidget):
         self.logo.setPixmap(logo.scaled(
             200, 200, QtCore.Qt.KeepAspectRatio, transformMode=QtCore.Qt.SmoothTransformation))
         self.logo.setAlignment(QtCore.Qt.AlignCenter)
-        
+
         # NOTE:
         # username field 
         self.emailField = LoginLineEdit()
@@ -181,7 +181,7 @@ class LoginPage(QWidget):
                                         '}\n')
         self.forgotPass.setText('Forgot password?')
         # self.forgotPass.setFixedWidth(400)
-        self.forgotPass.setFont(QtGui.QFont('Arial', 10, 800))
+        self.forgotPass.setFont(QtGui.QFont('Arial', 12, 800))
         self.forgotPass.setAlignment(QtCore.Qt.AlignRight)
         self.forgotPass.mouseReleaseEvent = self.goToForgotPass
 
@@ -227,6 +227,7 @@ class LoginPage(QWidget):
             self.parent.loggedInWidget = LoggedInWidget()
             self.parent.loggedInWidget.setAuthToken(authToken)
             self.parent.loggedInWidget.sidebar.selectPage(self.parent.loggedInWidget.sidebar.dashboard, 'Dashboard')
+            self.parent.loggedInWidget.setAccount(self.emailField.text())
             self.parent.setCentralWidget(self.parent.loggedInWidget)
         
         # self.parent.loggedInWidget = LoggedInWidget()
@@ -466,7 +467,7 @@ class LoginWindow(QMainWindow):
     def __init__(self):
         super(LoginWindow, self).__init__()
 
-        self.resize(1024, 768)
+        self.resize(1000, 950)
         self.setStyleSheet('background: rgb(47, 47, 47)')
         self.setWindowTitle('rendt')
         self.setWindowIcon(QtGui.QIcon(

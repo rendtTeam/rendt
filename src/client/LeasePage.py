@@ -132,8 +132,11 @@ class DockerSpecsLabel(QWidget):
 
         self.parent = parent
 
+        self.current_theme = self.parent.current_theme
+        self.current_font = self.parent.current_font
+
         self.label1 = QLabel(self)
-        self.label1.setFont(QtGui.QFont('Arial', 25, 800))
+        self.label1.setFont(QtGui.QFont(self.current_font, 30, 800))
         self.label1.adjustSize()
         # self.label1.setAlignment(QtCore.Qt.AlignHCenter)
         self.label1.setStyleSheet(  'background: transparent;\n'
@@ -142,7 +145,7 @@ class DockerSpecsLabel(QWidget):
                                     'font-weight: bold;\n')
         
         self.label2 = QLabel(self)
-        self.label2.setFont(QtGui.QFont('Arial', 25, 800))
+        self.label2.setFont(QtGui.QFont(self.current_font, 30, 800))
         self.label2.adjustSize()
         # self.label2.setAlignment(QtCore.Qt.AlignHCenter)
         self.label2.setStyleSheet(  'background: transparent;\n'
@@ -176,28 +179,21 @@ class NoDockerFoundPage(QWidget):
         self.current_theme = self.parent.current_theme
         self.current_font = self.parent.current_font
 
-        if (self.current_theme == 'Dark'):
-            self.darkTheme()
-        elif (self.current_theme == 'Light'):
-            self.lightTheme()
-        else:
-            self.classicTheme()
-
         self.shadow = QtWidgets.QGraphicsDropShadowEffect()
         self.shadow.setBlurRadius(30)
         self.shadow.setXOffset(0)
         self.shadow.setYOffset(0)
-        self.shadow.setColor(QtGui.QColor('rgb(0, 0, 0)'))
+        self.shadow.setColor(QtGui.QColor(20, 20, 20))
 
         self.shadow2 = QtWidgets.QGraphicsDropShadowEffect()
         self.shadow2.setBlurRadius(30)
         self.shadow2.setXOffset(0)
         self.shadow2.setYOffset(0)
-        self.shadow2.setColor(QtGui.QColor('rgb(0, 0, 0)'))
+        self.shadow2.setColor(QtGui.QColor(20, 20, 20))
 
         self.noDockerFoundLabel = QLabel(self)
         self.noDockerFoundLabel.setText('Docker is not running')
-        self.noDockerFoundLabel.setFont(QtGui.QFont('Arial', 40, 400))
+        self.noDockerFoundLabel.setFont(QtGui.QFont(self.current_font, 48, 400))
         self.noDockerFoundLabel.adjustSize()
         self.noDockerFoundLabel.setAlignment(QtCore.Qt.AlignHCenter)
         self.noDockerFoundLabel.setStyleSheet('background: transparent;\n'
@@ -209,7 +205,7 @@ class NoDockerFoundPage(QWidget):
 
         self.errorReasonLabel = QLabel(self)
         self.errorReasonLabel.setText('You are seeing this error because:')
-        self.errorReasonLabel.setFont(QtGui.QFont('Arial', 20, 800))
+        self.errorReasonLabel.setFont(QtGui.QFont(self.current_font, 24, 800))
         self.errorReasonLabel.adjustSize()
         self.errorReasonLabel.setAlignment(QtCore.Qt.AlignLeft)
         self.errorReasonLabel.setStyleSheet('background: transparent;\n'
@@ -219,7 +215,7 @@ class NoDockerFoundPage(QWidget):
 
         self.firstReasonLabel = QLabel(self)
         self.firstReasonLabel.setText('\t1. Docker daemon is not running')
-        self.firstReasonLabel.setFont(QtGui.QFont('Arial', 14, 800))
+        self.firstReasonLabel.setFont(QtGui.QFont(self.current_font, 17, 800))
         self.firstReasonLabel.adjustSize()
         self.firstReasonLabel.setAlignment(QtCore.Qt.AlignLeft)
         self.firstReasonLabel.setStyleSheet('background: transparent;\n'
@@ -230,7 +226,7 @@ class NoDockerFoundPage(QWidget):
         self.firstReasonALabel = QLabel(self)
         self.firstReasonALabel.setText(
             '\t\ta. Please start your docker daemon or check docker status')
-        self.firstReasonALabel.setFont(QtGui.QFont('Arial', 14, 800))
+        self.firstReasonALabel.setFont(QtGui.QFont(self.current_font, 17, 800))
         self.firstReasonALabel.adjustSize()
         self.firstReasonALabel.setAlignment(QtCore.Qt.AlignLeft)
         self.firstReasonALabel.setStyleSheet('background: transparent;\n'
@@ -241,7 +237,7 @@ class NoDockerFoundPage(QWidget):
 
         self.secondReasonLabel = QLabel(self)
         self.secondReasonLabel.setText('\t2. No docker installation is found')
-        self.secondReasonLabel.setFont(QtGui.QFont('Arial', 14, 800))
+        self.secondReasonLabel.setFont(QtGui.QFont(self.current_font, 17, 800))
         self.secondReasonLabel.adjustSize()
         self.secondReasonLabel.setAlignment(QtCore.Qt.AlignLeft)
         self.secondReasonLabel.setStyleSheet('background: transparent;\n'
@@ -251,7 +247,7 @@ class NoDockerFoundPage(QWidget):
 
         self.secondReasonALabel = QLabel(self)
         self.secondReasonALabel.setText('\t\ta. To lease your machine you need to\n\t\t    have a running docker daemon on your computer')
-        self.secondReasonALabel.setFont(QtGui.QFont('Arial', 14, 800))
+        self.secondReasonALabel.setFont(QtGui.QFont(self.current_font, 17, 800))
         self.secondReasonALabel.adjustSize()
         self.secondReasonALabel.setAlignment(QtCore.Qt.AlignLeft)
         self.secondReasonALabel.setStyleSheet('background: transparent;\n'
@@ -261,11 +257,7 @@ class NoDockerFoundPage(QWidget):
                                               'margin-top: 0px;\n')
 
         self.infoBox = QWidget(self)
-        self.infoBox.setStyleSheet( 'background: rgb(71, 71, 71);\n'
-                                    'color: white;\n'
-                                    'border: 0px solid white;\n'
-                                    'padding: 0px;\n'
-                                    'margin: 30px;\n')
+        
         
         self.infoBox.setMinimumHeight(400)
         self.infoBox.setMinimumWidth(800)
@@ -291,21 +283,43 @@ class NoDockerFoundPage(QWidget):
         self.layout.setSpacing(20)
 
         self.setLayout(self.layout)
+
+        if (self.current_theme == 'Dark'):
+            self.darkTheme()
+        elif (self.current_theme == 'Light'):
+            self.lightTheme()
+        else:
+            self.classicTheme()
     
     def darkTheme(self):
-        self.setStyleSheet( 'background: rgb(57, 57, 57);\n'
+        self.setStyleSheet( 'background: rgb(69, 69, 69);\n'
                             'color: white;\n'
                             'border: 0px solid white;\n')
+        self.infoBox.setStyleSheet( 'background: rgb(71, 71, 71);\n'
+                                    'color: white;\n'
+                                    'border: 0px solid white;\n'
+                                    'padding: 0px;\n'
+                                    'margin: 30px;\n')
 
     def lightTheme(self):
         self.setStyleSheet( 'background: rgb(204, 204, 204);\n'
-                            'color: black;\n'
+                            'color: white;\n'
                             'border: 0px solid black;\n')
+        self.infoBox.setStyleSheet( 'background: rgb(140, 140, 140);\n'
+                                    'color: white;\n'
+                                    'border: 0px solid white;\n'
+                                    'padding: 0px;\n'
+                                    'margin: 30px;\n')
 
     def classicTheme(self):
         self.setStyleSheet( 'background: rgb(0, 23, 37);\n'
                             'color: white;\n'
                             'border: 0px solid white;\n')
+        self.infoBox.setStyleSheet( 'background: rgb(28, 47, 57);\n'
+                                    'color: white;\n'
+                                    'border: 0px solid white;\n'
+                                    'padding: 0px;\n'
+                                    'margin: 30px;\n')
 
 class DockerSpecificationsPage(QWidget):
     def __init__(self, parent):
@@ -318,43 +332,36 @@ class DockerSpecificationsPage(QWidget):
         self.current_font = self.parent.current_font
         self.machine_details = 'CPU: ' + str(self.dockerInfo.getCPUModel()) + '(' + str(self.dockerInfo.getNumCPU()) + 'x)' + ' RAM: ' + str('%.3fGB' % self.dockerInfo.getMemTotalGB())
         self.machine_details_full = str(self.dockerInfo.getFullInfoJSON())
-        print('oneliner: ' + self.machine_details)
-        print('full: ' + self.machine_details_full)
-
-        if (self.current_theme == 'Dark'):
-            self.darkTheme()
-        elif (self.current_theme == 'Light'):
-            self.lightTheme()
-        else:
-            self.classicTheme()
+        # print('oneliner: ' + self.machine_details)
+        # print('full: ' + self.machine_details_full)
 
         self.shadow = QtWidgets.QGraphicsDropShadowEffect()
         self.shadow.setBlurRadius(30)
         self.shadow.setXOffset(0)
         self.shadow.setYOffset(0)
-        self.shadow.setColor(QtGui.QColor('rgb(0, 0, 0)'))
+        self.shadow.setColor(QtGui.QColor(20, 20, 20))
     
         self.shadow2 = QtWidgets.QGraphicsDropShadowEffect()
         self.shadow2.setBlurRadius(30)
         self.shadow2.setXOffset(0)
         self.shadow2.setYOffset(0)
-        self.shadow2.setColor(QtGui.QColor('rgb(0, 0, 0)'))
+        self.shadow2.setColor(QtGui.QColor(20, 20, 20))
 
         self.shadow3 = QtWidgets.QGraphicsDropShadowEffect()
         self.shadow3.setBlurRadius(30)
         self.shadow3.setXOffset(0)
         self.shadow3.setYOffset(0)
-        self.shadow3.setColor(QtGui.QColor('rgb(0, 0, 0)'))
+        self.shadow3.setColor(QtGui.QColor(20, 20, 20))
 
         self.shadow4 = QtWidgets.QGraphicsDropShadowEffect()
         self.shadow4.setBlurRadius(30)
         self.shadow4.setXOffset(0)
         self.shadow4.setYOffset(0)
-        self.shadow4.setColor(QtGui.QColor('rgb(0, 0, 0)'))
+        self.shadow4.setColor(QtGui.QColor(20, 20, 20))
 
         self.dockerSpecsLabel = QLabel(self)
         self.dockerSpecsLabel.setText('Docker specifications')
-        self.dockerSpecsLabel.setFont(QtGui.QFont('Arial', 40, 400))
+        self.dockerSpecsLabel.setFont(QtGui.QFont(self.current_font, 48, 400))
         self.dockerSpecsLabel.adjustSize()
         self.dockerSpecsLabel.setAlignment(QtCore.Qt.AlignHCenter)
         self.dockerSpecsLabel.setStyleSheet('background: transparent;\n'
@@ -414,22 +421,18 @@ class DockerSpecificationsPage(QWidget):
                                         'border: 0px solid white;\n'
                                         'padding: 5px 10px;\n'
                                         'margin: 0px 0px 0px 0px;\n')
-        self.priceField.setFont(QtGui.QFont('Arial', 13, 400))
+        self.priceField.setFont(QtGui.QFont(self.current_font, 16, 400))
         self.priceField.setFixedHeight(55)
         self.priceField.setPlaceholderText('for ex: 5 - meaning 5$ per hour will be charged')
 
         self.pf = QWidget(self)
-        self.pf.setStyleSheet( 'background: rgb(71, 71, 71);\n'
-                                    'color: white;\n'
-                                    'border: 0px solid white;\n'
-                                    'margin: 20px;\n')
 
         self.pf.setFixedHeight(120)
         self.pf.setMinimumWidth(800)
 
         self.pflabel = QLabel(self)
         self.pflabel.setText('Price per hour: ')
-        self.pflabel.setFont(QtGui.QFont('Arial', 15, 400))
+        self.pflabel.setFont(QtGui.QFont(self.current_font, 18, 400))
         self.pflabel.setStyleSheet( 'background: transparent:\n'
                                     'color: white;\n'
                                     'border: 0px solid white;\n'
@@ -445,10 +448,6 @@ class DockerSpecificationsPage(QWidget):
         self.pf.setGraphicsEffect(self.shadow4)
 
         self.infoBox = QWidget(self)
-        self.infoBox.setStyleSheet( 'background: rgb(71, 71, 71);\n'
-                                    'color: white;\n'
-                                    'border: 0px solid white;\n'
-                                    'margin: 20px;\n')
 
         self.infoBox.setMinimumHeight(400)
         self.infoBox.setMinimumWidth(800)
@@ -478,41 +477,97 @@ class DockerSpecificationsPage(QWidget):
                                      'QPushButton:pressed {\n'
                                      '   background: rgb(0, 110, 35);\n'
                                      '}\n')
-        self.leaseBtn.setFont(QtGui.QFont('Arial', 12, 800))
+        self.leaseBtn.setFont(QtGui.QFont(self.current_font, 14, 800))
         self.leaseBtn.setText('Lease')
         self.leaseBtn.setFixedHeight(65)
         self.leaseBtn.setFixedWidth(180)
         self.leaseBtn.setGraphicsEffect(self.shadow3)
         self.leaseBtn.clicked.connect(self.goToLeaseIdlePage)
 
-        self.layout = QVBoxLayout()
-        self.layout.addWidget(self.dockerSpecsLabel)
-        self.layout.addWidget(self.infoBox, alignment = QtCore.Qt.AlignTop)
-        self.layout.addWidget(self.pf, alignment = QtCore.Qt.AlignCenter)
-        self.layout.addWidget(self.leaseBtn, alignment = QtCore.Qt.AlignRight)
-        self.layout.setAlignment(QtCore.Qt.AlignTop)
-        self.layout.setContentsMargins(0, 0, 0, 50)
-        self.layout.setSpacing(10)
+        layout = QVBoxLayout()
+        layout.addWidget(self.dockerSpecsLabel)
+        layout.addWidget(self.infoBox, alignment = QtCore.Qt.AlignTop)
+        layout.addWidget(self.pf, alignment = QtCore.Qt.AlignCenter)
+        layout.addWidget(self.leaseBtn, alignment = QtCore.Qt.AlignRight)
+        layout.setAlignment(QtCore.Qt.AlignTop)
+        layout.setContentsMargins(0, 0, 0, 50)
+        layout.setSpacing(10)
 
+        self.widget = QWidget(self)
+        self.widget.setContentsMargins(0, 0, 0, 0)
+
+        self.widget.setLayout(layout)
+
+        self.layout = QVBoxLayout()
+        self.layout.addWidget(self.widget)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setAlignment(QtCore.Qt.AlignTop)
         self.setLayout(self.layout)
 
+        if (self.current_theme == 'Dark'):
+            self.darkTheme()
+        elif (self.current_theme == 'Light'):
+            self.lightTheme()
+        else:
+            self.classicTheme()
+
     def darkTheme(self):
-        self.setStyleSheet( 'background: rgb(57, 57, 57);\n'
-                            'color: white;\n'
-                            'border: 0px solid white;\n')
+        self.widget.setStyleSheet(  'background: rgb(69, 69, 69);\n'
+                                    'color: white;\n'
+                                    'border: 0px solid white;\n')
+        self.infoBox.setStyleSheet( 'background: rgb(71, 71, 71);\n'
+                                    'color: white;\n'
+                                    'border: 0px solid white;\n'
+                                    'margin: 20px;\n')
+        self.pf.setStyleSheet( 'background: rgb(71, 71, 71);\n'
+                                'color: white;\n'
+                                'border: 0px solid white;\n'
+                                'margin: 20px;\n')
+        self.pflabel.setStyleSheet( 'background: transparent:\n'
+                                    'color: white;\n'
+                                    'border: 0px solid white;\n'
+                                    'font-weight: bold;\n')
 
     def lightTheme(self):
-        self.setStyleSheet( 'background: rgb(204, 204, 204);\n'
-                            'color: black;\n'
-                            'border: 0px solid black;\n')
+        self.widget.setStyleSheet(  'background: rgb(204, 204, 204);\n'
+                                    'color: white;\n'
+                                    'border: 0px solid black;\n')
+        self.infoBox.setStyleSheet( 'background: rgb(180, 180, 180);\n'
+                                    'color: white;\n'
+                                    'border: 0px solid white;\n'
+                                    'margin: 20px;\n')
+        self.pf.setStyleSheet( 'background: rgb(180, 180, 180);\n'
+                                'color: white;\n'
+                                'border: 0px solid white;\n'
+                                'margin: 20px;\n')
+        self.pflabel.setStyleSheet( 'background: transparent:\n'
+                                    'color: white;\n'
+                                    'border: 0px solid white;\n'
+                                    'font-weight: bold;\n')
 
     def classicTheme(self):
-        self.setStyleSheet( 'background: rgb(0, 23, 37);\n'
-                            'color: white;\n'
-                            'border: 0px solid white;\n')
+        self.widget.setStyleSheet(  'background: rgb(0, 23, 37);\n'
+                                    'color: white;\n'
+                                    'border: 0px solid white;\n')
+        self.infoBox.setStyleSheet( 'background: rgb(28, 47, 57);\n'
+                                    'color: white;\n'
+                                    'border: 0px solid white;\n'
+                                    'margin: 20px;\n')
+        self.pf.setStyleSheet( 'background: rgb(28, 47, 57);\n'
+                                'color: white;\n'
+                                'border: 0px solid white;\n'
+                                'margin: 20px;\n')
+        self.pflabel.setStyleSheet( 'background: transparent:\n'
+                                    'color: white;\n'
+                                    'border: 0px solid white;\n'
+                                    'font-weight: bold;\n')
     
     def goToLeaseIdlePage(self):
-        self.price = str('%.2f' % float(str(self.priceField.text())))
+        if (self.parent.parent.price_saved is None):
+            self.price = str('%.2f' % float(str(self.priceField.text())))
+            self.parent.parent.price_saved = float(self.price)
+        else:
+            self.price = self.parent.parent.price_saved
         self.parent.parent.receiver.mark_available(self.machine_details, self.machine_details_full, self.price)
         self.parent.leaseIdlePage.show()
         self.parent.dockerSpecificationsPage.hide()
@@ -530,7 +585,7 @@ class LeaseIdlePage(QWidget):
         self.current_theme = self.parent.current_theme
         self.current_font = self.parent.current_font
 
-        self.setStyleSheet( 'background: rgb(149, 149, 149);\n'
+        self.setStyleSheet( 'background: rgb(204, 204, 204);\n'
                             'color: white;\n'
                             'border: 0px solid white;\n')
 
@@ -538,17 +593,17 @@ class LeaseIdlePage(QWidget):
         self.shadow.setBlurRadius(30)
         self.shadow.setXOffset(0)
         self.shadow.setYOffset(0)
-        self.shadow.setColor(QtGui.QColor('rgb(0, 0, 0)'))
+        self.shadow.setColor(QtGui.QColor(20, 20, 20))
 
         self.shadow2 = QtWidgets.QGraphicsDropShadowEffect()
         self.shadow2.setBlurRadius(30)
         self.shadow2.setXOffset(0)
         self.shadow2.setYOffset(0)
-        self.shadow2.setColor(QtGui.QColor('rgb(0, 0, 0)'))
+        self.shadow2.setColor(QtGui.QColor(20, 20, 20))
 
         self.idleLabel = QLabel(self)
         self.idleLabel.setText('Idle')
-        self.idleLabel.setFont(QtGui.QFont('Arial', 100, 400))
+        self.idleLabel.setFont(QtGui.QFont(self.current_font, 120, 400))
         self.idleLabel.adjustSize()
         self.idleLabel.setAlignment(QtCore.Qt.AlignHCenter)
         self.idleLabel.setStyleSheet(   'background: transparent;\n'
@@ -571,7 +626,7 @@ class LeaseIdlePage(QWidget):
                                      'QPushButton:pressed {\n'
                                      '   background: rgb(123, 25, 25);\n'
                                      '}\n')
-        self.stopBtn.setFont(QtGui.QFont('Arial', 25, 900))
+        self.stopBtn.setFont(QtGui.QFont(self.current_font, 30, 900))
         self.stopBtn.setText('Stop')
         self.stopBtn.setFixedHeight(125)
         self.stopBtn.setFixedWidth(325)
@@ -602,6 +657,7 @@ class LeaseIdlePage(QWidget):
         self.parent.changeStatus('idle')
 
     def goToDockerSpecificationsPage(self):
+        self.parent.parent.price_saved = None
         self.parent.changeStatus('not_leasing')
         self.parent.parent.receiver.mark_unavailable()
         self.parent.dockerSpecificationsPage.show()
@@ -630,11 +686,11 @@ class LeaseExecPage(QWidget):
         self.shadow.setBlurRadius(30)
         self.shadow.setXOffset(0)
         self.shadow.setYOffset(0)
-        self.shadow.setColor(QtGui.QColor('rgb(0, 0, 0)'))
+        self.shadow.setColor(QtGui.QColor(20, 20, 20))
 
         self.execLabel = QLabel(self)
         self.execLabel.setText('Executing')
-        self.execLabel.setFont(QtGui.QFont('Arial', 100, 400))
+        self.execLabel.setFont(QtGui.QFont(self.current_font, 120, 400))
         self.execLabel.adjustSize()
         self.execLabel.setAlignment(QtCore.Qt.AlignHCenter)
         self.execLabel.setStyleSheet(   'background: transparent;\n'
@@ -643,7 +699,7 @@ class LeaseExecPage(QWidget):
 
         
         self.cpuUsageLabel = QLabel(self)# self.hardwareUsageLabel.setText('CPU: ' + str('%.2f' % self.parent.dockerInfo.getCpuUsage()) + '\nRAM: ' + str('%.2f' % self.parent.dockerInfo.getMemUsage()) + '\nET: ' + str(datetime.now() - self.started))
-        self.cpuUsageLabel.setFont(QtGui.QFont('Arial', 20, 400))
+        self.cpuUsageLabel.setFont(QtGui.QFont(self.current_font, 24, 400))
         self.cpuUsageLabel.adjustSize()
         self.cpuUsageLabel.setAlignment(QtCore.Qt.AlignLeft)
         self.cpuUsageLabel.setStyleSheet(  'background: transparent;\n'
@@ -652,7 +708,7 @@ class LeaseExecPage(QWidget):
                                             'margin-left: 5px;\n')
         
         self.memUsageLabel = QLabel(self)
-        self.memUsageLabel.setFont(QtGui.QFont('Arial', 20, 400))
+        self.memUsageLabel.setFont(QtGui.QFont(self.current_font, 24, 400))
         self.memUsageLabel.adjustSize()
         self.memUsageLabel.setAlignment(QtCore.Qt.AlignLeft)
         self.memUsageLabel.setStyleSheet(   'background: transparent;\n'
@@ -661,7 +717,7 @@ class LeaseExecPage(QWidget):
                                             'margin-left: 5px;\n')
         
         self.elapsedTimeLabel = QLabel(self)
-        self.elapsedTimeLabel.setFont(QtGui.QFont('Arial', 20, 400))
+        self.elapsedTimeLabel.setFont(QtGui.QFont(self.current_font, 24, 400))
         self.elapsedTimeLabel.adjustSize()
         self.elapsedTimeLabel.setAlignment(QtCore.Qt.AlignLeft)
         self.elapsedTimeLabel.setStyleSheet('background: transparent;\n'
@@ -742,14 +798,17 @@ class LeaseExecPage(QWidget):
     def getElapsedTime(self):
         starttime=time.time()
         while True:
-            self.elapsedTimeLabel.setText('ET: ' + str(datetime.now() - self.started))
+            self.elapsedTimeLabel.setText('ET: ' + str(datetime.now() - self.parent.parent.start_time))
             self.elapsedTimeLabel.adjustSize()
+            if (not self.parent.dockerInfo.containerExists()):
+                self.finishExecuting()
+                break
             time.sleep(1)
 
     def getRealTimeCpuUsage(self):
         self.hardwareUsageLabel.setText('CPU: %.2f' % self.parent.dockerInfo.getCpuUsage())
     
-    def finishExecuting(self, e):
+    def finishExecuting(self):
         self.parent.changeStatus('idle')
         self.parent.leaseExecPage.hide()
         self.parent.leaseIdlePage.show()
@@ -759,12 +818,16 @@ class LeasePage(QWidget):
         super(LeasePage, self).__init__()
 
         self.parent = parent
-        self.setStyleSheet("background: rgb(57, 57, 57);\n"
-                           "border: 0px solid rgb(25, 118, 210);\n"
-                           "color: white;\n")
 
         self.current_theme = self.parent.current_theme
         self.current_font = self.parent.current_font
+
+        if (self.current_theme == 'Dark'):
+            self.darkTheme()
+        elif (self.current_theme == 'Light'):
+            self.lightTheme()
+        else:
+            self.classicTheme()
 
         self.status = self.parent.lease_status
 
@@ -799,6 +862,21 @@ class LeasePage(QWidget):
         self.setLayout(self.layout)
         self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
     
+    def darkTheme(self):
+        self.setStyleSheet( 'background: rgb(69, 69, 69);\n'
+                            'color: white;\n'
+                            'border: 0px solid white;\n')
+
+    def lightTheme(self):
+        self.setStyleSheet( 'background: rgb(204, 204, 204);\n'
+                            'color: white;\n'
+                            'border: 0px solid black;\n')
+
+    def classicTheme(self):
+        self.setStyleSheet( 'background: rgb(0, 23, 37);\n'
+                            'color: white;\n'
+                            'border: 0px solid white;\n')
+
     def openLeasePage(self):
         if (self.status == 'idle'):
             self.dockerSpecificationsPage.goToLeaseIdlePage()

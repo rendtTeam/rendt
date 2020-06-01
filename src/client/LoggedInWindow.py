@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import QScrollArea, QPushButton, QLabel, QWidget, QVBoxLayo
 from RentPage import RentPage
 from LeasePage import LeasePage
 from DashboardPage import DashboardPage
+from SettingsPage import SettingsPage
 
 from sender import Sender
 from receiver import Receiver
@@ -67,7 +68,7 @@ class SidebarElement(QWidget):
         self.shadow.setBlurRadius(10)
         self.shadow.setXOffset(0)
         self.shadow.setYOffset(0)
-        self.shadow.setColor(QtGui.QColor('rgba(0, 0, 0, 0.2)'))
+        self.shadow.setColor(QtGui.QColor(20, 20, 20))
 
         # self.setGraphicsEffect(self.shadow)
         widget.setGraphicsEffect(self.shadow)
@@ -107,7 +108,7 @@ class SidebarElement(QWidget):
     def setLabel(self, e):
         self.page_title = e
         self.pageLabel.setText(e)
-        self.pageLabel.setFont(QtGui.QFont(self.parent.current_font, 10, 800))
+        self.pageLabel.setFont(QtGui.QFont(self.parent.current_font, 12, 800))
         self.pageLabel.setAlignment(QtCore.Qt.AlignCenter)
         self.pageLabel.adjustSize()
         # self.pageLabel.hide()
@@ -190,9 +191,9 @@ class Sidebar(QWidget):
         self.dashboard.setLabel('Dashboard')
         self.dashboard.setPage(self.parent.dashboardPage)
 
-        # self.profile = SidebarElement(self)
-        # self.profile.setIcon('../../assets/img/profile_w.png')
-        # self.profile.setLabel('Profile')
+        self.profile = SidebarElement(self)
+        self.profile.setIcon('../../assets/img/profile_w.png')
+        self.profile.setLabel('Profile')
         # self.profile.setPage(self.parent.profilePage)
 
         self.rent = SidebarElement(self)
@@ -205,10 +206,10 @@ class Sidebar(QWidget):
         self.lease.setLabel('Lease')
         self.lease.setPage(self.parent.leasePage)
 
-        # self.settings = SidebarElement(self)
-        # self.settings.setIcon('../../assets/img/settings_w.png')
-        # self.settings.setLabel('Settings')
-        # self.settings.setPage(self.parent.settingsPage)
+        self.settings = SidebarElement(self)
+        self.settings.setIcon('../../assets/img/settings_w.png')
+        self.settings.setLabel('Settings')
+        self.settings.setPage(self.parent.settingsPage)
 
         # self.test = SidebarElement(self)
         # self.test.setIcon('../../assets/img/edit_w.png')
@@ -216,20 +217,20 @@ class Sidebar(QWidget):
         # self.test.setPage(self.parent.testPage)
 
         self.elements.append(self.dashboard)
-        # self.elements.append(self.profile)
+        self.elements.append(self.profile)
         self.elements.append(self.rent)
         self.elements.append(self.lease)
-        # self.elements.append(self.settings)
+        self.elements.append(self.settings)
         # self.elements.append(self.test)
 
         # NOTE
         # layout is Vertical
         layout = QVBoxLayout()
         layout.addWidget(self.dashboard, alignment=QtCore.Qt.AlignLeft)
-        # layout.addWidget(self.profile, alignment=QtCore.Qt.AlignLeft)
+        layout.addWidget(self.profile, alignment=QtCore.Qt.AlignLeft)
         layout.addWidget(self.rent, alignment=QtCore.Qt.AlignLeft)
         layout.addWidget(self.lease, alignment=QtCore.Qt.AlignLeft)
-        # layout.addWidget(self.settings, alignment=QtCore.Qt.AlignLeft)
+        layout.addWidget(self.settings, alignment=QtCore.Qt.AlignLeft)
         # layout.addWidget(self.test, alignment=QtCore.Qt.AlignLeft)
 
         layout.setAlignment(QtCore.Qt.AlignTop)
@@ -266,6 +267,11 @@ class Sidebar(QWidget):
                 elif (e.page_title == 'Dashboard'):
                     self.parent.dashboardPage = DashboardPage(self.parent)
                     e.setPage(self.parent.dashboardPage)
+                elif (e.page_title == 'Settings'):
+                    self.parent.settingsPage = SettingsPage(self.parent)
+                    self.parent.settingsPage.accountLabel.setText(self.parent.account)
+                    self.parent.settingsPage.setCurrentSettings(self.parent.current_theme, self.parent.current_font)
+                    e.setPage(self.parent.settingsPage)
                 self.parent.content.setCentralWidget(e.page)
         self.current_page = sender.getText()
         self.parent.current_page = sender.getText()
@@ -279,6 +285,11 @@ class Sidebar(QWidget):
     # hiding labels when mouse leves
     def leaveEvent(self, e):
         self.setFixedWidth(70)
+    
+    def changeFont(self):
+        self.current_font = self.parent.current_font
+        for e in self.elements:
+            e.pageLabel.setFont(QtGui.QFont(self.current_font, 12, 800))
 
 # NOTE:
 # LoggedInWindow is the main window with sidebar and dynamic content
@@ -287,6 +298,9 @@ class LoggedInWidget(QWidget):
         super(LoggedInWidget, self).__init__()
 
         self.setStyleSheet('background: rgba(40, 40, 40, 1)')
+        self.account = ''
+        self.price_saved = None
+        self.start_time = None
 
         # NOTE:
         # class state variables
@@ -307,14 +321,14 @@ class LoggedInWidget(QWidget):
         # self.profilePage = ProfilePage()
         self.rentPage = RentPage(self)
         self.leasePage = LeasePage(self)
-        # self.settingsPage = SettingsPage()
+        self.settingsPage = SettingsPage(self)
         # self.testPage = TestPage()
 
         self.pages.append(self.dashboardPage)
         # self.pages.append(self.profilePage)
         self.pages.append(self.rentPage)
         self.pages.append(self.leasePage)
-        # self.pages.append(self.settingsPage)
+        self.pages.append(self.settingsPage)
         # self.pages.append(self.testPage)
 
         # NOTE:
@@ -339,6 +353,28 @@ class LoggedInWidget(QWidget):
 
         self.setLayout(self.layout)
 
+        if (self.current_theme == 'Dark'):
+            self.darkTheme()
+        elif (self.current_theme == 'Light'):
+            self.lightTheme()
+        else:
+            self.classicTheme()
+
+    def darkTheme(self):
+        self.setStyleSheet(  'background: rgb(40, 40, 40);\n'
+                                    'color: white;\n'
+                                    'border: 0px solid white;\n')
+
+    def lightTheme(self):
+        self.setStyleSheet(  'background: rgb(154, 154, 154);\n'
+                                    'color: white;\n'
+                                    'border: 0px solid black;\n')
+
+    def classicTheme(self):
+        self.setStyleSheet(  'background: rgb(0, 13, 27);\n'
+                                    'color: white;\n'
+                                    'border: 0px solid white;\n')
+
     def setAuthToken(self, auth_token):
         self.receiver = Receiver(auth_token)
         self.sender = Sender(auth_token)
@@ -352,6 +388,11 @@ class LoggedInWidget(QWidget):
     # setter function to change the font
     def setFont(self, e):
         self.current_font = e
+    
+    # NOTE:
+    # setter function for account
+    def setAccount(self, e):
+        self.account = e
 
 # NOTE:
 # MainWindow class which will display all the pages inside

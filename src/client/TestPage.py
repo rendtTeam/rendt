@@ -15,7 +15,7 @@ class TestPage(QWidget):
         # self.resize(800, 600)
         self.setStyleSheet('background: rgb(' + str(self.r) + ', ' + str(self.g) + ', ' + str(self.b) + ');')
         label = QLabel(self)
-        label.setFont(QtGui.QFont('Arial', 80, 10000))
+        label.setFont(QtGui.QFont('Arial', 96, 10000))
         label.setStyleSheet('color: white')
         label.setText('Executing')
         label.setAlignment(QtCore.Qt.AlignCenter)

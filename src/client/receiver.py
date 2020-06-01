@@ -88,7 +88,6 @@ class Receiver(Client):
     
 
     def build_docker(self, path_to_dockerfile):
-
         home_dir = os.system("docker build -t rendt " + path_to_dockerfile)
 
     def download_file_from_db(self, path_to_file, db_token, file_size):
