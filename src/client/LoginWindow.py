@@ -211,7 +211,7 @@ class LoginPage(QWidget):
     # NOTE:
     # function to login to the application
     def goToLogin(self):
-        authToken, user_type = None, None
+        authToken, username, user_type = None, None, None
         auth = Auth()
 
         email = self.emailField.text()
@@ -223,7 +223,7 @@ class LoginPage(QWidget):
         cred = auth.sign_in(email, pswd)
 
         if cred:
-            authToken, user_type = cred
+            authToken, username, user_type = cred
             self.parent.loggedInWidget = LoggedInWidget()
             self.parent.loggedInWidget.setAuthToken(authToken)
             self.parent.loggedInWidget.sidebar.selectPage(self.parent.loggedInWidget.sidebar.dashboard, 'Dashboard')
@@ -311,7 +311,7 @@ class RegisterPage(QWidget):
     # NOTE:
     # signUp function to sign the user with the given credentials
     def signUp(self):
-        authToken, user_type = None, None
+        authToken, usrname, user_type = None, None, None
         auth = Auth()
 
         username = self.userField.text()
@@ -323,9 +323,9 @@ class RegisterPage(QWidget):
         pswd = self.passField.text()
         pswd = pswd.strip()   
 
-        cred = auth.sign_up(email, pswd)     
+        cred = auth.sign_up(email, pswd, username)     
         if cred:
-            authToken, user_type = cred
+            authToken, usrname, user_type = cred
             self.goBack()
 
 # NOTE:

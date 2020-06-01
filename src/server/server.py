@@ -108,8 +108,8 @@ class Server:
                                     }
             req_pipe.write(response_content, 'text/json')
         else:
-            email, pswd, usr_type, chars = request['email'], request['password'], request['user-type'], request['machine-chars']
-            res = self.auth.register_user(email, pswd)
+            email, pswd, username, usr_type, chars = request['email'], request['password'], request['username'], request['user-type'], request['machine-chars']
+            res = self.auth.register_user(email, pswd, username)
             if res == 1:
                 self.logger.warning('could not sign up: email already in use')
                 response_content = {'status': 'error',
@@ -122,6 +122,7 @@ class Server:
                 response_content = {'status': 'success',
                                     'user-id': user_id, 
                                     'authToken': authToken,
+                                    'username': username
                                     # 'user-type': usr_type
                                         }
                 req_pipe.write(response_content, 'text/json')                
@@ -136,7 +137,7 @@ class Server:
             req_pipe.write(response_content, 'text/json')
         else:
             email, pswd = request['email'], request['password']
-            user_id, user_type = self.db_handler.getUserIdAndType(email)
+            user_id, username, user_type = self.db_handler.getUserInfo(email)
             if user_id is None:
                 self.logger.warning(f'could not sign in: email not registered.')
                 response_content = {'status': 'error',
@@ -155,7 +156,8 @@ class Server:
                     self.logger.info(f'successful sign in. uid: {user_id}')
                     response_content = {'status': 'success',
                                         'authToken': authToken,
-                                        'user-type': user_type
+                                        'user-type': user_type,
+                                        'username': username
                                             }
                     req_pipe.write(response_content, 'text/json')                
 

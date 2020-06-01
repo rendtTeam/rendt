@@ -12,11 +12,11 @@ class Authentication(object):
 
         self.db_handler = DBHandler()
     
-    def register_user(self, email, password):
+    def register_user(self, email, password, username):
         if self.db_handler.checkEmailAvailability(email):
             user_id = self.generate_user_id()
             pswd = self.__hash_password(password)
-            self.db_handler.registerUser(user_id, email, pswd)
+            self.db_handler.registerUser(user_id, email, pswd, username)
             authToken = self.generate_auth_token()
             self.db_handler.addAuthToken(user_id, authToken)
             return (user_id, authToken)
