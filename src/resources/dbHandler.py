@@ -219,7 +219,7 @@ class DBHandler(object):
             return rows[0][0]
 
     def getAuthToken(self, email):
-        user_id = self.getUserIdAndType(email)[0]
+        user_id = self.getUserInfo(email)[0]
         if user_id:
             query = f'SELECT auth_token FROM active_auth_tokens WHERE user_id = {user_id}'
             self._executeQuery(query)
@@ -294,8 +294,8 @@ class DBHandler(object):
         rows = self.__cursor.fetchall()
         return len(rows) == 0
 
-    def registerUser(self, user_id, email, pswd, user_type='U', chars=' '):
-        query = f'INSERT INTO users (user_id, email_address, user_type, machine_chpasswordsars) VALUES ({user_id}, "{email}", "{user_type}", "{chars}")'
+    def registerUser(self, user_id, email, pswd, username, user_type='U', chars=' '):
+        query = f'INSERT INTO users (user_id, email_address, username, user_type, machine_chpasswordsars) VALUES ({user_id}, "{email}", "{username}", "{user_type}", "{chars}")'
         self._executeQuery(query)
 
         query = f'INSERT INTO passwords (email_address, password_hash) VALUES ("{email}", "{pswd}")'
@@ -337,8 +337,8 @@ class DBHandler(object):
         if len(rows) == 1:
             return rows[0][0]
 
-    def getUserIdAndType(self, email):
-        query = f'SELECT user_id, user_type FROM users WHERE email_address="{email}"'
+    def getUserInfo(self, email):
+        query = f'SELECT user_id, username, user_type FROM users WHERE email_address="{email}"'
         self._executeQuery(query)
         rows = self.__cursor.fetchall()
         if len(rows) == 1:

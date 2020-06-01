@@ -37,9 +37,9 @@ class Auth:
         if response['status'] == 'error':
             print('ERROR:', response['error-msg'])
         else:
-            return response['authToken'], response['user-type']
+            return response['authToken'], response['username'], response['user-type']
         
-    def sign_up(self, email, password, user_type='U', machine_chars=' '):
+    def sign_up(self, email, password, username, user_type='U', machine_chars=' '):
         global server_addr
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         ssl_sock = self.ssl_context.wrap_socket(s)
@@ -53,7 +53,8 @@ class Auth:
                     'email': email,
                     'password': password,
                     'user-type': user_type,
-                    'machine-chars': machine_chars
+                    'machine-chars': machine_chars, 
+                    'username': username
                     }
         request = {'type' : 'text/json',
                     'content': content}
@@ -68,4 +69,4 @@ class Auth:
         if response['status'] == 'error':
             print('ERROR:', response['error-msg'])
         else:
-            return response['authToken'], user_type
+            return response['authToken'], username, user_type
