@@ -6,8 +6,8 @@ from PyQt5.QtWidgets import QScrollArea, QPushButton, QLabel, QWidget, QVBoxLayo
 from LoginWindow import LoginWindow
 
 if __name__ == "__main__":
-    QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
     app = QtWidgets.QApplication(sys.argv)
+    app.setAttribute(QtCore.Qt.AA_DisableHighDpiScaling, True)
     window = LoginWindow()
     window.show()
     sys.exit(app.exec_())

@@ -1,7 +1,7 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QScrollArea, QPushButton, QLabel, QWidget, QVBoxLayout, QStackedWidget, QHBoxLayout, QMainWindow
 
-import platform
+import platform, subprocess
 import docker
 from numexpr import cpuinfo
 from pprint import pprint
@@ -62,9 +62,9 @@ class DockerInfo:
             if (platform.system() == 'Windows'):
                 return cpuinfo.cpu.info[0]['ProcessorNameString']
             elif (platform.system() == 'Darwin'):
-                print(cpuinfo.cpu.info)
-                print(type(cpuinfo.cpu.info['arch'].decode()))
-                return cpuinfo.cpu.info['arch'].decode()
+                os.environ['PATH'] = os.environ['PATH'] + os.pathsep + '/usr/sbin'
+                command ="sysctl -n machdep.cpu.brand_string"
+                return subprocess.check_output(command).strip()
             else:
                 return cpuinfo.cpu.info[0]['model name']
         else:

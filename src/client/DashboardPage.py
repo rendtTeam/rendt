@@ -48,7 +48,7 @@ class LeasingRequest(QWidget):
 
         self.renterLabel = QLabel(self)
         self.renterLabel.setText('')
-        self.renterLabel.setFont(QtGui.QFont(self.current_font, 20, 800))
+        self.renterLabel.setFont(QtGui.QFont(self.current_font, 24, 800))
         self.renterLabel.adjustSize()
         self.renterLabel.setStyleSheet( 'background: transparent;\n'
                                         'color: rgb(197, 0, 255);\n'
@@ -270,7 +270,7 @@ class RentingRequest(QWidget):
                                             'color: white;\n'
                                             'font-weight: bold;\n'
                                             'border: 0px solid white;\n')
-        self.requestForLabel.setAlignment(QtCore.Qt.AlignLeft)
+        self.requestForLabel.setAlignment(QtCore.Qt.AlignRight)
 
         self.leaserLabel = QLabel(self)
         self.leaserLabel.setText('')
