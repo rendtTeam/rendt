@@ -775,9 +775,13 @@ class LeaseExecPage(QWidget):
         t2.daemon = True
         t2.start()
 
-        t3 = threading.Thread(target=lambda:self.getElapsedTime(self.parent.dockerInfo))
+        t3 = threading.Thread(target=lambda:self.getElapsedTime(self.parent.dockerInfo, self.parent.parent.start_time))
         t3.daemon = True
         t3.start()
+
+        t4 = threading.Thread(target=self.parent.finishExecuting)
+        t4.daemon = True
+        t4.start()
 
     def getDockerCpuUsage(self):
         starttime=time.time()
@@ -795,23 +799,15 @@ class LeaseExecPage(QWidget):
             self.memUsageLabel.adjustSize()
             time.sleep(1)
     
-    def getElapsedTime(self, dockerInfo):
+    def getElapsedTime(self, dockerInfo, start_time):
         starttime=time.time()
         while True:
-            self.elapsedTimeLabel.setText('ET: ' + str(datetime.now() - self.parent.parent.start_time))
+            self.elapsedTimeLabel.setText('ET: ' + str(datetime.now() - start_time))
             self.elapsedTimeLabel.adjustSize()
-            if (not dockerInfo.containerExists()):
-                self.finishExecuting()
-                break
             time.sleep(1)
 
     def getRealTimeCpuUsage(self):
         self.hardwareUsageLabel.setText('CPU: %.2f' % self.parent.dockerInfo.getCpuUsage())
-    
-    def finishExecuting(self):
-        self.parent.changeStatus('idle')
-        self.parent.leaseExecPage.hide()
-        self.parent.leaseIdlePage.show()
 
 class LeasePage(QWidget):
     def __init__(self, parent):
@@ -876,6 +872,17 @@ class LeasePage(QWidget):
         self.setStyleSheet( 'background: rgb(0, 23, 37);\n'
                             'color: white;\n'
                             'border: 0px solid white;\n')
+
+    def finishExecuting(self):
+        starttime=time.time()
+        time.sleep(10)
+        while (True):
+            if (not self.dockerInfo.containerExists()):
+                self.changeStatus('idle')
+                self.leaseExecPage.hide()
+                self.leaseIdlePage.show()
+                break
+            time.sleep(1)
 
     def openLeasePage(self):
         if (self.status == 'idle'):
