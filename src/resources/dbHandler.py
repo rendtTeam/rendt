@@ -2,6 +2,7 @@ import mysql.connector
 from mysql.connector import errorcode
 import logging
 import datetime
+from conf import DB_USER, DB_PASS, DB_INSTANCE
 
 class DBHandler(object):
     def __init__(self):
@@ -13,9 +14,9 @@ class DBHandler(object):
             self.__mySession = mysql.connector.connect(
                 host="rendt-database.cksgcmivrysp.us-east-2.rds.amazonaws.com",
                 port="3306",
-                user='rendtTeam',
-                password="rendt-db-admin",
-                database='RendtDB')
+                user=DB_USER,
+                password=DB_PASS,
+                database=DB_INSTANCE)
             self.__mySession.ping(reconnect=True, attempts=1, delay=0)
         except mysql.connector.Error as err:
             if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
@@ -172,6 +173,11 @@ class DBHandler(object):
         query = f'SELECT O.job_id, O.job_desc, O.job_mode, U.username, O.status, O.exec_start_time FROM job_orders O, users U WHERE O.renter_id = {renter_id} AND O.leaser_id = U.user_id'
         self._executeQuery(query)
         rows = self.__cursor.fetchall()
+        for i, r in enumerate(rows):
+            if r[5]:
+                rows[i] = r[:5] + (datetime.datetime.strftime(r[5], '%Y-%m-%d %H:%M:%S'),)
+            else:
+                rows[i] = r[:5] + (0,)
         return rows
 
     def getExecfileToken(self, job_id):

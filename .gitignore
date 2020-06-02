@@ -7,6 +7,6 @@ src/server/db_test.py
 src/update.sh
 src/client/files.zip
 **/.DS_Store
-
+src/resources/conf.py
 src/client/rendt.exe
 *.zip

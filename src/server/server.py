@@ -137,7 +137,9 @@ class Server:
             req_pipe.write(response_content, 'text/json')
         else:
             email, pswd = request['email'], request['password']
-            user_id, username, user_type = self.db_handler.getUserInfo(email)
+            res = self.db_handler.getUserInfo(email)
+            if res:
+                user_id, username, user_type = res
             if user_id is None:
                 self.logger.warning(f'could not sign in: email not registered.')
                 response_content = {'status': 'error',
