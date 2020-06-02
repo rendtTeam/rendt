@@ -128,6 +128,13 @@ class DBHandler(object):
         else:
             'n' # not a leaser
 
+    def getLeaserPrice(self, uid):
+        query = f'SELECT price FROM leasers WHERE user_id={uid}'
+        self._executeQuery(query)
+        rows = self.__cursor.fetchall()
+        if len(rows) == 1:
+            return rows[0][0]
+
     def getUserId(self, username):
         query = f'SELECT user_id FROM users WHERE username = "{username}"'
         self._executeQuery(query)
@@ -145,17 +152,19 @@ class DBHandler(object):
         query = f'INSERT INTO exec_file_tokens (job_id, db_token, file_size) VALUES ({job_id}, "{token}", {files_size})'
         self._executeQuery(query)
 
-    def submitJobOrder(self, order_id, renter_id, job_id, job_desc, job_mode, leaser_id, status='p'):
-        query = f'INSERT INTO job_orders (order_id, renter_id, job_id, job_desc, job_mode, file_size, leaser_id, status) \
-                VALUES ({order_id}, {renter_id}, {job_id}, "{job_desc}", "{job_mode}", 0, {leaser_id}, "{status}")'
+    def submitJobOrder(self, order_id, renter_id, job_id, job_desc, job_mode, leaser_id, agreed_price, status='p'):
+        query = f'INSERT INTO job_orders (order_id, renter_id, job_id, job_desc, job_mode, leaser_id, status, price) \
+                VALUES ({order_id}, {renter_id}, {job_id}, "{job_desc}", "{job_mode}", {leaser_id}, "{status}", {agreed_price})'
         self._executeQuery(query)
 
     def updateJobOrderStatus(self, order_id, response):
         query = f'UPDATE job_orders SET status = "{response}" WHERE order_id = {order_id}'
         self._executeQuery(query)
 
-    def getJobRequests(self, leaser_id): # TODO delete job_desc from here
-        query = f'SELECT O.order_id, U.username, O.job_id, O.job_desc, O.job_mode, O.status FROM job_orders O, users U WHERE leaser_id = {leaser_id} AND status = "p" AND U.user_id = O.renter_id'
+    def getJobRequests(self, leaser_id):
+        query = f'SELECT O.order_id, U.username, O.job_id, O.job_desc, O.job_mode, O.status, O.price \
+                    FROM job_orders O, users U \
+                    WHERE leaser_id = {leaser_id} AND status = "p" AND U.user_id = O.renter_id'
         self._executeQuery(query)
         rows = self.__cursor.fetchall()
         return rows
@@ -178,15 +187,18 @@ class DBHandler(object):
         rows = self.__cursor.fetchall()
         return rows[0][0]
 
-    def getJobStatuses(self, renter_id): # TODO delete job_desc from here
-        query = f'SELECT O.job_id, O.job_desc, O.job_mode, U.username, O.status, O.exec_start_time FROM job_orders O, users U WHERE O.renter_id = {renter_id} AND O.leaser_id = U.user_id'
+    def getJobStatuses(self, renter_id):
+        query = f'SELECT O.job_id, O.job_desc, O.job_mode, U.username, O.status, O.exec_start_time, O.exec_finish_time, O.price FROM job_orders O, users U WHERE O.renter_id = {renter_id} AND O.leaser_id = U.user_id'
         self._executeQuery(query)
         rows = self.__cursor.fetchall()
         for i, r in enumerate(rows):
             if r[5]:
-                rows[i] = r[:5] + (datetime.datetime.strftime(r[5], '%Y-%m-%d %H:%M:%S'),)
+                if r[6]:
+                    rows[i] = r[:5] + (datetime.datetime.strftime(r[5], '%Y-%m-%d %H:%M:%S'), datetime.datetime.strftime(r[6], '%Y-%m-%d %H:%M:%S'), r[7])
+                else:
+                    rows[i] = r[:5] + (datetime.datetime.strftime(r[5], '%Y-%m-%d %H:%M:%S'), 0, r[7])
             else:
-                rows[i] = r[:5] + (0,)
+                rows[i] = r[:5] + (0, 0, r[7])
         return rows
 
     def getExecfileToken(self, job_id):

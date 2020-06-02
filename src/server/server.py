@@ -242,7 +242,8 @@ class Server:
             job_description = request_content['job-description']
             order_id = self.generate_order_id()
             leaser_id = self.db_handler.getUserId(leaser_username)
-            self.db_handler.submitJobOrder(order_id, uid, job_id, job_description, job_mode, leaser_id, status='p')
+            price = self.db_handler.getLeaserPrice(leaser_id)
+            self.db_handler.submitJobOrder(order_id, uid, job_id, job_description, job_mode, leaser_id, price, status='p')
             response_content = {'status': 'success',
                                 'order-id': order_id
                                 }
