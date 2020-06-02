@@ -246,6 +246,10 @@ class DBHandler(object):
         query = f'INSERT INTO active_auth_tokens (user_id, auth_token) VALUES ({user_id}, "{token}")'
         self._executeQuery(query)        
 
+    def removeAuthToken(self, uid):
+        query = f'DELETE FROM active_auth_tokens WHERE user_id = {uid}'
+        self._executeQuery(query)
+        
     def checkAuthToken(self, token):
         query = f'SELECT auth_token FROM active_auth_tokens WHERE auth_token = "{token}"'
         self._executeQuery(query)

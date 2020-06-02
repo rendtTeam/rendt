@@ -81,7 +81,7 @@ class Server:
             elif req_pipe.request.get('request-type') == 'sign-up':
                 self.register_user(req_pipe, conn, addr)
             else:
-                if 'authToken' not in req_pipe.request or 'role' not in req_pipe.request or 'request-type' not in req_pipe.request:
+                if 'authToken' not in req_pipe.request or 'request-type' not in req_pipe.request:
                     self.logger.warning(f'invalid request from {addr}.')
                     response_content = {'status': 'error',
                                         'error-msg': 'invalid request. check that you have authToken, role and request-type in the request',
@@ -91,10 +91,20 @@ class Server:
                     authToken = req_pipe.request.get('authToken')
                     if (self.db_handler.checkAuthToken(authToken)):
                         uid = self.db_handler.getUserIdFromAuthToken(authToken)
-                        if req_pipe.request.get('role') == 'renter':
-                            self.serve_renter_request(req_pipe, conn, addr, uid)
-                        elif req_pipe.request.get('role') == 'leaser':
-                            self.serve_leaser_request(req_pipe, conn, addr, uid)
+                        if req_pipe.request.get('sign-out'):
+                            self.sign_out_user(req_pipe, conn, addr, uid)
+                        else:
+                            if 'role' not in req_pipe.request:
+                                self.logger.warning(f'invalid request from {addr}.')
+                                response_content = {'status': 'error',
+                                                    'error-msg': 'invalid request. check that you have authToken, role and request-type in the request',
+                                                }
+                                req_pipe.write(response_content, 'text/json')
+                                return
+                            if req_pipe.request.get('role') == 'renter':
+                                self.serve_renter_request(req_pipe, conn, addr, uid)
+                            elif req_pipe.request.get('role') == 'leaser':
+                                self.serve_leaser_request(req_pipe, conn, addr, uid)
                     else:
                         # log error, send error msg
                         self.logger.warning(f'invalid request from {addr}: no/invalid credentials')
@@ -163,6 +173,13 @@ class Server:
                                         'leasing-status': leasing_status
                                             }
                     req_pipe.write(response_content, 'text/json')                
+
+    def sign_out_user(self, req_pipe, conn, addr, uid):
+        self.db_handler.removeAuthToken(uid)
+        self.logger.info(f'logged out user {uid}.')
+        response_content = {'status': 'success',
+                                }
+        req_pipe.write(response_content, 'text/json')
 
     def refuse_client(self, conn, addr):
         req_pipe = Messaging(conn, addr)
