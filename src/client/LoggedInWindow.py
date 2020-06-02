@@ -412,7 +412,7 @@ class LoggedInWidget(QWidget):
             if (len(numberOfReqsL) != len(newNumberOfReqsL)):
                 self.sidebar.dashboard.notify(True)
                 numberOfReqsL = newNumberOfReqs
-            time.sleep(1)
+            time.sleep(5)
 
     def darkTheme(self):
         self.setStyleSheet( 'background: rgb(40, 40, 40);\n'
