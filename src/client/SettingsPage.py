@@ -1,6 +1,8 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QScrollArea, QPushButton, QLabel, QWidget, QVBoxLayout, QStackedWidget, QHBoxLayout, QMainWindow
 
+import LoginWindow
+
 class CustomShadow(QtWidgets.QGraphicsDropShadowEffect):
     def __init__(self):
         super(CustomShadow, self).__init__()
@@ -214,7 +216,7 @@ class SettingsPage(QWidget):
         self.logOutBtn.setFixedHeight(95)
         self.logOutBtn.setFixedWidth(205)
         self.logOutBtn.setGraphicsEffect(self.shadow2)
-        # self.logOutBtn.clicked.connect(self.goToDockerSpecificationsPage)
+        self.logOutBtn.clicked.connect(self.logOut)
 
         self.accountRow = QWidget(self)
         self.accountRow.setStyleSheet(  'background: transparent;\n'
@@ -270,6 +272,18 @@ class SettingsPage(QWidget):
             self.lightTheme()
         else:
             self.classicTheme()
+
+    def logOut(self, e):
+        self.parent.t1.stop()
+        self.parent.t1.join()
+    
+        self.parent.receiver.sign_out()
+
+        self.hide()
+        self.parent.hide()
+        self.parent.parent.close()
+        loginWindow = LoginWindow.LoginWindow()
+        loginWindow.show()
 
     def setCurrentSettings(self, theme, font, sf):
         self.themeDropdown.setCurrentText(theme)

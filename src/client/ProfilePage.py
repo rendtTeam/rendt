@@ -187,11 +187,17 @@ class ProfilePage(QWidget):
             self.classicTheme()
 
     def logOut(self, e):
+        self.parent.t1.stop()
+        self.parent.t1.join()
+    
         self.parent.receiver.sign_out()
-        self.parent.sender.sign_out()
+
         self.hide()
         self.parent.hide()
-        self.parent.parent.setCentralWidget(self.parent.parent.loginPage)
+        self.parent.parent.close()
+        loginWindow = LoginWindow.LoginWindow()
+        loginWindow.show()
+        
 
     def darkTheme(self):
         self.widget.setStyleSheet(  'background: rgb(69, 69, 69);\n'

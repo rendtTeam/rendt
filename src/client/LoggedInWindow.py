@@ -12,11 +12,23 @@ import LoginWindow
 from sender import Sender
 from receiver import Receiver
 
-import threading, time
+import threading, time, sys
 
-# NOTE: 
-# A page for testing GUI and layouts
-# from TestPage import TestPage
+class CustomThread(threading.Thread):
+
+    def _bootstrap(self, stop_thread=False):
+        def stop():
+            nonlocal stop_thread
+            stop_thread = True
+        self.stop = stop
+
+        def tracer(*_):
+            if stop_thread:
+                raise StopThread()
+            return tracer
+        sys.settrace(tracer)
+        super()._bootstrap()
+
 
 # NOTE:
 # class for Sidebar elements/members
@@ -335,6 +347,7 @@ class LoggedInWidget(QWidget):
         self.accountEmail = ''
         self.price_saved = None
         self.start_time = None
+        self.t1 = None
 
         # NOTE:
         # class state variables
@@ -440,9 +453,8 @@ class LoggedInWidget(QWidget):
         self.receiver = Receiver(auth_token)
         self.sender = Sender(auth_token)
 
-        t1 = threading.Thread(target=self.sendNotificationDashboard)
-        t1.daemon = True
-        t1.start()
+        self.t1 = CustomThread(target=self.sendNotificationDashboard)
+        self.t1.start()
 
     # NOTE:
     # setter function to change the theme
