@@ -6,6 +6,8 @@ import json
 import os
 import stripe
 import pprint
+from dbHandler import DBHandler
+from datetime import datetime
 # This is your real test secret API key.
 stripe.api_key = "sk_test_vc4WnSEYouCgfo0TqHqjUZft00xvqP4xCV"
 
@@ -17,31 +19,43 @@ app = Flask(__name__, static_folder=".",
             static_url_path="", template_folder=".")
 
 
-def calculate_order_amount(items):
+def calculate_order_amount(order_id):
     # Replace this constant with a calculation of the order's amount
     # Calculate the order total on the server to prevent
     # people from directly manipulating the amount on the client
     """get date time from db calculate total amount of elapsed time"""
-    return 10000
+    db_handler = DBHandler()
+    start, end, hourlyPrice = db_handler.getOrderBillingInfo(order_id)
+    start = datetime.strptime(start, '%Y-%m-%d %H:%M:%S')
+    end = datetime.strptime(end, '%Y-%m-%d %H:%M:%S')
+    hour = (end - start).seconds//3600
+    minutes = (end - start).seconds//60%60
+    price = hourlyPrice * (minutes / 60 + hour)
+    price = price * 1.029 + 0.3
+
+    return price
 
 
-@app.route('/create-payment-intent', methods=['POST'])
+@app.route('/create-payment-intent/11', methods=['POST'])
 def create_payment():
     try:
         data = request.get_json()
         pprint.pprint(data)
         intent = stripe.PaymentIntent.create(
-            amount=calculate_order_amount(data['items']),
+            amount = calculate_order_amount(data['items'][0]['id']),
             currency='usd',
             receipt_email = "fnurlan7@gmail.com",
+            # payment_method = "cardElement",
+            confirmation_method = 'automatic'
+            # confirm=True,
             # payment_method = 
         )
         print("Output check start----------------------:  ")
-        # pprint.pprint(intent)
+        pprint.pprint(intent.id)
         # returnedResponse = generate_response(intent)
         # print(type(returnedResponse)
         # print(intent)
-        pprint.pprint(generate_response(intent))
+        pprint.pprint(generate_response(intent, data['items'][0]['id'], amount))
         print("Output check finish----------------------:  ")
         return jsonify({
           'clientSecret': intent['client_secret']
@@ -65,11 +79,11 @@ def create_payment():
 #                 amount=order_amount,
 #                 currency=data['currency'],
 #                 payment_method=data['paymentMethodId'],
-#                 confirmation_method='manual',
-#                 confirm=True,
+#                 # confirmation_method='manual',
+#                 # confirm=True
 #                 # If a mobile client passes `useStripeSdk`, set `use_stripe_sdk=true`
 #                 # to take advantage of new authentication features in mobile SDKs.
-#                 use_stripe_sdk=True if 'useStripeSdk' in data and data['useStripeSdk'] else None,
+#                 use_stripe_sdk = True if 'useStripeSdk' in data and data['useStripeSdk'] else None,
 #             )
 #             # After create, if the PaymentIntent's status is succeeded, fulfill the order.
 #         elif 'paymentIntentId' in data:
@@ -83,8 +97,9 @@ def create_payment():
 #         return jsonify({'error': e.user_message})
 
 
-def generate_response(intent):
+def generate_response(intent, order_id, amount):
     status = intent['status']
+    db_handler = DBHandler()
     if status == 'requires_action' or status == 'requires_source_action':
         # Card requires authentication
         print(status)
@@ -92,11 +107,13 @@ def generate_response(intent):
     elif status == 'requires_payment_method' or status == 'requires_source':
         # Card was not properly authenticated, suggest a new payment method
         print(status)
+        db_handler.registerPayment(order_id, amount)
         return jsonify({'error': 'Your card was denied, please provide a new payment method'})
     elif status == 'succeeded':
         # Payment is complete, authentication not required
         # To cancel the payment you will need to issue a Refund (https://stripe.com/docs/api/refunds)
         print("💰 Payment received!")
+        prindb_handler.registerPayment(order_id, amount)
         return jsonify({'clientSecret': intent['client_secret']})
 
 
