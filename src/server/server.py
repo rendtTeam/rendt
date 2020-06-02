@@ -84,14 +84,14 @@ class Server:
                 if 'authToken' not in req_pipe.request or 'request-type' not in req_pipe.request:
                     self.logger.warning(f'invalid request from {addr}.')
                     response_content = {'status': 'error',
-                                        'error-msg': 'invalid request. check that you have authToken, role and request-type in the request',
+                                        'error-msg': 'invalid request. check that you have authToken and request-type in the request',
                                     }
                     req_pipe.write(response_content, 'text/json')
                 else:
                     authToken = req_pipe.request.get('authToken')
                     if (self.db_handler.checkAuthToken(authToken)):
                         uid = self.db_handler.getUserIdFromAuthToken(authToken)
-                        if req_pipe.request.get('sign-out'):
+                        if req_pipe.request.get('request-type') == 'sign-out':
                             self.sign_out_user(req_pipe, conn, addr, uid)
                         else:
                             if 'role' not in req_pipe.request:
@@ -239,9 +239,10 @@ class Server:
             job_id = request_content['job-id']
             job_mode = request_content['job-mode']
             leaser_username = request_content['leaser']
+            job_description = request_content['job-description']
             order_id = self.generate_order_id()
             leaser_id = self.db_handler.getUserId(leaser_username)
-            self.db_handler.submitJobOrder(order_id, uid, job_id, job_mode, leaser_id, status='p')
+            self.db_handler.submitJobOrder(order_id, uid, job_id, job_description, job_mode, leaser_id, status='p')
             response_content = {'status': 'success',
                                 'order-id': order_id
                                 }

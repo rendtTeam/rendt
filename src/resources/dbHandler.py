@@ -145,9 +145,9 @@ class DBHandler(object):
         query = f'INSERT INTO exec_file_tokens (job_id, db_token, file_size) VALUES ({job_id}, "{token}", {files_size})'
         self._executeQuery(query)
 
-    def submitJobOrder(self, order_id, renter_id, job_id, job_mode, leaser_id, status='p'):
+    def submitJobOrder(self, order_id, renter_id, job_id, job_desc, job_mode, leaser_id, status='p'):
         query = f'INSERT INTO job_orders (order_id, renter_id, job_id, job_desc, job_mode, file_size, leaser_id, status) \
-                VALUES ({order_id}, {renter_id}, {job_id}, "to be deleted", "{job_mode}", 0, {leaser_id}, "{status}")'
+                VALUES ({order_id}, {renter_id}, {job_id}, "{job_desc}", "{job_mode}", 0, {leaser_id}, "{status}")'
         self._executeQuery(query)
 
     def updateJobOrderStatus(self, order_id, response):
