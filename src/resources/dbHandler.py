@@ -300,8 +300,8 @@ class DBHandler(object):
         rows = self.__cursor.fetchall()
         return len(rows) == 0
 
-    def registerUser(self, user_id, email, pswd, username, user_type='U', chars=' '):
-        query = f'INSERT INTO users (user_id, email_address, username, user_type, machine_chpasswordsars) VALUES ({user_id}, "{email}", "{username}", "{user_type}", "{chars}")'
+    def registerUser(self, user_id, email, pswd, username, user_type='U'):
+        query = f'INSERT INTO users (user_id, email_address, username, user_type) VALUES ({user_id}, "{email}", "{username}", "{user_type}")'
         self._executeQuery(query)
 
         query = f'INSERT INTO passwords (email_address, password_hash) VALUES ("{email}", "{pswd}")'
