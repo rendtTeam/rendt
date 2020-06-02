@@ -10,6 +10,7 @@ class CustomSquareButton(QPushButton):
 
         self.parent = parent
         self.current_font = self.parent.current_font
+        self.current_sf = self.parent.current_sf
         self.current_theme = self.parent.current_theme
         # self.sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
         # self.setSizePolicy(self.sizePolicy)
@@ -24,7 +25,7 @@ class CustomSquareButton(QPushButton):
             self.classicTheme()
         
         self.headerLabel = QLabel(self)
-        self.headerLabel.setFont(QtGui.QFont(self.current_font, 24, 10000))
+        self.headerLabel.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 24), 10000))
         self.headerLabel.setAlignment(QtCore.Qt.AlignHCenter)
         self.headerLabel.setStyleSheet('background: transparent')
 
@@ -32,7 +33,7 @@ class CustomSquareButton(QPushButton):
         self.image.setAlignment(QtCore.Qt.AlignCenter)
         
         self.footerLabel = QLabel(self)
-        self.footerLabel.setFont(QtGui.QFont(self.current_font, 12, 800))
+        self.footerLabel.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 12), 800))
         self.footerLabel.setAlignment(QtCore.Qt.AlignHCenter)
         self.footerLabel.setStyleSheet('color: rgba(200, 200, 200, 0.8)')
 
@@ -155,6 +156,7 @@ class LeasersList(QScrollArea):
         self.setWidgetResizable(True)
 
         self.current_font = self.parent.current_font
+        self.current_sf = self.parent.current_sf
         self.current_theme = self.parent.current_theme
 
         self.form = QtWidgets.QFormLayout()
@@ -181,7 +183,7 @@ class LeasersList(QScrollArea):
 
         leaserCol = QLabel()
         leaserCol.setText('leaser')
-        leaserCol.setFont(QtGui.QFont(self.current_font, 14, 800))
+        leaserCol.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 14), 800))
         leaserCol.adjustSize()
         leaserCol.setStyleSheet('background: transparent;\n'
                                 'border: 0px solid white;\n'
@@ -190,7 +192,7 @@ class LeasersList(QScrollArea):
 
         specsCol = QLabel()
         specsCol.setText('specifications')
-        specsCol.setFont(QtGui.QFont(self.current_font, 14, 800))
+        specsCol.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 14), 800))
         specsCol.adjustSize()
         specsCol.setStyleSheet('background: transparent;\n'
                                 'border: 0px solid white;\n'
@@ -199,7 +201,7 @@ class LeasersList(QScrollArea):
 
         priceCol = QLabel()
         priceCol.setText('price')
-        priceCol.setFont(QtGui.QFont(self.current_font, 14, 800))
+        priceCol.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 14), 800))
         priceCol.adjustSize()
         priceCol.setStyleSheet('background: transparent;\n'
                                 'border: 0px solid white;\n'
@@ -264,7 +266,7 @@ class LeasersList(QScrollArea):
         
         leaser = QLabel()
         leaser.setText(user)
-        leaser.setFont(QtGui.QFont(self.current_font, 14, 1000))
+        leaser.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 14), 1000))
         leaser.adjustSize()
         leaser.setStyleSheet('background: transparent;\n'
                              'color: rgb(0, 200, 56);\n'
@@ -274,7 +276,7 @@ class LeasersList(QScrollArea):
 
         leaserSpecs = QLabel()
         leaserSpecs.setText(specs)
-        leaserSpecs.setFont(QtGui.QFont(self.current_font, 14, 1000))
+        leaserSpecs.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 14), 1000))
         leaserSpecs.adjustSize()
         leaserSpecs.setStyleSheet('background: transparent;\n'
                              'color: rgb(255, 255, 255);\n'
@@ -284,7 +286,7 @@ class LeasersList(QScrollArea):
 
         leaserPrice = QLabel()
         leaserPrice.setText(price + '$')
-        leaserPrice.setFont(QtGui.QFont(self.current_font, 14, 1000))
+        leaserPrice.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 14), 1000))
         leaserPrice.adjustSize()
         leaserPrice.setStyleSheet('background: transparent;\n'
                              'color: rgb(255, 255, 255);\n'
@@ -353,6 +355,7 @@ class UploadPage(QWidget):
 
         self.current_theme = self.parent.current_theme
         self.current_font = self.parent.current_font
+        self.current_sf = self.parent.current_sf
 
         self.fileName = ''
 
@@ -370,7 +373,7 @@ class UploadPage(QWidget):
 
         self.uploadFilesLabel = QLabel(self)
         self.uploadFilesLabel.setText('Upload files')
-        self.uploadFilesLabel.setFont(QtGui.QFont(self.current_font, 48, 400))
+        self.uploadFilesLabel.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 48), 400))
         self.uploadFilesLabel.adjustSize()
         self.uploadFilesLabel.setAlignment(QtCore.Qt.AlignHCenter)
         self.uploadFilesLabel.setStyleSheet('background: transparent;\n'
@@ -400,7 +403,7 @@ class UploadPage(QWidget):
                                      'QPushButton:pressed {\n'
                                      '   background: rgb(0, 75, 72);\n'
                                      '}\n')
-        self.uploadBtn.setFont(QtGui.QFont(self.current_font, 14, 800))
+        self.uploadBtn.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 14), 800))
         self.uploadBtn.setText('Upload')
         self.uploadBtn.setFixedHeight(65)
         self.uploadBtn.setFixedWidth(180)
@@ -482,6 +485,7 @@ class RentalTypePage(QWidget):
 
         self.current_theme = self.parent.current_theme
         self.current_font = self.parent.current_font
+        self.current_sf = self.parent.current_sf
 
         if (self.current_theme == 'Dark'):
             self.darkTheme()
@@ -498,7 +502,7 @@ class RentalTypePage(QWidget):
 
         self.selectRentalTypeLabel = QLabel(self)
         self.selectRentalTypeLabel.setText('Select rental type')
-        self.selectRentalTypeLabel.setFont(QtGui.QFont(self.current_font, 48, 400))
+        self.selectRentalTypeLabel.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 48), 400))
         self.selectRentalTypeLabel.adjustSize()
         self.selectRentalTypeLabel.setAlignment(QtCore.Qt.AlignHCenter)
         self.selectRentalTypeLabel.setStyleSheet('background: transparent;\n'
@@ -576,6 +580,7 @@ class SuccessfulRequest(QWidget):
 
         self.parent = parent
         self.current_font = self.parent.current_font
+        self.current_sf = self.parent.current_sf
 
         self.shadow = QtWidgets.QGraphicsDropShadowEffect()
         self.shadow.setBlurRadius(30)
@@ -591,7 +596,7 @@ class SuccessfulRequest(QWidget):
 
         self.label = QLabel(self)
         self.label.setText('Request successfully sent to leaser')
-        self.label.setFont(QtGui.QFont(self.current_font, 30, 400))
+        self.label.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 30), 400))
         self.label.adjustSize()
         self.label.setAlignment(QtCore.Qt.AlignCenter)
         self.label.setStyleSheet('background: transparent;\n'
@@ -629,7 +634,7 @@ class SuccessfulRequest(QWidget):
                                     'QPushButton:pressed {\n'
                                     '   background: rgb(0, 65, 69);\n'
                                     '}\n')
-        self.backBtn.setFont(QtGui.QFont(self.current_font, 14, 900))
+        self.backBtn.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 14), 900))
         self.backBtn.setText('Back')
         self.backBtn.setFixedHeight(105)
         self.backBtn.setFixedWidth(225)
@@ -674,6 +679,7 @@ class LeasersListPage(QWidget):
 
         self.current_theme = self.parent.current_theme
         self.current_font = self.parent.current_font
+        self.current_sf = self.parent.current_sf
 
         if (self.current_theme == 'Dark'):
             self.darkTheme()
@@ -696,7 +702,7 @@ class LeasersListPage(QWidget):
 
         self.leasersLabel = QLabel(self)
         self.leasersLabel.setText('Leasers')
-        self.leasersLabel.setFont(QtGui.QFont(self.current_font, 48, 400))
+        self.leasersLabel.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 48), 400))
         self.leasersLabel.adjustSize()
         self.leasersLabel.setAlignment(QtCore.Qt.AlignHCenter)
         self.leasersLabel.setStyleSheet('background: transparent;\n'
@@ -719,7 +725,7 @@ class LeasersListPage(QWidget):
                                      'QPushButton:pressed {\n'
                                      '   background: rgb(0, 75, 72);\n'
                                      '}\n')
-        self.sendReqBtn.setFont(QtGui.QFont(self.current_font, 14, 800))
+        self.sendReqBtn.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 14), 800))
         self.sendReqBtn.setText('Send request')
         self.sendReqBtn.setFixedHeight(55)
         self.sendReqBtn.setFixedWidth(180)
@@ -780,6 +786,7 @@ class RentPage(QScrollArea):
 
         self.current_theme = self.parent.current_theme
         self.current_font = self.parent.current_font
+        self.current_sf = self.parent.current_sf
 
         self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         self.setWidgetResizable(True)
@@ -787,6 +794,7 @@ class RentPage(QScrollArea):
         self.fileName = None
         self.current_theme = self.parent.current_theme
         self.current_font = self.parent.current_font
+        self.current_sf = self.parent.current_sf
 
         self.shadow = QtWidgets.QGraphicsDropShadowEffect()
         self.shadow.setBlurRadius(30)

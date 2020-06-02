@@ -333,7 +333,17 @@ class RegisterPage(QWidget):
         cred = auth.sign_up(email, pswd, username)     
         if cred:
             authToken, usrname, user_type = cred
-            self.goBack()
+
+            cred2 = auth.sign_in(email, pswd)
+
+            if cred2:
+                authToken, username, user_type = cred2
+                self.parent.loggedInWidget = LoggedInWidget()
+                self.parent.loggedInWidget.setAuthToken(authToken)
+                self.parent.loggedInWidget.sidebar.selectPage(self.parent.loggedInWidget.sidebar.dashboard, 'Dashboard')
+                self.parent.loggedInWidget.setAccount(username, email)
+                self.parent.setCentralWidget(self.parent.loggedInWidget)
+            
 
 # NOTE:
 # Login page with LoginLineEdit and LoginButton instances

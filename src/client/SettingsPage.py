@@ -18,6 +18,7 @@ class SettingsPage(QWidget):
 
         self.current_theme = self.parent.current_theme
         self.current_font = self.parent.current_font
+        self.current_sf = self.parent.current_sf
     
         self.shadow = CustomShadow()
         self.shadow1 = CustomShadow()
@@ -25,7 +26,7 @@ class SettingsPage(QWidget):
 
         self.settingsLabel = QLabel(self)
         self.settingsLabel.setText('Settings')
-        self.settingsLabel.setFont(QtGui.QFont(self.current_font, 48, 400))
+        self.settingsLabel.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 48), 400))
         self.settingsLabel.adjustSize()
         self.settingsLabel.setStyleSheet(   'background: transparent;\n'
                                             'color: white;\n'
@@ -37,7 +38,7 @@ class SettingsPage(QWidget):
 
         self.customLabel = QLabel(self)
         self.customLabel.setText('Customization')
-        self.customLabel.setFont(QtGui.QFont(self.current_font, 30, 400))
+        self.customLabel.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 30), 400))
         self.customLabel.adjustSize()
         self.customLabel.setStyleSheet(   'background: transparent;\n'
                                             'color: white;\n'
@@ -55,7 +56,7 @@ class SettingsPage(QWidget):
 
         self.accountsLabel = QLabel(self)
         self.accountsLabel.setText('Account')
-        self.accountsLabel.setFont(QtGui.QFont(self.current_font, 30, 400))
+        self.accountsLabel.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 30), 400))
         self.accountsLabel.adjustSize()
         self.accountsLabel.setStyleSheet(   'background: transparent;\n'
                                             'color: white;\n'
@@ -75,7 +76,7 @@ class SettingsPage(QWidget):
 
         self.themeLabel = QLabel(self)
         self.themeLabel.setText('Theme')
-        self.themeLabel.setFont(QtGui.QFont(self.current_font, 24, 400))
+        self.themeLabel.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 24), 400))
         self.themeLabel.adjustSize()
         self.themeLabel.setStyleSheet(  'background: transparent;\n'
                                         'color: white;\n'
@@ -88,9 +89,9 @@ class SettingsPage(QWidget):
                                             'color: white;\n'
                                             'border: 0px solid white;\n'
                                             'padding-left: 10px;\n')
-        self.themeDropdown.setFont(QtGui.QFont(self.current_font, 18, 400))
+        self.themeDropdown.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 18), 400))
         self.themeDropdown.setFixedHeight(50)
-        self.themeDropdown.setFixedWidth(120)
+        self.themeDropdown.setFixedWidth(200)
         self.themeDropdown.addItem('Dark')
         self.themeDropdown.addItem('Light')
         self.themeDropdown.addItem('Classic')
@@ -110,7 +111,7 @@ class SettingsPage(QWidget):
 
         self.fontLabel = QLabel(self)
         self.fontLabel.setText('Font')
-        self.fontLabel.setFont(QtGui.QFont(self.current_font, 24, 400))
+        self.fontLabel.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 24), 400))
         self.fontLabel.adjustSize()
         self.fontLabel.setStyleSheet(  'background: transparent;\n'
                                         'color: white;\n'
@@ -123,7 +124,7 @@ class SettingsPage(QWidget):
                                         'color: white;\n'
                                         'border: 0px solid white;\n'
                                         'padding-left: 10px;\n')
-        self.fontDropdown.setFont(QtGui.QFont(self.current_font, 18, 400))
+        self.fontDropdown.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 18), 400))
         self.fontDropdown.setFixedHeight(50)
         self.fontDropdown.setFixedWidth(180)
         self.fontDropdown.addItem('Arial')
@@ -146,9 +147,47 @@ class SettingsPage(QWidget):
         self.fontRowLayout.setAlignment(QtCore.Qt.AlignVCenter)
         self.fontRow.setLayout(self.fontRowLayout)
 
+
+        self.sfLabel = QLabel(self)
+        self.sfLabel.setText('Scaling')
+        self.sfLabel.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 24), 400))
+        self.sfLabel.adjustSize()
+        self.sfLabel.setStyleSheet(  'background: transparent;\n'
+                                        'color: white;\n'
+                                        'border: 0px solid black;\n'
+                                        'font-weight: bold;\n')
+        self.sfLabel.setAlignment(QtCore.Qt.AlignVCenter)
+
+        self.sfDropdown = QtWidgets.QComboBox(self)
+        self.sfDropdown.setStyleSheet('background: rgb(124, 124, 124);\n'
+                                        'color: white;\n'
+                                        'border: 0px solid white;\n'
+                                        'padding-left: 10px;\n')
+        self.sfDropdown.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 18), 400))
+        self.sfDropdown.setFixedHeight(50)
+        self.sfDropdown.setFixedWidth(200)
+        self.sfDropdown.addItem('100%')
+        self.sfDropdown.addItem('125%')
+        self.sfDropdown.addItem('150%')
+        self.sfDropdown.addItem('200%')
+        self.sfDropdown.currentTextChanged.connect(self.changeSf)
+
+        self.sfRow = QWidget(self)
+        self.sfRow.setStyleSheet( 'background: transparent;\n'
+                                    'border: 0px solid white;\n')
+        
+        self.sfRowLayout = QHBoxLayout()
+        self.sfRowLayout.addWidget(self.sfLabel, alignment = QtCore.Qt.AlignRight)
+        self.sfRowLayout.addWidget(self.sfDropdown, alignment = QtCore.Qt.AlignLeft)
+        self.sfRowLayout.setSpacing(10)
+        self.sfRowLayout.setContentsMargins(0, 0, 0, 0)
+        self.sfRowLayout.setAlignment(QtCore.Qt.AlignVCenter)
+        self.sfRow.setLayout(self.sfRowLayout)
+
+
         self.accountLabel = QLabel(self)
         self.accountLabel.setText('account')
-        self.accountLabel.setFont(QtGui.QFont(self.current_font, 18, 400))
+        self.accountLabel.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 18), 400))
         self.accountLabel.adjustSize()
         self.accountLabel.setStyleSheet('background: transparent;\n'
                                         'color: white;\n'
@@ -170,7 +209,7 @@ class SettingsPage(QWidget):
                                      'QPushButton:pressed {\n'
                                      '   background: rgb(123, 25, 25);\n'
                                      '}\n')
-        self.logOutBtn.setFont(QtGui.QFont(self.current_font, 18, 400))
+        self.logOutBtn.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 18), 400))
         self.logOutBtn.setText('Log Out')
         self.logOutBtn.setFixedHeight(95)
         self.logOutBtn.setFixedWidth(205)
@@ -195,6 +234,7 @@ class SettingsPage(QWidget):
         self.boxLayout.addWidget(self.customRow)
         self.boxLayout.addWidget(self.themeRow)
         self.boxLayout.addWidget(self.fontRow)
+        self.boxLayout.addWidget(self.sfRow)
         self.boxLayout.addWidget(self.accountsRow)
         self.boxLayout.addWidget(self.accountRow)
         self.boxLayout.setAlignment(QtCore.Qt.AlignTop)
@@ -231,9 +271,17 @@ class SettingsPage(QWidget):
         else:
             self.classicTheme()
 
-    def setCurrentSettings(self, theme, font):
+    def setCurrentSettings(self, theme, font, sf):
         self.themeDropdown.setCurrentText(theme)
         self.fontDropdown.setCurrentText(font)
+        if (sf == 1):
+            self.sfDropdown.setCurrentText('100%')
+        elif (sf == 1.25):
+            self.sfDropdown.setCurrentText('125%')
+        elif (sf == 1.5):
+            self.sfDropdown.setCurrentText('150%')
+        else:
+            self.sfDropdown.setCurrentText('200%')
 
     def changeTheme(self, e):
         self.parent.current_theme = self.themeDropdown.currentText()
@@ -249,19 +297,35 @@ class SettingsPage(QWidget):
             self.classicTheme()
             self.parent.classicTheme()
     
+    def changeSf(self, e):
+        if (self.sfDropdown.currentText() == '100%'):
+            self.parent.current_sf = 1
+        elif (self.sfDropdown.currentText() == '125%'):
+            self.parent.current_sf = 1.25
+        elif (self.sfDropdown.currentText() == '150%'):
+            self.parent.current_sf = 1.5
+        else:
+            self.parent.current_sf = 2
+        
+        self.current_sf = self.parent.current_sf
+        
+        self.changeFont(0)
+
     def changeFont(self, e):
         self.parent.current_font = self.fontDropdown.currentText()
         self.current_font = self.parent.current_font
 
-        self.logOutBtn.setFont(QtGui.QFont(self.current_font, 18, 400))
-        self.accountLabel.setFont(QtGui.QFont(self.current_font, 18, 400))
-        self.fontDropdown.setFont(QtGui.QFont(self.current_font, 18, 400))     
-        self.fontLabel.setFont(QtGui.QFont(self.current_font, 24, 400))
-        self.themeDropdown.setFont(QtGui.QFont(self.current_font, 18, 400))
-        self.themeLabel.setFont(QtGui.QFont(self.current_font, 24, 400))
-        self.accountsLabel.setFont(QtGui.QFont(self.current_font, 30, 400))
-        self.customLabel.setFont(QtGui.QFont(self.current_font, 30, 400))
-        self.settingsLabel.setFont(QtGui.QFont(self.current_font, 48, 400))
+        self.logOutBtn.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 18), 400))
+        self.accountLabel.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 18), 400))
+        self.fontDropdown.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 18), 400))     
+        self.fontLabel.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 24), 400))
+        self.themeDropdown.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 18), 400))
+        self.themeLabel.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 24), 400))
+        self.accountsLabel.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 30), 400))
+        self.customLabel.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 30), 400))
+        self.settingsLabel.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 48), 400))
+        self.sfDropdown.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 18), 400))
+        self.sfLabel.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 24), 400))
 
         self.parent.sidebar.changeFont()
 
@@ -292,6 +356,10 @@ class SettingsPage(QWidget):
                                         'color: white;\n'
                                         'border: 0px solid white;\n'
                                         'padding-left: 10px;\n')
+        self.sfDropdown.setStyleSheet('background: rgb(100, 100, 100);\n'
+                                        'color: white;\n'
+                                        'border: 0px solid white;\n'
+                                        'padding-left: 10px;\n')
 
     def classicTheme(self):
         self.widget.setStyleSheet(  'background: rgb(0, 23, 37);\n'
@@ -307,6 +375,10 @@ class SettingsPage(QWidget):
                                             'border: 0px solid white;\n'
                                             'padding-left: 10px;\n')
         self.fontDropdown.setStyleSheet('background: rgba(255, 255, 255, 0.2);\n'
+                                        'color: white;\n'
+                                        'border: 0px solid white;\n'
+                                        'padding-left: 10px;\n')
+        self.sfDropdown.setStyleSheet('background: rgba(255, 255, 255, 0.2);\n'
                                         'color: white;\n'
                                         'border: 0px solid white;\n'
                                         'padding-left: 10px;\n')

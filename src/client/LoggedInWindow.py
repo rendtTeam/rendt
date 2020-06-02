@@ -193,6 +193,7 @@ class Sidebar(QWidget):
         self.current_page = ""
         self.current_font = self.parent.current_font
         self.current_theme = self.parent.current_theme
+        self.current_sf = self.parent.current_sf
         self.elements = []
 
         # NOTE:
@@ -296,7 +297,7 @@ class Sidebar(QWidget):
                     self.settings.notify(False)
                     self.parent.settingsPage = SettingsPage(self.parent)
                     self.parent.settingsPage.accountLabel.setText(self.parent.account)
-                    self.parent.settingsPage.setCurrentSettings(self.parent.current_theme, self.parent.current_font)
+                    self.parent.settingsPage.setCurrentSettings(self.parent.current_theme, self.parent.current_font, self.parent.current_sf)
                     
                     e.setPage(self.parent.settingsPage)
                 self.parent.content.setCentralWidget(e.page)
@@ -315,8 +316,9 @@ class Sidebar(QWidget):
     
     def changeFont(self):
         self.current_font = self.parent.current_font
+        self.current_sf = self.parent.current_sf
         for e in self.elements:
-            e.pageLabel.setFont(QtGui.QFont(self.current_font, 12, 800))
+            e.pageLabel.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 12), 800))
 
 # NOTE:
 # LoggedInWindow is the main window with sidebar and dynamic content
@@ -335,6 +337,7 @@ class LoggedInWidget(QWidget):
         self.current_page = "Dashboard"
         self.current_font = "Arial"
         self.current_theme = "Classic"
+        self.current_sf = 1
         self.pages = []
         self.content = QMainWindow()
 
@@ -398,12 +401,12 @@ class LoggedInWidget(QWidget):
 
             if (len(numberOfReqsR) != len(newNumberOfReqsR)):
                 self.sidebar.dashboard.notify(True)
-                numberOfReqsR = newNumberOfReqs
+                numberOfReqsR = newNumberOfReqsR
             else:
                 for i in range(len(newNumberOfReqsR)) :
                     if (numberOfReqsR[i][4] != newNumberOfReqsR[i][4]):
                         self.sidebar.dashboard.notify(True)
-                        numberOfReqsR = newNumberOfReqs
+                        numberOfReqsR = newNumberOfReqsR
                         break
 
             newNumberOfReqsL = self.receiver.get_job_notifications()
@@ -411,7 +414,7 @@ class LoggedInWidget(QWidget):
 
             if (len(numberOfReqsL) != len(newNumberOfReqsL)):
                 self.sidebar.dashboard.notify(True)
-                numberOfReqsL = newNumberOfReqs
+                numberOfReqsL = newNumberOfReqsL
             time.sleep(1)
 
     def darkTheme(self):
