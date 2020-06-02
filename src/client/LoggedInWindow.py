@@ -48,6 +48,7 @@ class SidebarElement(QWidget):
         self.page = ""
         self.isSelected = False
         self.openedNotf = False
+        self.stopTimer = False
 
         # NOTE:
         # setting text color for the element depending on the theme
@@ -104,7 +105,7 @@ class SidebarElement(QWidget):
 
     # NOTE:
     # A function to change the element's behavior if an update is received
-    def notify(self, flag):
+    def notify(self, flag, flag2 = None):
         if (not flag):
             self.setStyleSheet('background: rgba(255, 255, 255, 0.1);\n'
                             'border: 0px solid black;\n'
@@ -115,6 +116,9 @@ class SidebarElement(QWidget):
                            'border: 0px solid black;\n'
                            'color: white;\n')
             self.openedNotf = False
+        
+        if (flag2 is not None and flag2 == True):
+            self.stopTimer = True
 
     # NOTE:
     # getter function to get element text
@@ -423,6 +427,8 @@ class LoggedInWidget(QWidget):
                 for i in range(len(newNumberOfReqsR)) :
                     if (numberOfReqsR[i][4] != newNumberOfReqsR[i][4]):
                         self.sidebar.dashboard.notify(True)
+                        if (newNumberOfReqsR[i][4] == 'f' and numberOfReqsR[i][4] == 'x'):
+                            self.sidebar.dashboard.notify(True, True)
                         numberOfReqsR = newNumberOfReqsR
                         break
 

@@ -243,8 +243,8 @@ class LoginPage(QWidget):
                 self.parent.loggedInWidget = LoggedInWidget(self.parent)
                 self.parent.loggedInWidget.setAuthToken(authToken)
                 self.parent.loggedInWidget.lease_status = leasing_status
-                self.parent.loggedInWidget.sidebar.selectPage(self.parent.loggedInWidget.sidebar.dashboard, 'Dashboard')
                 self.parent.loggedInWidget.setAccount(username, email)
+                self.parent.loggedInWidget.sidebar.selectPage(self.parent.loggedInWidget.sidebar.dashboard, 'Dashboard')
                 self.parent.setCentralWidget(self.parent.loggedInWidget)
         
         # self.parent.loggedInWidget = LoggedInWidget()
@@ -525,11 +525,13 @@ class LoginWindow(QMainWindow):
         self.setCentralWidget(self.loginPage)
     
     def closeEvent(self, event):
-        if (self.loggedInWidget.t1 is not None):
-            self.loggedInWidget.t1.stop()
-            self.loggedInWidget.t1.join()
-            self.loggedInWidget.receiver.sign_out()
+        if (self.loggedInWidget.lease_status != 'executing'):
+            if (self.loggedInWidget.t1 is not None):
+                self.loggedInWidget.t1.stop()
+                self.loggedInWidget.t1.join()
+                self.loggedInWidget.receiver.sign_out()
 
-        self.close()
-
-        event.accept() # let the window close
+            self.close()
+            event.accept() # let the window close
+        else:
+            event.ignore()

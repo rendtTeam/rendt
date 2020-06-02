@@ -24,6 +24,7 @@ class LeasingRequest(QWidget):
         self.jobDesc = None
         self.jobMode = None
         self.status = None
+        self.price = None
 
         self.requests = []
 
@@ -407,7 +408,7 @@ class RentingRequest(QWidget):
                                             'QPushButton:pressed {\n'
                                             '   background: rgba(80, 80, 80, 0.3);\n'
                                             '}\n')
-            self.taskPage = TaskPage(self.parent, self.jobInfo[0], 'Pending')
+            self.taskPage = TaskPage(self.parent, self.jobInfo[0], 'Pending', self.jobInfo[7], None, None)
 
         elif (e == 'x'):
             self.requestBtn.setText('Executing')
@@ -422,7 +423,7 @@ class RentingRequest(QWidget):
                                             'QPushButton:pressed {\n'
                                             '   background: rgba(0, 75, 10, 0.7);\n'
                                             '}\n')
-            self.taskPage = TaskPage(self.parent, self.jobInfo[0], 'Executing', self.jobInfo[5])
+            self.taskPage = TaskPage(self.parent, self.jobInfo[0], 'Executing', self.jobInfo[7], self.jobInfo[5], None)
             # TODO: Set function to be linked to the button
         elif (e == 'd'):
             self.requestBtn.setText('Rejected')
@@ -437,7 +438,7 @@ class RentingRequest(QWidget):
                                             'QPushButton:pressed {\n'
                                             '   background: rgba(120, 42, 40, 0.7);\n'
                                             '}\n')
-            self.taskPage = TaskPage(self.parent, self.jobInfo[0], 'Rejected')
+            self.taskPage = TaskPage(self.parent, self.jobInfo[0], 'Rejected', self.jobInfo[7], None, None)
             # TODO: Set function to be linked to the button
         elif (e == 'f'):
             self.requestBtn.setText('Finished')
@@ -452,7 +453,7 @@ class RentingRequest(QWidget):
                                             'QPushButton:pressed {\n'
                                             '   background: rgba(93, 30, 100, 0.7);\n'
                                             '}\n')
-            self.taskPage = TaskPage(self.parent, self.jobInfo[0], 'Finished', self.jobInfo[5])
+            self.taskPage = TaskPage(self.parent, self.jobInfo[0], 'Finished', self.jobInfo[7], self.jobInfo[5], self.jobInfo[6])
             # TODO: Set function to be linked to the button
 
 class EmptyRequest(QWidget):
@@ -529,7 +530,7 @@ class EmptyRequest(QWidget):
                                     'border: 0px solid white;\n')
 
 class TaskPage(QWidget):
-    def __init__(self, parent, jobId, status, start_time = None):
+    def __init__(self, parent, jobId, status, price, start_time, finish):
         super(TaskPage, self).__init__()
 
         self.parent = parent
@@ -538,6 +539,7 @@ class TaskPage(QWidget):
         self.current_theme = self.parent.current_theme
         self.current_font = self.parent.current_font
         self.current_sf = self.parent.current_sf
+        self.price = price
 
         self.shadow = QtWidgets.QGraphicsDropShadowEffect()
         self.shadow.setBlurRadius(30)
@@ -546,10 +548,18 @@ class TaskPage(QWidget):
         self.shadow.setColor(QtGui.QColor(20, 20, 20))
 
         self.requestStatus = status
+        self.requestStarted = None
+        self.requestFinished = None
+
         if (start_time is not None):
             start_time = datetime.strptime(start_time, '%Y-%m-%d %H:%M:%S')
             start_time = self.datetime_from_utc_to_local(start_time)
             self.requestStarted = start_time
+        
+        if (finish is not None):
+            finish = datetime.strptime(finish, '%Y-%m-%d %H:%M:%S')
+            finish = self.datetime_from_utc_to_local(finish)
+            self.requestFinished = finish
 
         self.shadow2 = QtWidgets.QGraphicsDropShadowEffect()
         self.shadow2.setBlurRadius(30)
@@ -650,13 +660,6 @@ class TaskPage(QWidget):
 
         self.statusBoxLayout = QVBoxLayout()
         self.statusBoxLayout.addWidget(self.statusInfoLabel)
-
-        if (self.requestStatus == 'Executing'):
-            self.statusBoxLayout.addWidget(self.elapsedTimeLabel)
-            self.statusBoxLayout.addWidget(self.feeLabel)
-            t1 = threading.Thread(target = self.getElapsedTime)
-            t1.daemon = True
-            t1.start()
 
         self.statusBoxLayout.setAlignment(QtCore.Qt.AlignCenter)
         self.statusBoxLayout.setContentsMargins(20, 20, 20, 20)
@@ -771,6 +774,21 @@ class TaskPage(QWidget):
             self.lightTheme()
         else:
             self.classicTheme()
+        
+        if (self.requestStatus == 'Executing'):
+            self.statusBoxLayout.addWidget(self.elapsedTimeLabel)
+            self.statusBoxLayout.addWidget(self.feeLabel)
+            t1 = threading.Thread(target = self.getElapsedTime)
+            t1.daemon = True
+            t1.start()
+        elif (self.requestStatus == 'Finished'):
+            self.statusBoxLayout.addWidget(self.feeLabel)
+            hour = (self.requestFinished - self.requestStarted).seconds//3600
+            minutes = (self.requestFinished - self.requestStarted).seconds//60%60
+            price = self.price * (minutes / 60 + hour)
+
+            self.feeLabel.setText('Fee: ' + str('%.2f' % price) + '$')
+            self.feeLabel.adjustSize()
     
     def datetime_from_utc_to_local(self, utc_datetime):
         now_timestamp = time.time()
@@ -778,12 +796,19 @@ class TaskPage(QWidget):
         return utc_datetime + offset
 
     def getElapsedTime(self):
-        while (True):
+        while (self.parent.parent.parent.sidebar.dashboard.stopTimer == False):
             self.elapsedTimeLabel.setText('ET: ' + str(datetime.now() - self.requestStarted))
             self.elapsedTimeLabel.adjustSize()
+
+            hour = (datetime.now() - self.requestStarted).seconds//3600
+            minutes = (datetime.now() - self.requestStarted).seconds//60%60
+            price = self.price * (minutes / 60 + hour)
+
+            self.feeLabel.setText('Fee: ' + str('%.2f' % price) + '$')
+            self.feeLabel.adjustSize()
+
             time.sleep(1)
-        # self.feeLabel.setText('Fee: ' + str((datetime.now() - self.requestStarted).hour() * price) + '$')
-        # self.feeLabel.adjustSize()
+        self.parent.parent.parent.sidebar.dashboard.stopTimer = False
 
     def goBack(self):
         self.hide()
@@ -804,7 +829,7 @@ class TaskPage(QWidget):
             self.parent.parent.parent.sender.download_output_from_db(y + '/output.zip', db_token, f_size)
 
     def calculateFee(self):
-        #TODO: Fee calculation
+        
         return ''
 
     def darkTheme(self):
@@ -940,6 +965,7 @@ class LeasingList(QWidget):
             request.jobDesc = r[3]
             request.jobMode = r[4]
             request.status = r[5]
+            request.price = r[6]
             
             request.setRenter(request.renterUserName)
 
