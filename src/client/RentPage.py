@@ -429,7 +429,6 @@ class LeasersList(QScrollArea):
         self.parent.selectedLeaser = leaser.layout.itemAt(0).widget().text()
         print('Selected Leaser: ' + leaser.layout.itemAt(0).widget().text())
 
-# TODO: Filter and allow only ZIP files
 class UploadPage(QWidget):
     def __init__(self, parent):
         super(UploadPage, self).__init__()
@@ -539,7 +538,7 @@ class UploadPage(QWidget):
 
     def chooseFile(self):
         dialog = QtWidgets.QFileDialog()
-        fileName = dialog.getOpenFileName(self, 'Open file', '.')
+        fileName = dialog.getOpenFileName(self, 'Open file', '', 'Zip-File (*.zip)')
         self.fileName = fileName[0]
 
         file_dir, file_name = os.path.split(self.fileName)

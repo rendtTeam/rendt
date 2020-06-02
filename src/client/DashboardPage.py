@@ -815,18 +815,14 @@ class TaskPage(QWidget):
         self.parent.parent.parent.sidebar.selectPage(self.parent.parent.parent.sidebar.dashboard, 'Dashboard')
 
     def downloadOutput(self):
+        fileName = QtWidgets.QFileDialog.getSaveFileName(self, 'Save File', '', 'Zip-File (*.zip)')
+        fileName = fileName[0]
+
         response = self.parent.parent.parent.sender.get_permission_to_download_output(self.jobId)
 
         if (response is not None):
             db_token, f_size = response
-            home_dir = os.system("pwd>pwd.txt")
-            f = open("pwd.txt", "r")
-            x = f.readline()
-            x = x.split("/")        
-            y = "/" + x[1] + "/" + x[2] + "/rendt"
-            home_dir = os.system("rm pwd.txt")
-            home_dir = os.system("mkdir " + y)
-            self.parent.parent.parent.sender.download_output_from_db(y + '/output.zip', db_token, f_size)
+            self.parent.parent.parent.sender.download_output_from_db(fileName, db_token, f_size)
 
     def calculateFee(self):
         
