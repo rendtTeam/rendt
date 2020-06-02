@@ -847,7 +847,7 @@ class LeasePage(QWidget):
         self.dockerInfo = DockerInfo()
 
         if (not self.dockerInfo.dockerExists()):
-            self.lease_status = 'not_leasing'
+            self.status = 'not_leasing'
 
         self.dockerSpecificationsPage = DockerSpecificationsPage(self)
         self.noDockerFoundPage = NoDockerFoundPage(self)

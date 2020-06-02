@@ -237,11 +237,13 @@ class LoginPage(QWidget):
                     leasing_status = 'not_leasing'
                 elif (leasing_status == 'n'):
                     leasing_status = 'not_leasing'
+                else:
+                    leasing_status = 'not_leasing'
 
                 self.parent.loggedInWidget = LoggedInWidget(self.parent)
                 self.parent.loggedInWidget.setAuthToken(authToken)
-                self.parent.loggedInWidget.sidebar.selectPage(self.parent.loggedInWidget.sidebar.dashboard, 'Dashboard')
                 self.parent.loggedInWidget.lease_status = leasing_status
+                self.parent.loggedInWidget.sidebar.selectPage(self.parent.loggedInWidget.sidebar.dashboard, 'Dashboard')
                 self.parent.loggedInWidget.setAccount(username, email)
                 self.parent.setCentralWidget(self.parent.loggedInWidget)
         

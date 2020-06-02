@@ -412,7 +412,7 @@ class LoggedInWidget(QWidget):
         numberOfReqsR = self.sender.get_job_statuses()
         numberOfReqsL = self.receiver.get_job_notifications()
 
-        while ():
+        while (True):
             newNumberOfReqsR = self.sender.get_job_statuses()
             # print('------------RENT------------------\n' + str(numberOfReqsR) + '\n++++++++++++++++++++++++++++++++++\n' + str(newNumberOfReqsR))
 

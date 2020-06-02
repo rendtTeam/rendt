@@ -88,8 +88,6 @@ class LeasingRequest(QWidget):
         self.acceptBtn.setFixedWidth(130)
         self.acceptBtn.setFixedHeight(100)
 
-        # self.acceptBtn.clicked.connect(self.goToRentalTypePage)
-
         self.rejectBtn = QPushButton(self)
         self.rejectBtn.setStyleSheet(  'QPushButton {\n'
                                         '   background: rgba(246, 49, 49, 0.7);\n'
@@ -107,8 +105,6 @@ class LeasingRequest(QWidget):
         self.rejectBtn.setFixedWidth(130)
         self.rejectBtn.setFixedHeight(100)
         # self.rejectBtn.clicked.connect(self.goToRentalTypePage)
-        if (self.parent.parent.parent.leasePage.status != 'idle'):
-            self.acceptBtn.setDisabled(True)
         
         self.buttonsGroup = QWidget(self)
         self.buttonsGroup.setStyleSheet('background: transparent;\n'
@@ -122,8 +118,18 @@ class LeasingRequest(QWidget):
         self.buttonsGroupLayout.setContentsMargins(0, 0, 0, 0)
         self.buttonsGroup.setLayout(self.buttonsGroupLayout)
 
+        self.jobDescLabel = QLabel(self)
+        self.jobDescLabel.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 12), 400))
+        self.jobDescLabel.adjustSize()
+        self.jobDescLabel.setAlignment(QtCore.Qt.AlignCenter)
+        self.jobDescLabel.setStyleSheet( 'background: transparent;\n'
+                                    'color: white;\n'
+                                    'border: 0px solid black;\n'
+                                    'padding-left: 20px')
+
         layout = QHBoxLayout()
         layout.addWidget(self.requestLabel, alignment = QtCore.Qt.AlignLeft)
+        layout.addWidget(self.jobDescLabel, alignment = QtCore.Qt.AlignLeft)
         layout.addWidget(self.buttonsGroup, alignment = QtCore.Qt.AlignRight)
         layout.setAlignment(QtCore.Qt.AlignVCenter)
         layout.setSpacing(0)
@@ -168,20 +174,18 @@ class LeasingRequest(QWidget):
     def setRenter(self, e):
         self.renterLabel.setText(e)
         self.renterLabel.adjustSize()
+        self.jobDescLabel.setText(self.jobDesc)
         self.acceptBtn.clicked.connect(self.acceptReq)
         self.rejectBtn.clicked.connect(self.rejectReq)
         
-        if (self.parent.parent.parent.leasePage.status != 'idle'):
+        if (self.parent.parent.parent.lease_status != 'idle'):
             self.acceptBtn.setDisabled(True)
         else:
             self.acceptBtn.setDisabled(False)
 
     def acceptReq(self, e):
-        self.hide()
-        self.destroy()
-        self.parent.addRequests()
-
         self.parent.parent.parent.start_time = datetime.now()
+        self.hide()
 
         if (self.parent.parent.parent.leasePage.dockerInfo.dockerExists()):
             self.parent.parent.parent.leasePage.changeStatus('executing')
@@ -190,6 +194,8 @@ class LeasingRequest(QWidget):
                                                                 self.orderId, self.jobId))
             t1.daemon = True
             t1.start()
+        
+        self.parent.parent.parent.sidebar.selectPage(self.parent.parent.parent.sidebar.dashboard, 'Dashboard')
 
     def startExec(self, dockerInfo, receiver, orderId, jobId):
             if (not dockerInfo.imageExists()):
@@ -246,8 +252,9 @@ class LeasingRequest(QWidget):
     def rejectReq(self, e):
         response = self.parent.parent.parent.receiver.decline_order(self.orderId)
         self.hide()
-        self.destroy()
         self.parent.addRequests()
+        self.parent.parent.rentingList.addRequests()
+        self.destroy()
 
 class RentingRequest(QWidget):
     def __init__(self, parent, jobInfo):
@@ -540,7 +547,9 @@ class TaskPage(QWidget):
 
         self.requestStatus = status
         if (start_time is not None):
-            self.requestStarted = datetime.strptime(start_time, '%Y-%m-%d %H:%M:%S')
+            start_time = datetime.strptime(start_time, '%Y-%m-%d %H:%M:%S')
+            start_time = self.datetime_from_utc_to_local(start_time)
+            self.requestStarted = start_time
 
         self.shadow2 = QtWidgets.QGraphicsDropShadowEffect()
         self.shadow2.setBlurRadius(30)
@@ -763,6 +772,11 @@ class TaskPage(QWidget):
         else:
             self.classicTheme()
     
+    def datetime_from_utc_to_local(self, utc_datetime):
+        now_timestamp = time.time()
+        offset = datetime.fromtimestamp(now_timestamp) - datetime.utcfromtimestamp(now_timestamp)
+        return utc_datetime + offset
+
     def getElapsedTime(self):
         while (True):
             self.elapsedTimeLabel.setText('ET: ' + str(datetime.now() - self.requestStarted))

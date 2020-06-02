@@ -861,6 +861,10 @@ class LeasersListPage(QWidget):
         print('Leasers: \n---------------------\n' + str(leasers))
         
         self.leasersList.leasers = []
+        self.leasersList.form = QtWidgets.QFormLayout()
+        self.leasersList.form.setContentsMargins(0, 65, 0, 0)
+        self.leasersList.form.setAlignment(QtCore.Qt.AlignHCenter)
+        self.leasersList.form.setSpacing(0)
 
         for l in leasers:
             self.leasersList.addLeaser(str(l[0]), l[1], str(l[3]))
