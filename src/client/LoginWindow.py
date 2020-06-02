@@ -230,7 +230,7 @@ class LoginPage(QWidget):
 
         if cred:
             authToken, username, user_type = cred
-            self.parent.loggedInWidget = LoggedInWidget()
+            self.parent.loggedInWidget = LoggedInWidget(self)
             self.parent.loggedInWidget.setAuthToken(authToken)
             self.parent.loggedInWidget.sidebar.selectPage(self.parent.loggedInWidget.sidebar.dashboard, 'Dashboard')
             self.parent.loggedInWidget.setAccount(username, email)
@@ -493,7 +493,7 @@ class LoginWindow(QMainWindow):
         self.registerPage = RegisterPage(self)
         self.forgotPassPage = ForgotPassPage(self)
         self.forgotPassConfirmPage = ForgotPassConfirmPage(self)
-        self.loggedInWidget = LoggedInWidget()
+        self.loggedInWidget = LoggedInWidget(self)
 
         self.layout = QHBoxLayout()
         self.layout.addWidget(self.loginPage)

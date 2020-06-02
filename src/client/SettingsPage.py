@@ -126,7 +126,7 @@ class SettingsPage(QWidget):
                                         'padding-left: 10px;\n')
         self.fontDropdown.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 18), 400))
         self.fontDropdown.setFixedHeight(50)
-        self.fontDropdown.setFixedWidth(180)
+        self.fontDropdown.setFixedWidth(200)
         self.fontDropdown.addItem('Arial')
         self.fontDropdown.addItem('Calibri')
         self.fontDropdown.addItem('Cambria')

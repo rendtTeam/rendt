@@ -4,6 +4,92 @@ from PyQt5.QtWidgets import QScrollArea, QPushButton, QLabel, QWidget, QVBoxLayo
 import os
 import platform
 
+class JobDescription(QtWidgets.QPlainTextEdit):
+    def __init__(self, parent):
+        super(JobDescription, self).__init__()
+
+        self.parent = parent
+        self.current_font = self.parent.current_font
+        self.current_sf = self.parent.current_sf
+        self.current_theme = self.parent.current_theme
+        # self.sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+        # self.setSizePolicy(self.sizePolicy)
+        self.setFixedHeight(400)
+        self.setFixedWidth(400)
+
+        if (self.current_theme == 'Dark'):
+            self.darkTheme()
+        elif (self.current_theme == 'Light'):
+            self.lightTheme()
+        else:
+            self.classicTheme()
+
+        self.charLimit = QLabel(self)
+        self.charLimit.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 12), 400))
+        self.charLimit.setStyleSheet('background: transparent;\n'
+                                     'color: white;\n'
+                                     'border: 0px solid black;\n')
+        self.charLimit.setAlignment(QtCore.Qt.AlignBottom)
+        self.charLimit.setText('Character limit: 50/50')
+        self.charLimit.adjustSize()
+
+        self.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 14), 400))
+
+        self.shadow = QtWidgets.QGraphicsDropShadowEffect()
+        self.shadow.setBlurRadius(10)
+        self.shadow.setXOffset(0)
+        self.shadow.setYOffset(0)
+        self.shadow.setColor(QtGui.QColor(20, 20, 20))
+
+        self.setGraphicsEffect(self.shadow)
+        self.textChanged.connect(self.updateCharLimit)
+
+        self.layout = QVBoxLayout()
+        self.layout.addWidget(self.charLimit, alignment = QtCore.Qt.AlignBottom)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setAlignment(QtCore.Qt.AlignBottom)
+
+        self.setLayout(self.layout)
+
+    def updateCharLimit(self):
+        if (len(self.toPlainText()) > 50):
+            self.setPlainText(self.toPlainText()[0:50])
+        self.charLimit.setText('Character limit: '+ str( 50 - len(self.toPlainText())) +'/50')
+        self.charLimit.adjustSize()
+
+    def darkTheme(self):
+        self.setStyleSheet( 'QPlainTextEdit {\n'
+                            '   background: rgb(71, 71, 71);\n'
+                            '   border: 0px solid white;\n'
+                            '   color: white;\n'
+                            '   padding: 20px;\n'
+                            '}\n'
+                            'QPlainTextEdit:hover {\n'
+                            '   background: rgb(50, 50, 50);\n'
+                            '}\n')
+
+    def lightTheme(self):
+        self.setStyleSheet( 'QPlainTextEdit {\n'
+                            '   background: rgb(140, 140, 140);\n'
+                            '   border: 0px solid white;\n'
+                            '   color: white;\n'
+                            '   padding: 20px;\n'
+                            '}\n'
+                            'QPlainTextEdit:hover {\n'
+                            '   background: rgb(100, 100, 100);\n'
+                            '}\n')
+
+    def classicTheme(self):
+        self.setStyleSheet( 'QPlainTextEdit {\n'
+                            '   background: rgb(28, 47, 57);\n'
+                            '   border: 0px solid white;\n'
+                            '   color: white;\n'
+                            '   padding: 20px;\n'
+                            '}\n'
+                            'QPlainTextEdit:hover {\n'
+                            '   background: rgb(20, 33, 40);\n'
+                            '}\n')
+
 class CustomSquareButton(QPushButton):
     def __init__(self, parent):
         super(CustomSquareButton, self).__init__()
@@ -388,7 +474,20 @@ class UploadPage(QWidget):
 
         self.uploadZipBtn.setFooter('.zip file should include files to be executed\nwith necessary libraries and bash files etc.')   
         self.uploadZipBtn.clicked.connect(self.chooseFile)
-        # self.uploadZipBtn.setGraphicsEffect(self.shadow)     
+
+        self.jobDesc = JobDescription(self)
+        self.jobDesc.setPlaceholderText('Enter job description here')
+
+        self.buttonsRow = QWidget()
+        self.buttonsRowLayout = QHBoxLayout()
+        self.buttonsRowLayout.addWidget(self.uploadZipBtn, alignment = QtCore.Qt.AlignLeft)
+        self.buttonsRowLayout.addWidget(self.jobDesc, alignment = QtCore.Qt.AlignRight)
+        self.buttonsRow.setLayout(self.buttonsRowLayout)
+        self.buttonsRowLayout.setAlignment(QtCore.Qt.AlignJustify)
+        self.buttonsRowLayout.setContentsMargins(0, 0, 0, 0)
+        self.buttonsRowLayout.setSpacing(40)
+        self.buttonsRow.setFixedWidth(900)
+        self.buttonsRow.setFixedHeight(430)
 
         self.uploadBtn = QPushButton(self)
         self.uploadBtn.setStyleSheet('QPushButton {\n'
@@ -411,11 +510,13 @@ class UploadPage(QWidget):
 
         layout = QVBoxLayout()
         layout.addWidget(self.uploadFilesLabel, alignment = QtCore.Qt.AlignHCenter)
-        layout.addWidget(self.uploadZipBtn, alignment = QtCore.Qt.AlignHCenter)
+        layout.addWidget(self.buttonsRow, alignment = QtCore.Qt.AlignHCenter)
         layout.addWidget(self.uploadBtn, alignment = QtCore.Qt.AlignHCenter)
         layout.setAlignment(QtCore.Qt.AlignTop)
         # self.layout.setContentsMargins(50, 80, 50, 50)
         layout.setSpacing(30)
+
+        self.setMaximumHeight(700)
 
         self.widget = QWidget(self)
         self.widget.setLayout(layout)
@@ -425,6 +526,7 @@ class UploadPage(QWidget):
 
         self.layout = QVBoxLayout()
         self.layout.addWidget(self.widget)
+        self.layout.setAlignment(QtCore.Qt.AlignTop)
         self.setLayout(self.layout)
         self.layout.setContentsMargins(0, 0, 0, 0)
 
@@ -446,7 +548,7 @@ class UploadPage(QWidget):
     
     def uploadFile(self, e):
         if (len(self.fileName) > 0):
-            job_id, db_token = self.parent.parent.sender.get_permission_to_upload_job(e, 'test')
+            job_id, db_token = self.parent.parent.sender.get_permission_to_upload_job(e, self.jobDesc.toPlainText())
             self.parent.parent.sender.upload_file_to_db(e, job_id, db_token)
             self.goToRentalTypePage(job_id)
             self.parent.fileName = self.fileName
@@ -820,7 +922,7 @@ class RentPage(QScrollArea):
         layout.addWidget(self.leasersListPage)
         layout.addWidget(self.success)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setAlignment(QtCore.Qt.AlignHCenter)
+        layout.setAlignment(QtCore.Qt.AlignTop)
         layout.setSpacing(30)
 
         self.widget.setLayout(layout)

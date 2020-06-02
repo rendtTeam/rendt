@@ -806,7 +806,7 @@ class LeaseExecPage(QWidget):
             self.cpuUsage = str('%.2f' % self.parent.dockerInfo.getCpuUsage())
             self.cpuUsageLabel.setText('CPU: ' + self.cpuUsage + '%')
             self.cpuUsageLabel.adjustSize()
-            time.sleep(1)
+            time.sleep(5)
     
     def getDockerMemUsage(self):
         starttime=time.time()
@@ -814,7 +814,7 @@ class LeaseExecPage(QWidget):
             self.memUsage = str('%.2f' % self.parent.dockerInfo.getMemUsage())
             self.memUsageLabel.setText('RAM: ' + self.memUsage + '%')
             self.memUsageLabel.adjustSize()
-            time.sleep(1)
+            time.sleep(5)
     
     def getElapsedTime(self, dockerInfo, start_time):
         starttime=time.time()
@@ -900,7 +900,7 @@ class LeasePage(QWidget):
                 self.leaseExecPage.hide()
                 self.leaseIdlePage.show()
                 break
-            time.sleep(1)
+            time.sleep(5)
 
     def openLeasePage(self):
         if (self.status == 'idle'):

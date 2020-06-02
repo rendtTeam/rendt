@@ -1,6 +1,8 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QScrollArea, QPushButton, QLabel, QWidget, QVBoxLayout, QStackedWidget, QHBoxLayout, QMainWindow
 
+import LoginWindow
+
 class CustomShadow(QtWidgets.QGraphicsDropShadowEffect):
     def __init__(self):
         super(CustomShadow, self).__init__()
@@ -141,6 +143,7 @@ class ProfilePage(QWidget):
         self.logOutBtn.setFixedHeight(95)
         self.logOutBtn.setFixedWidth(205)
         self.logOutBtn.setGraphicsEffect(self.shadow2)
+        self.logOutBtn.clicked.connect(self.logOut)
 
         self.box = QWidget(self)
 
@@ -182,6 +185,13 @@ class ProfilePage(QWidget):
             self.lightTheme()
         else:
             self.classicTheme()
+
+    def logOut(self, e):
+        self.parent.receiver.sign_out()
+        self.parent.sender.sign_out()
+        self.hide()
+        self.parent.hide()
+        self.parent.parent.setCentralWidget(self.parent.parent.loginPage)
 
     def darkTheme(self):
         self.widget.setStyleSheet(  'background: rgb(69, 69, 69);\n'

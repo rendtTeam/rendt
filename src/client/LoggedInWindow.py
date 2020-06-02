@@ -7,6 +7,8 @@ from DashboardPage import DashboardPage
 from SettingsPage import SettingsPage
 from ProfilePage import ProfilePage
 
+import LoginWindow
+
 from sender import Sender
 from receiver import Receiver
 
@@ -323,8 +325,10 @@ class Sidebar(QWidget):
 # NOTE:
 # LoggedInWindow is the main window with sidebar and dynamic content
 class LoggedInWidget(QWidget):
-    def __init__(self):
+    def __init__(self, parent):
         super(LoggedInWidget, self).__init__()
+
+        self.parent = parent
 
         self.setStyleSheet('background: rgba(40, 40, 40, 1)')
         self.account = ''
@@ -415,7 +419,7 @@ class LoggedInWidget(QWidget):
             if (len(numberOfReqsL) != len(newNumberOfReqsL)):
                 self.sidebar.dashboard.notify(True)
                 numberOfReqsL = newNumberOfReqsL
-            time.sleep(1)
+            time.sleep(5)
 
     def darkTheme(self):
         self.setStyleSheet( 'background: rgb(40, 40, 40);\n'
@@ -459,13 +463,14 @@ class LoggedInWidget(QWidget):
 # NOTE:
 # MainWindow class which will display all the pages inside
 class LoggedInWindow(QMainWindow):
-    def __init__(self, parent=None):
+    def __init__(self, parent = None):
         super(LoggedInWindow, self).__init__(parent)
 
         # NOTE:
         # class configurations
         self.resize(1024, 768)
-        self.widget = LoggedInWidget()
+        self.loginWindow = LoginWindow()
+        self.widget = LoggedInWidget(self.loginWindow)
         self.setWindowTitle('rendt')
         self.setWindowIcon(QtGui.QIcon(
             '../../assets/img/rendt_new_logo_square.png'))

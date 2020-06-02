@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import QScrollArea, QPushButton, QLabel, QWidget, QVBoxLayo
 import threading
 import os, sys, platform
 from datetime import datetime
+import time
 
 from RentPage import CustomSquareButton
 
@@ -319,8 +320,19 @@ class RentingRequest(QWidget):
         self.setRequestStatus(self.jobInfo[4])
         self.setLeaserLabel(self.jobInfo[3])
 
+        self.jobDesc = QLabel(self)
+        self.jobDesc.setText(self.jobInfo[1])
+        self.jobDesc.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 12), 400))
+        self.jobDesc.adjustSize()
+        self.jobDesc.setAlignment(QtCore.Qt.AlignCenter)
+        self.jobDesc.setStyleSheet( 'background: transparent;\n'
+                                    'color: white;\n'
+                                    'border: 0px solid black;\n'
+                                    'padding-left: 20px')
+
         layout = QHBoxLayout()
         layout.addWidget(self.requestLabel, alignment = QtCore.Qt.AlignLeft)
+        layout.addWidget(self.jobDesc, alignment = QtCore.Qt.AlignLeft)
         layout.addWidget(self.requestBtn, alignment = QtCore.Qt.AlignRight)
         layout.setAlignment(QtCore.Qt.AlignVCenter)
         layout.setSpacing(0)
@@ -403,7 +415,7 @@ class RentingRequest(QWidget):
                                             'QPushButton:pressed {\n'
                                             '   background: rgba(0, 75, 10, 0.7);\n'
                                             '}\n')
-            self.taskPage = TaskPage(self.parent, self.jobInfo[0], 'Executing')
+            self.taskPage = TaskPage(self.parent, self.jobInfo[0], 'Executing', self.jobInfo[5])
             # TODO: Set function to be linked to the button
         elif (e == 'd'):
             self.requestBtn.setText('Rejected')
@@ -433,7 +445,7 @@ class RentingRequest(QWidget):
                                             'QPushButton:pressed {\n'
                                             '   background: rgba(93, 30, 100, 0.7);\n'
                                             '}\n')
-            self.taskPage = TaskPage(self.parent, self.jobInfo[0], 'Finished')
+            self.taskPage = TaskPage(self.parent, self.jobInfo[0], 'Finished', self.jobInfo[5])
             # TODO: Set function to be linked to the button
 
 class EmptyRequest(QWidget):
@@ -510,7 +522,7 @@ class EmptyRequest(QWidget):
                                     'border: 0px solid white;\n')
 
 class TaskPage(QWidget):
-    def __init__(self, parent, jobId, status):
+    def __init__(self, parent, jobId, status, start_time = None):
         super(TaskPage, self).__init__()
 
         self.parent = parent
@@ -527,7 +539,8 @@ class TaskPage(QWidget):
         self.shadow.setColor(QtGui.QColor(20, 20, 20))
 
         self.requestStatus = status
-        self.requestStarted = '' #TODO: get execution start time
+        if (start_time is not None):
+            self.requestStarted = datetime.strptime(start_time, '%Y-%m-%d %H:%M:%S')
 
         self.shadow2 = QtWidgets.QGraphicsDropShadowEffect()
         self.shadow2.setBlurRadius(30)
@@ -583,7 +596,6 @@ class TaskPage(QWidget):
 
         # if (self.requestStatus == 'Executing'):
         self.elapsedTimeLabel = QLabel(self)
-        self.elapsedTimeLabel.setText('ET: ')
         self.elapsedTimeLabel.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 24), 1000))
         self.elapsedTimeLabel.adjustSize()
         self.elapsedTimeLabel.setAlignment(QtCore.Qt.AlignLeft)
@@ -633,6 +645,9 @@ class TaskPage(QWidget):
         if (self.requestStatus == 'Executing'):
             self.statusBoxLayout.addWidget(self.elapsedTimeLabel)
             self.statusBoxLayout.addWidget(self.feeLabel)
+            t1 = threading.Thread(target = self.getElapsedTime)
+            t1.daemon = True
+            t1.start()
 
         self.statusBoxLayout.setAlignment(QtCore.Qt.AlignCenter)
         self.statusBoxLayout.setContentsMargins(20, 20, 20, 20)
@@ -748,6 +763,14 @@ class TaskPage(QWidget):
         else:
             self.classicTheme()
     
+    def getElapsedTime(self):
+        while (True):
+            self.elapsedTimeLabel.setText('ET: ' + str(datetime.now() - self.requestStarted))
+            self.elapsedTimeLabel.adjustSize()
+            time.sleep(1)
+        # self.feeLabel.setText('Fee: ' + str((datetime.now() - self.requestStarted).hour() * price) + '$')
+        # self.feeLabel.adjustSize()
+
     def goBack(self):
         self.hide()
         self.parent.parent.parent.sidebar.selectPage(self.parent.parent.parent.sidebar.dashboard, 'Dashboard')
