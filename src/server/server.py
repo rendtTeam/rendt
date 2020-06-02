@@ -154,11 +154,13 @@ class Server:
                                             }
                     req_pipe.write(response_content, 'text/json')
                 else:
+                    leasing_status = self.db_handler.getLeasingStatus(user_id)
                     self.logger.info(f'successful sign in. uid: {user_id}')
                     response_content = {'status': 'success',
                                         'authToken': authToken,
                                         'user-type': user_type,
-                                        'username': username
+                                        'username': username,
+                                        'leasing-status': leasing_status
                                             }
                     req_pipe.write(response_content, 'text/json')                
 

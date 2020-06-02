@@ -119,6 +119,15 @@ class DBHandler(object):
         rows = self.__cursor.fetchall()
         return rows
 
+    def getLeasingStatus(self, uid):
+        query = f'SELECT status FROM leasers WHERE user_id={uid}'
+        self._executeQuery(query)
+        rows = self.__cursor.fetchall()
+        if len(rows) == 1:
+            return rows[0][0]
+        else:
+            'n' # not a leaser
+
     def getUserId(self, username):
         query = f'SELECT user_id FROM users WHERE username = "{username}"'
         self._executeQuery(query)

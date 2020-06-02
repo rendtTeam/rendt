@@ -37,7 +37,7 @@ class Auth:
         if response['status'] == 'error':
             print('ERROR:', response['error-msg'])
         else:
-            return response['authToken'], response['username'], response['user-type']
+            return response['authToken'], response['username'], response['user-type'], response['leasing-status']
         
     def sign_up(self, email, password, username, user_type='U', machine_chars=' '):
         global server_addr

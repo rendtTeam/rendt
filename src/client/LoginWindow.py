@@ -229,7 +229,7 @@ class LoginPage(QWidget):
         cred = auth.sign_in(email, pswd)
 
         if cred:
-            authToken, username, user_type = cred
+            authToken, username, user_type, leasing_status = cred
             self.parent.loggedInWidget = LoggedInWidget()
             self.parent.loggedInWidget.setAuthToken(authToken)
             self.parent.loggedInWidget.sidebar.selectPage(self.parent.loggedInWidget.sidebar.dashboard, 'Dashboard')
