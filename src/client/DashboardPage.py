@@ -15,6 +15,7 @@ class LeasingRequest(QWidget):
 
         self.current_theme = self.parent.current_theme
         self.current_font = self.parent.current_font
+        self.current_sf = self.parent.current_sf
 
         self.jobId = None
         self.orderId = None
@@ -32,7 +33,7 @@ class LeasingRequest(QWidget):
 
         self.requestByLabel = QLabel(self)
         self.requestByLabel.setText('Request by ')
-        self.requestByLabel.setFont(QtGui.QFont(self.current_font, 24, 800))
+        self.requestByLabel.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 24), 800))
         self.requestByLabel.adjustSize()
         self.requestByLabel.setStyleSheet( 'background: transparent;\n'
                                             'color: white;\n'
@@ -48,7 +49,7 @@ class LeasingRequest(QWidget):
 
         self.renterLabel = QLabel(self)
         self.renterLabel.setText('')
-        self.renterLabel.setFont(QtGui.QFont(self.current_font, 24, 800))
+        self.renterLabel.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 24), 800))
         self.renterLabel.adjustSize()
         self.renterLabel.setStyleSheet( 'background: transparent;\n'
                                         'color: rgb(197, 0, 255);\n'
@@ -81,7 +82,7 @@ class LeasingRequest(QWidget):
                                         'QPushButton:pressed {\n'
                                         '   background: rgba(0, 75, 10, 0.7);\n'
                                         '}\n')
-        self.acceptBtn.setFont(QtGui.QFont(self.current_font, 14, 800))
+        self.acceptBtn.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 14), 800))
         self.acceptBtn.setText('Accept')
         self.acceptBtn.setFixedWidth(130)
         self.acceptBtn.setFixedHeight(100)
@@ -100,7 +101,7 @@ class LeasingRequest(QWidget):
                                         'QPushButton:pressed {\n'
                                         '   background: rgba(123, 25, 25, 0.7);\n'
                                         '}\n')
-        self.rejectBtn.setFont(QtGui.QFont(self.current_font, 14, 800))
+        self.rejectBtn.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 14), 800))
         self.rejectBtn.setText('Reject')
         self.rejectBtn.setFixedWidth(130)
         self.rejectBtn.setFixedHeight(100)
@@ -257,6 +258,7 @@ class RentingRequest(QWidget):
 
         self.current_theme = self.parent.current_theme
         self.current_font = self.parent.current_font
+        self.current_sf = self.parent.current_sf
 
         self.setStyleSheet( 'background: rgb(70, 70, 70);\n'
                             'color: white;\n'
@@ -266,7 +268,7 @@ class RentingRequest(QWidget):
 
         self.requestForLabel = QLabel(self)
         self.requestForLabel.setText('Request for ')
-        self.requestForLabel.setFont(QtGui.QFont(self.current_font, 24, 800))
+        self.requestForLabel.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 24), 800))
         self.requestForLabel.adjustSize()
         self.requestForLabel.setStyleSheet( 'background: transparent;\n'
                                             'color: white;\n'
@@ -276,7 +278,7 @@ class RentingRequest(QWidget):
 
         self.leaserLabel = QLabel(self)
         self.leaserLabel.setText('')
-        self.leaserLabel.setFont(QtGui.QFont(self.current_font, 24, 800))
+        self.leaserLabel.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 24), 800))
         self.leaserLabel.adjustSize()
         self.leaserLabel.setStyleSheet( 'background: transparent;\n'
                                         'color: rgb(0, 200, 56);\n'
@@ -309,7 +311,7 @@ class RentingRequest(QWidget):
                                         'QPushButton:pressed {\n'
                                         '   background: rgb(0, 75, 10);\n'
                                         '}\n')
-        self.requestBtn.setFont(QtGui.QFont(self.current_font, 14, 800))
+        self.requestBtn.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 14), 800))
         self.requestBtn.setText('Status')
         self.requestBtn.setFixedWidth(130)
         self.requestBtn.setFixedHeight(100)
@@ -442,6 +444,7 @@ class EmptyRequest(QWidget):
 
         self.current_theme = self.parent.current_theme
         self.current_font = self.parent.current_font
+        self.current_sf = self.parent.current_sf
 
         self.setStyleSheet( 'background: rgb(70, 70, 70);\n'
                             'color: white;\n'
@@ -450,7 +453,7 @@ class EmptyRequest(QWidget):
 
         self.requestLabel = QLabel(self)
         self.requestLabel.setText('You have no new requests')
-        self.requestLabel.setFont(QtGui.QFont(self.current_font, 24, 800))
+        self.requestLabel.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 24), 800))
         self.requestLabel.adjustSize()
         self.requestLabel.setStyleSheet( 'background: transparent;\n'
                                             'color: white;\n'
@@ -515,6 +518,7 @@ class TaskPage(QWidget):
 
         self.current_theme = self.parent.current_theme
         self.current_font = self.parent.current_font
+        self.current_sf = self.parent.current_sf
 
         self.shadow = QtWidgets.QGraphicsDropShadowEffect()
         self.shadow.setBlurRadius(30)
@@ -551,7 +555,7 @@ class TaskPage(QWidget):
 
         self.statusLabel = QLabel(self)
         self.statusLabel.setText('Status')
-        self.statusLabel.setFont(QtGui.QFont(self.current_font, 48, 1000))
+        self.statusLabel.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 48), 1000))
         self.statusLabel.adjustSize()
         self.statusLabel.setAlignment(QtCore.Qt.AlignHCenter)
         self.statusLabel.setStyleSheet( 'background: transparent;\n'
@@ -570,7 +574,7 @@ class TaskPage(QWidget):
 
         self.statusInfoLabel = QLabel(self)
         self.statusInfoLabel.setText('Status: ' + self.requestStatus)
-        self.statusInfoLabel.setFont(QtGui.QFont(self.current_font, 24, 1000))
+        self.statusInfoLabel.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 24), 1000))
         self.statusInfoLabel.adjustSize()
         self.statusInfoLabel.setAlignment(QtCore.Qt.AlignLeft)
         self.statusInfoLabel.setStyleSheet( 'background: transparent;\n'
@@ -580,7 +584,7 @@ class TaskPage(QWidget):
         # if (self.requestStatus == 'Executing'):
         self.elapsedTimeLabel = QLabel(self)
         self.elapsedTimeLabel.setText('ET: ')
-        self.elapsedTimeLabel.setFont(QtGui.QFont(self.current_font, 24, 1000))
+        self.elapsedTimeLabel.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 24), 1000))
         self.elapsedTimeLabel.adjustSize()
         self.elapsedTimeLabel.setAlignment(QtCore.Qt.AlignLeft)
         self.elapsedTimeLabel.setStyleSheet('background: transparent;\n'
@@ -590,7 +594,7 @@ class TaskPage(QWidget):
 
         self.feeLabel = QLabel(self)
         self.feeLabel.setText('Fee: ' + self.calculateFee())
-        self.feeLabel.setFont(QtGui.QFont(self.current_font, 24, 1000))
+        self.feeLabel.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 24), 1000))
         self.feeLabel.adjustSize()
         self.feeLabel.setAlignment(QtCore.Qt.AlignLeft)
         self.feeLabel.setStyleSheet('background: transparent;\n'
@@ -662,7 +666,7 @@ class TaskPage(QWidget):
                                     'QPushButton:pressed {\n'
                                     '   background: rgb(75, 30, 80);\n'
                                     '}\n')
-        self.proceedToPaymentBtn.setFont(QtGui.QFont(self.current_font, 14, 900))
+        self.proceedToPaymentBtn.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 14), 900))
         self.proceedToPaymentBtn.setText('Proceed to Payment')
         self.proceedToPaymentBtn.setFixedHeight(105)
         self.proceedToPaymentBtn.setFixedWidth(325)
@@ -682,7 +686,7 @@ class TaskPage(QWidget):
                                     'QPushButton:pressed {\n'
                                     '   background: rgb(0, 65, 69);\n'
                                     '}\n')
-        self.backBtn.setFont(QtGui.QFont(self.current_font, 14, 900))
+        self.backBtn.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 14), 900))
         self.backBtn.setText('Back')
         self.backBtn.setFixedHeight(105)
         self.backBtn.setFixedWidth(225)
@@ -800,6 +804,7 @@ class RentingList(QWidget):
 
         self.current_theme = self.parent.current_theme
         self.current_font = self.parent.current_font
+        self.current_sf = self.parent.current_sf
 
         if (self.current_theme == 'Dark'):
             self.darkTheme()
@@ -865,6 +870,7 @@ class LeasingList(QWidget):
 
         self.current_theme = self.parent.current_theme
         self.current_font = self.parent.current_font
+        self.current_sf = self.parent.current_sf
 
         if (self.current_theme == 'Dark'):
             self.darkTheme()
@@ -942,6 +948,7 @@ class DashboardPage(QScrollArea):
 
         self.current_theme = self.parent.current_theme
         self.current_font = self.parent.current_font
+        self.current_sf = self.parent.current_sf
 
         self.shadow = QtWidgets.QGraphicsDropShadowEffect()
         self.shadow.setBlurRadius(30)
@@ -957,7 +964,7 @@ class DashboardPage(QScrollArea):
 
         self.rentingLabel = QLabel(self)
         self.rentingLabel.setText('Renting')
-        self.rentingLabel.setFont(QtGui.QFont(self.current_font, 48, 400))
+        self.rentingLabel.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 48), 400))
         self.rentingLabel.adjustSize()
         self.rentingLabel.setAlignment(QtCore.Qt.AlignLeft)
         self.rentingLabel.setStyleSheet('background: transparent;\n'
@@ -972,7 +979,7 @@ class DashboardPage(QScrollArea):
 
         self.leasingLabel = QLabel(self)
         self.leasingLabel.setText('Leasing')
-        self.leasingLabel.setFont(QtGui.QFont(self.current_font, 48, 400))
+        self.leasingLabel.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 48), 400))
         self.leasingLabel.adjustSize()
         self.leasingLabel.setAlignment(QtCore.Qt.AlignLeft)
         self.leasingLabel.setStyleSheet('background: transparent;\n'

@@ -18,6 +18,7 @@ class ProfilePage(QWidget):
 
         self.current_theme = self.parent.current_theme
         self.current_font = self.parent.current_font
+        self.current_sf = self.parent.current_sf
     
         self.shadow = CustomShadow()
         self.shadow1 = CustomShadow()
@@ -25,7 +26,7 @@ class ProfilePage(QWidget):
 
         self.profileLabel = QLabel(self)
         self.profileLabel.setText('Profile')
-        self.profileLabel.setFont(QtGui.QFont(self.current_font, 48, 400))
+        self.profileLabel.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 48), 400))
         self.profileLabel.adjustSize()
         self.profileLabel.setStyleSheet(   'background: transparent;\n'
                                             'color: white;\n'
@@ -37,7 +38,7 @@ class ProfilePage(QWidget):
 
         self.accountsLabel = QLabel(self)
         self.accountsLabel.setText('Account')
-        self.accountsLabel.setFont(QtGui.QFont(self.current_font, 30, 400))
+        self.accountsLabel.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 30), 400))
         self.accountsLabel.adjustSize()
         self.accountsLabel.setStyleSheet(   'background: transparent;\n'
                                             'color: white;\n'
@@ -57,7 +58,7 @@ class ProfilePage(QWidget):
 
         self.unameLabel = QLabel(self)
         self.unameLabel.setText('username: ')
-        self.unameLabel.setFont(QtGui.QFont(self.current_font, 24, 400))
+        self.unameLabel.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 24), 400))
         self.unameLabel.adjustSize()
         self.unameLabel.setStyleSheet(  'background: transparent;\n'
                                         'color: white;\n'
@@ -67,7 +68,7 @@ class ProfilePage(QWidget):
 
         self.unameVal = QLabel(self)
         self.unameVal.setText(self.parent.account)
-        self.unameVal.setFont(QtGui.QFont(self.current_font, 24, 400))
+        self.unameVal.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 24), 400))
         self.unameVal.adjustSize()
         self.unameVal.setStyleSheet(  'background: transparent;\n'
                                         'color: rgb(255, 241, 118);\n'
@@ -91,7 +92,7 @@ class ProfilePage(QWidget):
 
         self.emailLabel = QLabel(self)
         self.emailLabel.setText('email: ')
-        self.emailLabel.setFont(QtGui.QFont(self.current_font, 24, 400))
+        self.emailLabel.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 24), 400))
         self.emailLabel.adjustSize()
         self.emailLabel.setStyleSheet(  'background: transparent;\n'
                                         'color: white;\n'
@@ -101,7 +102,7 @@ class ProfilePage(QWidget):
 
         self.emailVal = QLabel(self)
         self.emailVal.setText(self.parent.accountEmail)
-        self.emailVal.setFont(QtGui.QFont(self.current_font, 24, 400))
+        self.emailVal.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 24), 400))
         self.emailVal.adjustSize()
         self.emailVal.setStyleSheet(  'background: transparent;\n'
                                         'color: rgb(255, 241, 118);\n'
@@ -135,7 +136,7 @@ class ProfilePage(QWidget):
                                      'QPushButton:pressed {\n'
                                      '   background: rgb(123, 25, 25);\n'
                                      '}\n')
-        self.logOutBtn.setFont(QtGui.QFont(self.current_font, 18, 400))
+        self.logOutBtn.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 18), 400))
         self.logOutBtn.setText('Log Out')
         self.logOutBtn.setFixedHeight(95)
         self.logOutBtn.setFixedWidth(205)

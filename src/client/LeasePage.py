@@ -134,9 +134,10 @@ class DockerSpecsLabel(QWidget):
 
         self.current_theme = self.parent.current_theme
         self.current_font = self.parent.current_font
+        self.current_sf = self.parent.current_sf
 
         self.label1 = QLabel(self)
-        self.label1.setFont(QtGui.QFont(self.current_font, 30, 800))
+        self.label1.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 30), 800))
         self.label1.adjustSize()
         # self.label1.setAlignment(QtCore.Qt.AlignHCenter)
         self.label1.setStyleSheet(  'background: transparent;\n'
@@ -145,7 +146,7 @@ class DockerSpecsLabel(QWidget):
                                     'font-weight: bold;\n')
         
         self.label2 = QLabel(self)
-        self.label2.setFont(QtGui.QFont(self.current_font, 30, 800))
+        self.label2.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 30), 800))
         self.label2.adjustSize()
         # self.label2.setAlignment(QtCore.Qt.AlignHCenter)
         self.label2.setStyleSheet(  'background: transparent;\n'
@@ -178,6 +179,7 @@ class NoDockerFoundPage(QWidget):
 
         self.current_theme = self.parent.current_theme
         self.current_font = self.parent.current_font
+        self.current_sf = self.parent.current_sf
 
         self.shadow = QtWidgets.QGraphicsDropShadowEffect()
         self.shadow.setBlurRadius(30)
@@ -193,7 +195,7 @@ class NoDockerFoundPage(QWidget):
 
         self.noDockerFoundLabel = QLabel(self)
         self.noDockerFoundLabel.setText('Docker is not running')
-        self.noDockerFoundLabel.setFont(QtGui.QFont(self.current_font, 48, 400))
+        self.noDockerFoundLabel.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 48), 400))
         self.noDockerFoundLabel.adjustSize()
         self.noDockerFoundLabel.setAlignment(QtCore.Qt.AlignHCenter)
         self.noDockerFoundLabel.setStyleSheet('background: transparent;\n'
@@ -205,7 +207,7 @@ class NoDockerFoundPage(QWidget):
 
         self.errorReasonLabel = QLabel(self)
         self.errorReasonLabel.setText('You are seeing this error because:')
-        self.errorReasonLabel.setFont(QtGui.QFont(self.current_font, 24, 800))
+        self.errorReasonLabel.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 24), 800))
         self.errorReasonLabel.adjustSize()
         self.errorReasonLabel.setAlignment(QtCore.Qt.AlignLeft)
         self.errorReasonLabel.setStyleSheet('background: transparent;\n'
@@ -215,7 +217,7 @@ class NoDockerFoundPage(QWidget):
 
         self.firstReasonLabel = QLabel(self)
         self.firstReasonLabel.setText('\t1. Docker daemon is not running')
-        self.firstReasonLabel.setFont(QtGui.QFont(self.current_font, 17, 800))
+        self.firstReasonLabel.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 17), 800))
         self.firstReasonLabel.adjustSize()
         self.firstReasonLabel.setAlignment(QtCore.Qt.AlignLeft)
         self.firstReasonLabel.setStyleSheet('background: transparent;\n'
@@ -226,7 +228,7 @@ class NoDockerFoundPage(QWidget):
         self.firstReasonALabel = QLabel(self)
         self.firstReasonALabel.setText(
             '\t\ta. Please start your docker daemon or check docker status')
-        self.firstReasonALabel.setFont(QtGui.QFont(self.current_font, 17, 800))
+        self.firstReasonALabel.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 17), 800))
         self.firstReasonALabel.adjustSize()
         self.firstReasonALabel.setAlignment(QtCore.Qt.AlignLeft)
         self.firstReasonALabel.setStyleSheet('background: transparent;\n'
@@ -237,7 +239,7 @@ class NoDockerFoundPage(QWidget):
 
         self.secondReasonLabel = QLabel(self)
         self.secondReasonLabel.setText('\t2. No docker installation is found')
-        self.secondReasonLabel.setFont(QtGui.QFont(self.current_font, 17, 800))
+        self.secondReasonLabel.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 17), 800))
         self.secondReasonLabel.adjustSize()
         self.secondReasonLabel.setAlignment(QtCore.Qt.AlignLeft)
         self.secondReasonLabel.setStyleSheet('background: transparent;\n'
@@ -247,7 +249,7 @@ class NoDockerFoundPage(QWidget):
 
         self.secondReasonALabel = QLabel(self)
         self.secondReasonALabel.setText('\t\ta. To lease your machine you need to\n\t\t    have a running docker daemon on your computer')
-        self.secondReasonALabel.setFont(QtGui.QFont(self.current_font, 17, 800))
+        self.secondReasonALabel.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 17), 800))
         self.secondReasonALabel.adjustSize()
         self.secondReasonALabel.setAlignment(QtCore.Qt.AlignLeft)
         self.secondReasonALabel.setStyleSheet('background: transparent;\n'
@@ -330,6 +332,8 @@ class DockerSpecificationsPage(QWidget):
 
         self.current_theme = self.parent.current_theme
         self.current_font = self.parent.current_font
+        self.current_sf = self.parent.current_sf
+
         self.machine_details = 'CPU: ' + str(self.dockerInfo.getCPUModel()) + '(' + str(self.dockerInfo.getNumCPU()) + 'x)' + ' RAM: ' + str('%.3fGB' % self.dockerInfo.getMemTotalGB())
         self.machine_details_full = str(self.dockerInfo.getFullInfoJSON())
         # print('oneliner: ' + self.machine_details)
@@ -361,7 +365,7 @@ class DockerSpecificationsPage(QWidget):
 
         self.dockerSpecsLabel = QLabel(self)
         self.dockerSpecsLabel.setText('Docker specifications')
-        self.dockerSpecsLabel.setFont(QtGui.QFont(self.current_font, 48, 400))
+        self.dockerSpecsLabel.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 48), 400))
         self.dockerSpecsLabel.adjustSize()
         self.dockerSpecsLabel.setAlignment(QtCore.Qt.AlignHCenter)
         self.dockerSpecsLabel.setStyleSheet('background: transparent;\n'
@@ -398,6 +402,7 @@ class DockerSpecificationsPage(QWidget):
         self.specsListLayout.addWidget(self.cpuModel)
         self.specsListLayout.addWidget(self.memory)
         self.specsListLayout.addWidget(self.version)
+        self.specsListLayout.setSpacing(0)
         self.specsListLayout.setAlignment(QtCore.Qt.AlignLeft)
         self.specsListLayout.setContentsMargins(0, 0, 0, 0)
 
@@ -421,7 +426,7 @@ class DockerSpecificationsPage(QWidget):
                                         'border: 0px solid white;\n'
                                         'padding: 5px 10px;\n'
                                         'margin: 0px 0px 0px 0px;\n')
-        self.priceField.setFont(QtGui.QFont(self.current_font, 16, 400))
+        self.priceField.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 16), 400))
         self.priceField.setFixedHeight(55)
         self.priceField.setPlaceholderText('for ex: 5 - meaning 5$ per hour will be charged')
 
@@ -432,7 +437,7 @@ class DockerSpecificationsPage(QWidget):
 
         self.pflabel = QLabel(self)
         self.pflabel.setText('Price per hour: ')
-        self.pflabel.setFont(QtGui.QFont(self.current_font, 18, 400))
+        self.pflabel.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 18), 400))
         self.pflabel.setStyleSheet( 'background: transparent:\n'
                                     'color: white;\n'
                                     'border: 0px solid white;\n'
@@ -477,7 +482,7 @@ class DockerSpecificationsPage(QWidget):
                                      'QPushButton:pressed {\n'
                                      '   background: rgb(0, 110, 35);\n'
                                      '}\n')
-        self.leaseBtn.setFont(QtGui.QFont(self.current_font, 14, 800))
+        self.leaseBtn.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 14), 800))
         self.leaseBtn.setText('Lease')
         self.leaseBtn.setFixedHeight(65)
         self.leaseBtn.setFixedWidth(180)
@@ -594,6 +599,7 @@ class LeaseIdlePage(QWidget):
 
         self.current_theme = self.parent.current_theme
         self.current_font = self.parent.current_font
+        self.current_sf = self.parent.current_sf
 
         self.setStyleSheet( 'background: rgb(204, 204, 204);\n'
                             'color: white;\n'
@@ -613,7 +619,7 @@ class LeaseIdlePage(QWidget):
 
         self.idleLabel = QLabel(self)
         self.idleLabel.setText('Idle')
-        self.idleLabel.setFont(QtGui.QFont(self.current_font, 120, 400))
+        self.idleLabel.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 120), 400))
         self.idleLabel.adjustSize()
         self.idleLabel.setAlignment(QtCore.Qt.AlignHCenter)
         self.idleLabel.setStyleSheet(   'background: transparent;\n'
@@ -636,7 +642,7 @@ class LeaseIdlePage(QWidget):
                                      'QPushButton:pressed {\n'
                                      '   background: rgb(123, 25, 25);\n'
                                      '}\n')
-        self.stopBtn.setFont(QtGui.QFont(self.current_font, 30, 900))
+        self.stopBtn.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 30), 900))
         self.stopBtn.setText('Stop')
         self.stopBtn.setFixedHeight(125)
         self.stopBtn.setFixedWidth(325)
@@ -687,6 +693,7 @@ class LeaseExecPage(QWidget):
 
         self.current_theme = self.parent.current_theme
         self.current_font = self.parent.current_font
+        self.current_sf = self.parent.current_sf
 
         self.setStyleSheet( 'background: rgb(2, 54, 50);\n'
                             'color: white;\n'
@@ -700,7 +707,7 @@ class LeaseExecPage(QWidget):
 
         self.execLabel = QLabel(self)
         self.execLabel.setText('Executing')
-        self.execLabel.setFont(QtGui.QFont(self.current_font, 120, 400))
+        self.execLabel.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 120), 400))
         self.execLabel.adjustSize()
         self.execLabel.setAlignment(QtCore.Qt.AlignHCenter)
         self.execLabel.setStyleSheet(   'background: transparent;\n'
@@ -709,7 +716,7 @@ class LeaseExecPage(QWidget):
 
         
         self.cpuUsageLabel = QLabel(self)# self.hardwareUsageLabel.setText('CPU: ' + str('%.2f' % self.parent.dockerInfo.getCpuUsage()) + '\nRAM: ' + str('%.2f' % self.parent.dockerInfo.getMemUsage()) + '\nET: ' + str(datetime.now() - self.started))
-        self.cpuUsageLabel.setFont(QtGui.QFont(self.current_font, 24, 400))
+        self.cpuUsageLabel.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 24), 400))
         self.cpuUsageLabel.adjustSize()
         self.cpuUsageLabel.setAlignment(QtCore.Qt.AlignLeft)
         self.cpuUsageLabel.setStyleSheet(  'background: transparent;\n'
@@ -718,7 +725,7 @@ class LeaseExecPage(QWidget):
                                             'margin-left: 5px;\n')
         
         self.memUsageLabel = QLabel(self)
-        self.memUsageLabel.setFont(QtGui.QFont(self.current_font, 24, 400))
+        self.memUsageLabel.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 24), 400))
         self.memUsageLabel.adjustSize()
         self.memUsageLabel.setAlignment(QtCore.Qt.AlignLeft)
         self.memUsageLabel.setStyleSheet(   'background: transparent;\n'
@@ -727,7 +734,7 @@ class LeaseExecPage(QWidget):
                                             'margin-left: 5px;\n')
         
         self.elapsedTimeLabel = QLabel(self)
-        self.elapsedTimeLabel.setFont(QtGui.QFont(self.current_font, 24, 400))
+        self.elapsedTimeLabel.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 24), 400))
         self.elapsedTimeLabel.adjustSize()
         self.elapsedTimeLabel.setAlignment(QtCore.Qt.AlignLeft)
         self.elapsedTimeLabel.setStyleSheet('background: transparent;\n'
@@ -827,6 +834,7 @@ class LeasePage(QWidget):
 
         self.current_theme = self.parent.current_theme
         self.current_font = self.parent.current_font
+        self.current_sf = self.parent.current_sf
 
         if (self.current_theme == 'Dark'):
             self.darkTheme()
