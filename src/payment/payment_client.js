@@ -1,9 +1,17 @@
 // A reference to Stripe.js initialized with your real test publishable API key.
 var stripe = Stripe("pk_test_ZPok5U96r2uoWaJqubePrOfV00olX7eWJJ");
 
+function getUrlVars() {
+  var vars = {};
+  var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function (m, key, value) {
+    vars[key] = value;
+  });
+  return vars;
+};
+
 // The items the customer wants to buy
 var purchase = {
-  items: [{ id: "xl-tshirt" }]
+  items: [{ id: getUrlVars()["orderid"] }]
 };
 
 // Disable the button until we have Stripe set up on the page

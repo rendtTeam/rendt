@@ -175,6 +175,16 @@ class DBHandler(object):
         rows = self.__cursor.fetchall()
         return rows[0][0]
 
+    def getOrderBillingInfo(self, order_id):
+        query = f'SELECT exec_start_time, exec_finish_time, price FROM job_orders WHERE order_id = {order_id}'
+        self._executeQuery(query)
+        rows = self.__cursor.fetchall()
+        if len(rows) == 1:
+            r = rows[0]
+            if r[0] and r[1]:
+                return (datetime.datetime.strftime(r[0], '%Y-%m-%d %H:%M:%S'), datetime.datetime.strftime(r[1], '%Y-%m-%d %H:%M:%S'), r[2])
+        return (0,0,0)
+
     def getOrderId(self, job_id):
         query = f'SELECT order_id FROM job_orders WHERE job_id = {job_id}'
         self._executeQuery(query)
@@ -220,6 +230,10 @@ class DBHandler(object):
         if len(rows) == 1:
             return rows[0][0]
         # TODO else raise or log an error
+
+    def registerPayment(self, order_id, price, status='s'):
+        query = f'INSERT INTO transactions (order_id, price, status) VALUES {order_id}, {price}, "{status}"'
+        self._executeQuery(query)
 
     def changeJobStatus(self, job_id, status):
         query = f'UPDATE jobs SET job_status = "{status}" WHERE job_id = {job_id}'
