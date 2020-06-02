@@ -187,13 +187,6 @@ class ProfilePage(QWidget):
             self.classicTheme()
 
     def logOut(self, e):
-        self.parent.t1.stop()
-        self.parent.t1.join()
-    
-        self.parent.receiver.sign_out()
-
-        self.hide()
-        self.parent.hide()
         self.parent.parent.close()
         loginWindow = LoginWindow.LoginWindow()
         loginWindow.show()

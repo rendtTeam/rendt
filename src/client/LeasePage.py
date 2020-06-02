@@ -844,8 +844,10 @@ class LeasePage(QWidget):
             self.classicTheme()
 
         self.status = self.parent.lease_status
-
         self.dockerInfo = DockerInfo()
+
+        if (not self.dockerInfo.dockerExists()):
+            self.lease_status = 'not_leasing'
 
         self.dockerSpecificationsPage = DockerSpecificationsPage(self)
         self.noDockerFoundPage = NoDockerFoundPage(self)
@@ -875,6 +877,8 @@ class LeasePage(QWidget):
 
         self.setLayout(self.layout)
         self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+
+        self.openLeasePage()
     
     def darkTheme(self):
         self.setStyleSheet( 'background: rgb(69, 69, 69);\n'

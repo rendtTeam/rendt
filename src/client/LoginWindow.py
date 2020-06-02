@@ -354,6 +354,8 @@ class RegisterPage(QWidget):
                     leasing_status = 'not_leasing'
                 elif (leasing_status == 'n'):
                     leasing_status = 'not_leasing'
+                else:
+                    leasing_status = 'not_leasing'
 
                 self.parent.loggedInWidget = LoggedInWidget(self.parent)
                 self.parent.loggedInWidget.setAuthToken(authToken)
@@ -519,3 +521,13 @@ class LoginWindow(QMainWindow):
         self.layout.addWidget(self.forgotPassConfirmPage)
         self.setLayout(self.layout)
         self.setCentralWidget(self.loginPage)
+    
+    def closeEvent(self, event):
+        if (self.loggedInWidget.t1 is not None):
+            self.loggedInWidget.t1.stop()
+            self.loggedInWidget.t1.join()
+            self.loggedInWidget.receiver.sign_out()
+
+        self.close()
+
+        event.accept() # let the window close

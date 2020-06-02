@@ -651,7 +651,7 @@ class TaskPage(QWidget):
 
         self.statusBoxLayout.setAlignment(QtCore.Qt.AlignCenter)
         self.statusBoxLayout.setContentsMargins(20, 20, 20, 20)
-        self.statusBoxLayout.setSpacing(10)
+        self.statusBoxLayout.setSpacing(2)
         self.statusBox.setLayout(self.statusBoxLayout)
         self.statusBox.setGraphicsEffect(self.shadow3)
 
