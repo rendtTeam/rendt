@@ -251,7 +251,8 @@ class Server:
             self.logger.info(f'job order ({job_id}) successfully submitted (from {uid} to {leaser_id})')
         elif request_content['request-type'] == 'get-payment-verification':
             self.logger.info(f'connection: renter from {addr}; request type: get-payment-verification')
-            order_id = request_content['order-id']
+            job_id = request_content['job-id']
+            order_id = self.db_handler.getOrderId(job_id)
             status = self.db_handler.get_payment_verification(order_id)
             if status:
                 response_content = {'status': 'success',
