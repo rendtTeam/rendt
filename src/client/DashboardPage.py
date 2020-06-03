@@ -795,6 +795,7 @@ class TaskPage(QWidget):
             hour = (self.requestFinished - self.requestStarted).seconds//3600
             minutes = (self.requestFinished - self.requestStarted).seconds//60%60
             price = self.price * (minutes / 60 + hour)
+            price = price * 1.029 + 0.5
 
             self.feeLabel.setText('Fee: ' + str('%.2f' % price) + '$')
             self.feeLabel.adjustSize()
@@ -824,6 +825,7 @@ class TaskPage(QWidget):
             hour = (datetime.now() - self.requestStarted).seconds//3600
             minutes = (datetime.now() - self.requestStarted).seconds//60%60
             price = self.price * (minutes / 60 + hour)
+            price = price * 1.029 + 0.5
 
             self.feeLabel.setText('Fee: ' + str('%.2f' % price) + '$')
             self.feeLabel.adjustSize()

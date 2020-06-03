@@ -14,18 +14,24 @@
 
   <body>
     <!-- Display a payment form -->
-    <form id="payment-form">
-      <input type="text" id="email" placeholder="Email address" />
-      <div id="card-element"><!--Stripe.js injects the Card Element--></div>
-      <button id="submit">
-        <div class="spinner hidden" id="spinner"></div>
-        <span id="button-text">Pay</span>
-      </button>
-      <p id="card-errors" role="alert"></p>
-      <p class="result-message hidden">
-        Payment succeeded,
-        <a href="" target="_blank"></a> Refresh the page to pay again.
-      </p>
-    </form>
+    <div style="padding: 200px" align=center>
+      <img src="../../assets/img/rendt_new_logo_square.png" width=200 height=200 style="margin-left: auto; margin-right: auto; margin-bottom: 30px;">
+      <br/>
+      <form id="payment-form" style="width: 500px">
+        <input type="text" id="email" placeholder="Email address" />
+        <br/>
+        <div id="card-element"><!--Stripe.js injects the Card Element--></div>
+        <br/>
+        <button id="submit">
+          <div class="spinner hidden" id="spinner"></div>
+          <span id="button-text">Pay</span>
+        </button>
+        <p id="card-errors" role="alert"></p>
+        <p class="result-message hidden">
+          Payment succeeded,
+          <a href="" target="_blank"></a> Refresh the page to pay again.
+        </p>
+      </form>
+  </div>
   </body>
 </html>
