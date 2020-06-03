@@ -119,7 +119,7 @@ class Sender(Client):
         response = self.send_request_server(content)
 
         if response['status'] == 'success':
-            return response['payment_status']
+            return response['payment-status']
         elif response['status'] == 'error':
             print('error:', response['error-msg'])
             return 'error'

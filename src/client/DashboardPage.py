@@ -800,7 +800,7 @@ class TaskPage(QWidget):
             self.feeLabel.adjustSize()
     
     def proceedToPayment(self):
-        webbrowser.open('http://18.220.165.22:57223/checkout.html?orderid=' + str(self.jobId))
+        webbrowser.open('http://18.220.165.22:41343/checkout.html?jobid=' + str(self.jobId))
         if (self.verifyPayment()):
             self.downloadZipBtn.setDisabled(False)
             self.proceedToPaymentBtn.hide()
