@@ -113,7 +113,10 @@ class DockerInfo:
     # Get Docker Stats for CPU Usage percentage
     def getCpuUsage(self):
         if (self.exists): 
-            return self.client.containers.get('rendtcont').stats(stream = False).get('cpu_stats')['cpu_usage']['total_usage'] / self.client.containers.get('rendtcont').stats(stream = False).get('cpu_stats')['system_cpu_usage'] * 100 
+            try:
+                return self.client.containers.get('rendtcont').stats(stream = False).get('cpu_stats')['cpu_usage']['total_usage'] / self.client.containers.get('rendtcont').stats(stream = False).get('cpu_stats')['system_cpu_usage'] * 100 
+            except:
+                return ''
         else:
             return ''
 
@@ -802,7 +805,8 @@ class LeaseExecPage(QWidget):
 
     def getDockerCpuUsage(self):
         starttime=time.time()
-        while True:
+        time.sleep(5)
+        while self.parent.parent.lease_status == 'executing':
             self.cpuUsage = str('%.2f' % self.parent.dockerInfo.getCpuUsage())
             self.cpuUsageLabel.setText('CPU: ' + self.cpuUsage + '%')
             self.cpuUsageLabel.adjustSize()
@@ -810,7 +814,8 @@ class LeaseExecPage(QWidget):
     
     def getDockerMemUsage(self):
         starttime=time.time()
-        while True:
+        time.sleep(5)
+        while self.parent.parent.lease_status == 'executing':
             self.memUsage = str('%.2f' % self.parent.dockerInfo.getMemUsage())
             self.memUsageLabel.setText('RAM: ' + self.memUsage + '%')
             self.memUsageLabel.adjustSize()
@@ -818,7 +823,7 @@ class LeaseExecPage(QWidget):
     
     def getElapsedTime(self, dockerInfo, start_time):
         starttime=time.time()
-        while True:
+        while self.parent.parent.lease_status == 'executing':
             self.elapsedTimeLabel.setText('ET: ' + str(datetime.now() - start_time))
             self.elapsedTimeLabel.adjustSize()
             time.sleep(1)
