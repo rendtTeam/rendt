@@ -2,7 +2,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QScrollArea, QPushButton, QLabel, QWidget, QVBoxLayout, QStackedWidget, QHBoxLayout, QMainWindow
 
 import threading
-import os, sys, platform
+import os, sys, platform, webbrowser
 from datetime import datetime
 import time
 
@@ -790,6 +790,18 @@ class TaskPage(QWidget):
             self.feeLabel.setText('Fee: ' + str('%.2f' % price) + '$')
             self.feeLabel.adjustSize()
     
+    def proceedToPayment(self):
+        webbrowser.open('http://18.220.165.22:57223/checkout.html?orderid=' + str(self.jobId))
+        if (self.verifyPayment())
+            self.downloadZipBtn.setDisabled(False)
+            self.proceedToPaymentBtn.hide()
+    
+    def verifyPayment(self):
+        while(self.parent.parent.parent.sender.get_payment_verification(self.jobId) != 'verified')
+            if (self.parent.parent.parent.sender.get_payment_verification(self.jobId) == 'error')
+                return False
+        return True
+
     def datetime_from_utc_to_local(self, utc_datetime):
         now_timestamp = time.time()
         offset = datetime.fromtimestamp(now_timestamp) - datetime.utcfromtimestamp(now_timestamp)
