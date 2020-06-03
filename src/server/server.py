@@ -242,12 +242,26 @@ class Server:
             job_description = request_content['job-description']
             order_id = self.generate_order_id()
             leaser_id = self.db_handler.getUserId(leaser_username)
-            self.db_handler.submitJobOrder(order_id, uid, job_id, job_description, job_mode, leaser_id, status='p')
+            price = self.db_handler.getLeaserPrice(leaser_id)
+            self.db_handler.submitJobOrder(order_id, uid, job_id, job_description, job_mode, leaser_id, price, status='p')
             response_content = {'status': 'success',
                                 'order-id': order_id
                                 }
             req_pipe.write(response_content, 'text/json')
             self.logger.info(f'job order ({job_id}) successfully submitted (from {uid} to {leaser_id})')
+        elif request_content['request-type'] == 'get-payment-verification':
+            self.logger.info(f'connection: renter from {addr}; request type: get-payment-verification')
+            order_id = request_content['order-id']
+            status = self.db_handler.get_payment_verification(order_id)
+            if status:
+                response_content = {'status': 'success',
+                                    'payment-status': 'verified'
+                                    }
+            else:
+                response_content = {'status': 'success',
+                                    'payment-status': 'not verified'
+                                    }
+            req_pipe.write(response_content, 'text/json')
         elif request_content['request-type'] == 'output-download-permission':
             self.logger.info(f'connection: renter from {addr}; request type: output-download-permission')
             if 'job-id' not in request_content:

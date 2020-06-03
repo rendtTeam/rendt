@@ -109,6 +109,21 @@ class Sender(Client):
         elif response['status'] == 'error':
             print('error:', response['error-msg'])
 
+    def get_payment_verification(self, order_id):
+        content = { 'authToken': self.authToken,
+                    'role': 'renter',
+                    'request-type': 'get-payment-verification',
+                    'order-id': order_id
+                    }
+        
+        response = self.send_request_server(content)
+
+        if response['status'] == 'success':
+            return response['payment_status']
+        elif response['status'] == 'error':
+            print('error:', response['error-msg'])
+            return 'error'
+
     def get_permission_to_download_output(self, job_id):
         content = { 'authToken': self.authToken,
                     'role': 'renter',
