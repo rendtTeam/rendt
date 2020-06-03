@@ -109,11 +109,11 @@ class Sender(Client):
         elif response['status'] == 'error':
             print('error:', response['error-msg'])
 
-    def get_payment_verification(self, order_id):
+    def get_payment_verification(self, job_id):
         content = { 'authToken': self.authToken,
                     'role': 'renter',
                     'request-type': 'get-payment-verification',
-                    'order-id': order_id
+                    'job-id': job_id
                     }
         
         response = self.send_request_server(content)
