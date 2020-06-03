@@ -210,8 +210,9 @@ class LeasingRequest(QWidget):
                 x = f.readline()
                 x = x.split("\\")        
                 y = x[0] + '\\' + x[1] + "\\" + x[2] + "\\rendt"
-                home_dir = os.system("DEL pwd.txt")
+                f.close()
                 home_dir = os.system("mkdir " + y)
+                home_dir = os.system("DEL pwd.txt")
             else:
                 home_dir = os.system("pwd>pwd.txt")
 
@@ -219,6 +220,7 @@ class LeasingRequest(QWidget):
                 x = f.readline()
                 x = x.split("/")        
                 y = "/" + x[1] + "/" + x[2] + "/rendt"
+                f.close()
                 home_dir = os.system("rm pwd.txt")
                 home_dir = os.system("mkdir " + y)
             if (response is not None):
@@ -230,7 +232,7 @@ class LeasingRequest(QWidget):
 
                 if (platform.system() == 'Windows'):
                     path_to_executable = y + '\\files.zip'
-                path_to_output = y + '\\output.zip'
+                    path_to_output = y + '\\output.zip'
 
                 print('Path to executable: ' + path_to_executable)
                 print('Path to output: ' + path_to_output)
