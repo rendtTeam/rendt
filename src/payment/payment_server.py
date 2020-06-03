@@ -18,13 +18,13 @@ from flask import Flask, render_template, jsonify, request
 app = Flask(__name__, static_folder=".",
             static_url_path="", template_folder=".")
 
-
-def calculate_order_amount(order_id):
+def calculate_order_amount(job_id):
     # Replace this constant with a calculation of the order's amount
     # Calculate the order total on the server to prevent
     # people from directly manipulating the amount on the client
     """get date time from db calculate total amount of elapsed time"""
     db_handler = DBHandler()
+    order_id = db_handler.getOrderId(job_id)
     start, end, hourlyPrice = db_handler.getOrderBillingInfo(order_id)
     start = datetime.strptime(start, '%Y-%m-%d %H:%M:%S')
     end = datetime.strptime(end, '%Y-%m-%d %H:%M:%S')
@@ -33,21 +33,20 @@ def calculate_order_amount(order_id):
     price = hourlyPrice * (minutes / 60 + hour)
     price = price * 1.029 + 0.5
 
-    return int(price*100)
-
+    return int(price*100), order_id
 
 @app.route('/create-payment-intent', methods=['POST'])
 def create_payment():
     try:
         data = request.get_json()
         pprint.pprint(data)
-        totalAmount = calculate_order_amount(data['items'][0]['id'])
+        totalAmount, order_id = calculate_order_amount(data['items'][0]['id'])
         intent = stripe.PaymentIntent.create(
             amount = totalAmount,
             currency='usd',
             receipt_email = "fnurlan7@gmail.com",
             # payment_method = "cardElement",
-            confirmation_method = 'automatic'
+            # confirmation_method = 'automatic'
             # confirm=True,
             # payment_method = 
         )
@@ -56,7 +55,7 @@ def create_payment():
         # returnedResponse = generate_response(intent)
         # print(type(returnedResponse)
         # print(intent)
-        pprint.pprint(generate_response(intent, data['items'][0]['id'], totalAmount))
+        pprint.pprint(generate_response(intent, order_id, totalAmount))
         print("Output check finish----------------------:  ")
         return jsonify({
           'clientSecret': intent['client_secret']
@@ -67,6 +66,16 @@ def create_payment():
         print(e.user_message)
         return jsonify({'error': e.user_message})
 
+@app.route('/send-payment-verification', methods=['POST'])
+def send_verification():
+    try:
+        data = request.get_json()
+        totalAmount, order_id = calculate_order_amount(data['items'][0]['id'])
+        db_handler = DBHandler()
+        db_handler.registerPayment(order_id, totalAmount)
+    except stripe.error.CardError as e:
+        print(e.user_message)
+        return jsonify({'error': e.user_message})
 
 # @app.route('/create-payment-intent', methods=['POST'])
 # def create_payment():
@@ -108,7 +117,7 @@ def generate_response(intent, order_id, amount):
     elif status == 'requires_payment_method' or status == 'requires_source':
         # Card was not properly authenticated, suggest a new payment method
         print(status)
-        db_handler.registerPayment(order_id, amount)
+        # db_handler.registerPayment(order_id, amount)
         return jsonify({'error': 'Your card was denied, please provide a new payment method'})
     elif status == 'succeeded':
         # Payment is complete, authentication not required

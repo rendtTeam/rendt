@@ -11,7 +11,7 @@ function getUrlVars() {
 
 // The items the customer wants to buy
 var purchase = {
-  items: [{ id: getUrlVars()["orderid"] }]
+  items: [{ id: getUrlVars()["jobid"] }]
 };
 
 // Disable the button until we have Stripe set up on the page
@@ -82,6 +82,14 @@ var payWithCard = function(stripe, card, clientSecret) {
         showError(result.error.message);
       } else {
         // The payment succeeded!
+        alert("payment success")
+        fetch("/send-payment-verification", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(purchase)
+        })
         orderComplete(result.paymentIntent.id);
       }
     });
