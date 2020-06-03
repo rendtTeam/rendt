@@ -41,8 +41,9 @@ def create_payment():
     try:
         data = request.get_json()
         pprint.pprint(data)
+        totalAmount = calculate_order_amount(data['items'][0]['id'])
         intent = stripe.PaymentIntent.create(
-            amount = calculate_order_amount(data['items'][0]['id']),
+            amount = totalAmount,
             currency='usd',
             receipt_email = "fnurlan7@gmail.com",
             # payment_method = "cardElement",
@@ -55,7 +56,7 @@ def create_payment():
         # returnedResponse = generate_response(intent)
         # print(type(returnedResponse)
         # print(intent)
-        pprint.pprint(generate_response(intent, data['items'][0]['id'], amount))
+        pprint.pprint(generate_response(intent, data['items'][0]['id'], totalAmount))
         print("Output check finish----------------------:  ")
         return jsonify({
           'clientSecret': intent['client_secret']
