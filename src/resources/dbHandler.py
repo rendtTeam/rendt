@@ -232,8 +232,15 @@ class DBHandler(object):
         # TODO else raise or log an error
 
     def registerPayment(self, order_id, price, status='s'):
-        query = f'INSERT INTO transactions (order_id, price, status) VALUES {order_id}, {price}, "{status}"'
+        query = f'INSERT INTO transactions (order_id, price, status) VALUES ({order_id}, {price}, "{status}")'
         self._executeQuery(query)
+    
+    def get_payment_verification(self, order_id):
+        query = f'SELECT status FROM transactions WHERE order_id = {order_id}'
+        self._executeQuery(query)
+        rows = self.__cursor.fetchall()
+        if len(rows) == 1:
+            return rows[0][0]
 
     def changeJobStatus(self, job_id, status):
         query = f'UPDATE jobs SET job_status = "{status}" WHERE job_id = {job_id}'

@@ -31,12 +31,12 @@ def calculate_order_amount(order_id):
     hour = (end - start).seconds//3600
     minutes = (end - start).seconds//60%60
     price = hourlyPrice * (minutes / 60 + hour)
-    price = price * 1.029 + 0.3
+    price = price * 1.029 + 0.5
 
-    return price
+    return int(price*100)
 
 
-@app.route('/create-payment-intent/11', methods=['POST'])
+@app.route('/create-payment-intent', methods=['POST'])
 def create_payment():
     try:
         data = request.get_json()
