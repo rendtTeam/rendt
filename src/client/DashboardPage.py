@@ -810,6 +810,7 @@ class TaskPage(QWidget):
         while(self.parent.parent.parent.sender.get_payment_verification(self.jobId) != 'verified'):
             if (self.parent.parent.parent.sender.get_payment_verification(self.jobId) == 'error'):
                 return False
+            time.sleep(1)
         return True
 
     def datetime_from_utc_to_local(self, utc_datetime):
