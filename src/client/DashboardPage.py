@@ -209,7 +209,7 @@ class LeasingRequest(QWidget):
                 f = open("pwd.txt", "r")
                 x = f.readline()
                 x = x.split("\\")        
-                y = x[0] + '/' + x[1] + "/" + x[2] + "/rendt"
+                y = x[0] + '\\' + x[1] + "\\" + x[2] + "\\rendt"
                 home_dir = os.system("DEL pwd.txt")
                 home_dir = os.system("mkdir " + y)
             else:
@@ -227,6 +227,13 @@ class LeasingRequest(QWidget):
 
                 path_to_executable = y + '/files.zip'
                 path_to_output = y + '/output.zip'
+
+                if (platform.system() == 'Windows'):
+                    path_to_executable = y + '\\files.zip'
+                path_to_output = y + '\\output.zip'
+
+                print('Path to executable: ' + path_to_executable)
+                print('Path to output: ' + path_to_output)
                 print('1------------------------------------------------------------------------------------------')
 
                 receiver.download_file_from_db(path_to_executable, db_token, f_size)
@@ -244,8 +251,8 @@ class LeasingRequest(QWidget):
                 # execPage.finishExecuting()
 
                 if (platform.system() == 'Windows'):
-                    home_dir = os.system("DEL files.zip")
-                    home_dir = os.system("DEL output.zip")
+                    home_dir = os.system("DEL " + path_to_executable)
+                    home_dir = os.system("DEL " + path_to_output)
                 else:
                     home_dir = os.system("rm -R " + path_to_executable)
                     home_dir = os.system("rm -R " + path_to_output)
@@ -792,13 +799,13 @@ class TaskPage(QWidget):
     
     def proceedToPayment(self):
         webbrowser.open('http://18.220.165.22:57223/checkout.html?orderid=' + str(self.jobId))
-        if (self.verifyPayment())
+        if (self.verifyPayment()):
             self.downloadZipBtn.setDisabled(False)
             self.proceedToPaymentBtn.hide()
     
     def verifyPayment(self):
-        while(self.parent.parent.parent.sender.get_payment_verification(self.jobId) != 'verified')
-            if (self.parent.parent.parent.sender.get_payment_verification(self.jobId) == 'error')
+        while(self.parent.parent.parent.sender.get_payment_verification(self.jobId) != 'verified'):
+            if (self.parent.parent.parent.sender.get_payment_verification(self.jobId) == 'error'):
                 return False
         return True
 
