@@ -29,7 +29,14 @@ class Client:
         else:
             print('error: couldn\'t receive status')
 
-    
+    def sign_out(self):
+        content = { 'authToken': self.authToken,
+                    'request-type': 'sign-out',
+                    }
+        
+        response = self.send_request_server(content)
+        print('status:', response['status'])
+
     def send_request_server(self, request_content):
         global server_addr
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import QScrollArea, QPushButton, QLabel, QWidget, QVBoxLayo
 import threading
 import os, sys, platform
 from datetime import datetime
+import time
 
 from RentPage import CustomSquareButton
 
@@ -23,6 +24,7 @@ class LeasingRequest(QWidget):
         self.jobDesc = None
         self.jobMode = None
         self.status = None
+        self.price = None
 
         self.requests = []
 
@@ -87,8 +89,6 @@ class LeasingRequest(QWidget):
         self.acceptBtn.setFixedWidth(130)
         self.acceptBtn.setFixedHeight(100)
 
-        # self.acceptBtn.clicked.connect(self.goToRentalTypePage)
-
         self.rejectBtn = QPushButton(self)
         self.rejectBtn.setStyleSheet(  'QPushButton {\n'
                                         '   background: rgba(246, 49, 49, 0.7);\n'
@@ -106,8 +106,6 @@ class LeasingRequest(QWidget):
         self.rejectBtn.setFixedWidth(130)
         self.rejectBtn.setFixedHeight(100)
         # self.rejectBtn.clicked.connect(self.goToRentalTypePage)
-        if (self.parent.parent.parent.leasePage.status != 'idle'):
-            self.acceptBtn.setDisabled(True)
         
         self.buttonsGroup = QWidget(self)
         self.buttonsGroup.setStyleSheet('background: transparent;\n'
@@ -121,8 +119,18 @@ class LeasingRequest(QWidget):
         self.buttonsGroupLayout.setContentsMargins(0, 0, 0, 0)
         self.buttonsGroup.setLayout(self.buttonsGroupLayout)
 
+        self.jobDescLabel = QLabel(self)
+        self.jobDescLabel.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 12), 400))
+        self.jobDescLabel.adjustSize()
+        self.jobDescLabel.setAlignment(QtCore.Qt.AlignCenter)
+        self.jobDescLabel.setStyleSheet( 'background: transparent;\n'
+                                    'color: white;\n'
+                                    'border: 0px solid black;\n'
+                                    'padding-left: 20px')
+
         layout = QHBoxLayout()
         layout.addWidget(self.requestLabel, alignment = QtCore.Qt.AlignLeft)
+        layout.addWidget(self.jobDescLabel, alignment = QtCore.Qt.AlignLeft)
         layout.addWidget(self.buttonsGroup, alignment = QtCore.Qt.AlignRight)
         layout.setAlignment(QtCore.Qt.AlignVCenter)
         layout.setSpacing(0)
@@ -167,20 +175,18 @@ class LeasingRequest(QWidget):
     def setRenter(self, e):
         self.renterLabel.setText(e)
         self.renterLabel.adjustSize()
+        self.jobDescLabel.setText(self.jobDesc)
         self.acceptBtn.clicked.connect(self.acceptReq)
         self.rejectBtn.clicked.connect(self.rejectReq)
         
-        if (self.parent.parent.parent.leasePage.status != 'idle'):
+        if (self.parent.parent.parent.lease_status != 'idle'):
             self.acceptBtn.setDisabled(True)
         else:
             self.acceptBtn.setDisabled(False)
 
     def acceptReq(self, e):
-        self.hide()
-        self.destroy()
-        self.parent.addRequests()
-
         self.parent.parent.parent.start_time = datetime.now()
+        self.hide()
 
         if (self.parent.parent.parent.leasePage.dockerInfo.dockerExists()):
             self.parent.parent.parent.leasePage.changeStatus('executing')
@@ -189,6 +195,8 @@ class LeasingRequest(QWidget):
                                                                 self.orderId, self.jobId))
             t1.daemon = True
             t1.start()
+        
+        self.parent.parent.parent.sidebar.selectPage(self.parent.parent.parent.sidebar.dashboard, 'Dashboard')
 
     def startExec(self, dockerInfo, receiver, orderId, jobId):
             if (not dockerInfo.imageExists()):
@@ -245,8 +253,9 @@ class LeasingRequest(QWidget):
     def rejectReq(self, e):
         response = self.parent.parent.parent.receiver.decline_order(self.orderId)
         self.hide()
-        self.destroy()
         self.parent.addRequests()
+        self.parent.parent.rentingList.addRequests()
+        self.destroy()
 
 class RentingRequest(QWidget):
     def __init__(self, parent, jobInfo):
@@ -319,8 +328,19 @@ class RentingRequest(QWidget):
         self.setRequestStatus(self.jobInfo[4])
         self.setLeaserLabel(self.jobInfo[3])
 
+        self.jobDesc = QLabel(self)
+        self.jobDesc.setText(self.jobInfo[1])
+        self.jobDesc.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 12), 400))
+        self.jobDesc.adjustSize()
+        self.jobDesc.setAlignment(QtCore.Qt.AlignCenter)
+        self.jobDesc.setStyleSheet( 'background: transparent;\n'
+                                    'color: white;\n'
+                                    'border: 0px solid black;\n'
+                                    'padding-left: 20px')
+
         layout = QHBoxLayout()
         layout.addWidget(self.requestLabel, alignment = QtCore.Qt.AlignLeft)
+        layout.addWidget(self.jobDesc, alignment = QtCore.Qt.AlignLeft)
         layout.addWidget(self.requestBtn, alignment = QtCore.Qt.AlignRight)
         layout.setAlignment(QtCore.Qt.AlignVCenter)
         layout.setSpacing(0)
@@ -388,7 +408,7 @@ class RentingRequest(QWidget):
                                             'QPushButton:pressed {\n'
                                             '   background: rgba(80, 80, 80, 0.3);\n'
                                             '}\n')
-            self.taskPage = TaskPage(self.parent, self.jobInfo[0], 'Pending')
+            self.taskPage = TaskPage(self.parent, self.jobInfo[0], 'Pending', self.jobInfo[7], None, None)
 
         elif (e == 'x'):
             self.requestBtn.setText('Executing')
@@ -403,7 +423,7 @@ class RentingRequest(QWidget):
                                             'QPushButton:pressed {\n'
                                             '   background: rgba(0, 75, 10, 0.7);\n'
                                             '}\n')
-            self.taskPage = TaskPage(self.parent, self.jobInfo[0], 'Executing')
+            self.taskPage = TaskPage(self.parent, self.jobInfo[0], 'Executing', self.jobInfo[7], self.jobInfo[5], None)
             # TODO: Set function to be linked to the button
         elif (e == 'd'):
             self.requestBtn.setText('Rejected')
@@ -418,7 +438,7 @@ class RentingRequest(QWidget):
                                             'QPushButton:pressed {\n'
                                             '   background: rgba(120, 42, 40, 0.7);\n'
                                             '}\n')
-            self.taskPage = TaskPage(self.parent, self.jobInfo[0], 'Rejected')
+            self.taskPage = TaskPage(self.parent, self.jobInfo[0], 'Rejected', self.jobInfo[7], None, None)
             # TODO: Set function to be linked to the button
         elif (e == 'f'):
             self.requestBtn.setText('Finished')
@@ -433,7 +453,7 @@ class RentingRequest(QWidget):
                                             'QPushButton:pressed {\n'
                                             '   background: rgba(93, 30, 100, 0.7);\n'
                                             '}\n')
-            self.taskPage = TaskPage(self.parent, self.jobInfo[0], 'Finished')
+            self.taskPage = TaskPage(self.parent, self.jobInfo[0], 'Finished', self.jobInfo[7], self.jobInfo[5], self.jobInfo[6])
             # TODO: Set function to be linked to the button
 
 class EmptyRequest(QWidget):
@@ -510,7 +530,7 @@ class EmptyRequest(QWidget):
                                     'border: 0px solid white;\n')
 
 class TaskPage(QWidget):
-    def __init__(self, parent, jobId, status):
+    def __init__(self, parent, jobId, status, price, start_time, finish):
         super(TaskPage, self).__init__()
 
         self.parent = parent
@@ -519,6 +539,7 @@ class TaskPage(QWidget):
         self.current_theme = self.parent.current_theme
         self.current_font = self.parent.current_font
         self.current_sf = self.parent.current_sf
+        self.price = price
 
         self.shadow = QtWidgets.QGraphicsDropShadowEffect()
         self.shadow.setBlurRadius(30)
@@ -527,7 +548,18 @@ class TaskPage(QWidget):
         self.shadow.setColor(QtGui.QColor(20, 20, 20))
 
         self.requestStatus = status
-        self.requestStarted = '' #TODO: get execution start time
+        self.requestStarted = None
+        self.requestFinished = None
+
+        if (start_time is not None):
+            start_time = datetime.strptime(start_time, '%Y-%m-%d %H:%M:%S')
+            start_time = self.datetime_from_utc_to_local(start_time)
+            self.requestStarted = start_time
+        
+        if (finish is not None):
+            finish = datetime.strptime(finish, '%Y-%m-%d %H:%M:%S')
+            finish = self.datetime_from_utc_to_local(finish)
+            self.requestFinished = finish
 
         self.shadow2 = QtWidgets.QGraphicsDropShadowEffect()
         self.shadow2.setBlurRadius(30)
@@ -583,7 +615,6 @@ class TaskPage(QWidget):
 
         # if (self.requestStatus == 'Executing'):
         self.elapsedTimeLabel = QLabel(self)
-        self.elapsedTimeLabel.setText('ET: ')
         self.elapsedTimeLabel.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 24), 1000))
         self.elapsedTimeLabel.adjustSize()
         self.elapsedTimeLabel.setAlignment(QtCore.Qt.AlignLeft)
@@ -630,13 +661,9 @@ class TaskPage(QWidget):
         self.statusBoxLayout = QVBoxLayout()
         self.statusBoxLayout.addWidget(self.statusInfoLabel)
 
-        if (self.requestStatus == 'Executing'):
-            self.statusBoxLayout.addWidget(self.elapsedTimeLabel)
-            self.statusBoxLayout.addWidget(self.feeLabel)
-
         self.statusBoxLayout.setAlignment(QtCore.Qt.AlignCenter)
         self.statusBoxLayout.setContentsMargins(20, 20, 20, 20)
-        self.statusBoxLayout.setSpacing(10)
+        self.statusBoxLayout.setSpacing(2)
         self.statusBox.setLayout(self.statusBoxLayout)
         self.statusBox.setGraphicsEffect(self.shadow3)
 
@@ -747,27 +774,58 @@ class TaskPage(QWidget):
             self.lightTheme()
         else:
             self.classicTheme()
+        
+        if (self.requestStatus == 'Executing'):
+            self.statusBoxLayout.addWidget(self.elapsedTimeLabel)
+            self.statusBoxLayout.addWidget(self.feeLabel)
+            t1 = threading.Thread(target = self.getElapsedTime)
+            t1.daemon = True
+            t1.start()
+        elif (self.requestStatus == 'Finished'):
+            self.statusBoxLayout.addWidget(self.feeLabel)
+            hour = (self.requestFinished - self.requestStarted).seconds//3600
+            minutes = (self.requestFinished - self.requestStarted).seconds//60%60
+            price = self.price * (minutes / 60 + hour)
+
+            self.feeLabel.setText('Fee: ' + str('%.2f' % price) + '$')
+            self.feeLabel.adjustSize()
     
+    def datetime_from_utc_to_local(self, utc_datetime):
+        now_timestamp = time.time()
+        offset = datetime.fromtimestamp(now_timestamp) - datetime.utcfromtimestamp(now_timestamp)
+        return utc_datetime + offset
+
+    def getElapsedTime(self):
+        while (self.parent.parent.parent.sidebar.dashboard.stopTimer == False):
+            self.elapsedTimeLabel.setText('ET: ' + str(datetime.now() - self.requestStarted))
+            self.elapsedTimeLabel.adjustSize()
+
+            hour = (datetime.now() - self.requestStarted).seconds//3600
+            minutes = (datetime.now() - self.requestStarted).seconds//60%60
+            price = self.price * (minutes / 60 + hour)
+
+            self.feeLabel.setText('Fee: ' + str('%.2f' % price) + '$')
+            self.feeLabel.adjustSize()
+
+            time.sleep(1)
+        self.parent.parent.parent.sidebar.dashboard.stopTimer = False
+
     def goBack(self):
         self.hide()
         self.parent.parent.parent.sidebar.selectPage(self.parent.parent.parent.sidebar.dashboard, 'Dashboard')
 
     def downloadOutput(self):
+        fileName = QtWidgets.QFileDialog.getSaveFileName(self, 'Save File', '', 'Zip-File (*.zip)')
+        fileName = fileName[0]
+
         response = self.parent.parent.parent.sender.get_permission_to_download_output(self.jobId)
 
         if (response is not None):
             db_token, f_size = response
-            home_dir = os.system("pwd>pwd.txt")
-            f = open("pwd.txt", "r")
-            x = f.readline()
-            x = x.split("/")        
-            y = "/" + x[1] + "/" + x[2] + "/rendt"
-            home_dir = os.system("rm pwd.txt")
-            home_dir = os.system("mkdir " + y)
-            self.parent.parent.parent.sender.download_output_from_db(y + '/output.zip', db_token, f_size)
+            self.parent.parent.parent.sender.download_output_from_db(fileName, db_token, f_size)
 
     def calculateFee(self):
-        #TODO: Fee calculation
+        
         return ''
 
     def darkTheme(self):
@@ -903,6 +961,7 @@ class LeasingList(QWidget):
             request.jobDesc = r[3]
             request.jobMode = r[4]
             request.status = r[5]
+            request.price = r[6]
             
             request.setRenter(request.renterUserName)
 

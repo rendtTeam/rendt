@@ -229,12 +229,23 @@ class LoginPage(QWidget):
         cred = auth.sign_in(email, pswd)
 
         if cred:
-            authToken, username, user_type, leasing_status = cred
-            self.parent.loggedInWidget = LoggedInWidget()
-            self.parent.loggedInWidget.setAuthToken(authToken)
-            self.parent.loggedInWidget.sidebar.selectPage(self.parent.loggedInWidget.sidebar.dashboard, 'Dashboard')
-            self.parent.loggedInWidget.setAccount(username, email)
-            self.parent.setCentralWidget(self.parent.loggedInWidget)
+                authToken, username, user_type, leasing_status = cred
+
+                if (leasing_status == 'a'):
+                    leasing_status = 'idle'
+                elif (leasing_status == 'u'):
+                    leasing_status = 'not_leasing'
+                elif (leasing_status == 'n'):
+                    leasing_status = 'not_leasing'
+                else:
+                    leasing_status = 'not_leasing'
+
+                self.parent.loggedInWidget = LoggedInWidget(self.parent)
+                self.parent.loggedInWidget.setAuthToken(authToken)
+                self.parent.loggedInWidget.lease_status = leasing_status
+                self.parent.loggedInWidget.setAccount(username, email)
+                self.parent.loggedInWidget.sidebar.selectPage(self.parent.loggedInWidget.sidebar.dashboard, 'Dashboard')
+                self.parent.setCentralWidget(self.parent.loggedInWidget)
         
         # self.parent.loggedInWidget = LoggedInWidget()
         # self.parent.setCentralWidget(self.parent.loggedInWidget)
@@ -334,16 +345,26 @@ class RegisterPage(QWidget):
         if cred:
             authToken, usrname, user_type = cred
 
-            cred2 = auth.sign_in(email, pswd)
+            cred = auth.sign_in(email, pswd)
 
-            if cred2:
-                authToken, username, user_type = cred2
-                self.parent.loggedInWidget = LoggedInWidget()
+            if cred:
+                authToken, username, user_type, leasing_status = cred
+
+                if (leasing_status == 'a'):
+                    leasing_status = 'idle'
+                elif (leasing_status == 'u'):
+                    leasing_status = 'not_leasing'
+                elif (leasing_status == 'n'):
+                    leasing_status = 'not_leasing'
+                else:
+                    leasing_status = 'not_leasing'
+
+                self.parent.loggedInWidget = LoggedInWidget(self.parent)
                 self.parent.loggedInWidget.setAuthToken(authToken)
                 self.parent.loggedInWidget.sidebar.selectPage(self.parent.loggedInWidget.sidebar.dashboard, 'Dashboard')
+                self.parent.loggedInWidget.lease_status = leasing_status
                 self.parent.loggedInWidget.setAccount(username, email)
                 self.parent.setCentralWidget(self.parent.loggedInWidget)
-            
 
 # NOTE:
 # Login page with LoginLineEdit and LoginButton instances
@@ -493,7 +514,7 @@ class LoginWindow(QMainWindow):
         self.registerPage = RegisterPage(self)
         self.forgotPassPage = ForgotPassPage(self)
         self.forgotPassConfirmPage = ForgotPassConfirmPage(self)
-        self.loggedInWidget = LoggedInWidget()
+        self.loggedInWidget = LoggedInWidget(self)
 
         self.layout = QHBoxLayout()
         self.layout.addWidget(self.loginPage)
@@ -502,3 +523,15 @@ class LoginWindow(QMainWindow):
         self.layout.addWidget(self.forgotPassConfirmPage)
         self.setLayout(self.layout)
         self.setCentralWidget(self.loginPage)
+    
+    def closeEvent(self, event):
+        if (self.loggedInWidget.lease_status != 'executing'):
+            if (self.loggedInWidget.t1 is not None):
+                self.loggedInWidget.t1.stop()
+                self.loggedInWidget.t1.join()
+                self.loggedInWidget.receiver.sign_out()
+
+            self.close()
+            event.accept() # let the window close
+        else:
+            event.ignore()

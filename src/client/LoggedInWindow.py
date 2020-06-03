@@ -7,14 +7,28 @@ from DashboardPage import DashboardPage
 from SettingsPage import SettingsPage
 from ProfilePage import ProfilePage
 
+import LoginWindow
+
 from sender import Sender
 from receiver import Receiver
 
-import threading, time
+import threading, time, sys
 
-# NOTE: 
-# A page for testing GUI and layouts
-# from TestPage import TestPage
+class CustomThread(threading.Thread):
+
+    def _bootstrap(self, stop_thread=False):
+        def stop():
+            nonlocal stop_thread
+            stop_thread = True
+        self.stop = stop
+
+        def tracer(*_):
+            if stop_thread:
+                raise StopThread()
+            return tracer
+        sys.settrace(tracer)
+        super()._bootstrap()
+
 
 # NOTE:
 # class for Sidebar elements/members
@@ -34,6 +48,7 @@ class SidebarElement(QWidget):
         self.page = ""
         self.isSelected = False
         self.openedNotf = False
+        self.stopTimer = False
 
         # NOTE:
         # setting text color for the element depending on the theme
@@ -90,7 +105,7 @@ class SidebarElement(QWidget):
 
     # NOTE:
     # A function to change the element's behavior if an update is received
-    def notify(self, flag):
+    def notify(self, flag, flag2 = None):
         if (not flag):
             self.setStyleSheet('background: rgba(255, 255, 255, 0.1);\n'
                             'border: 0px solid black;\n'
@@ -101,6 +116,9 @@ class SidebarElement(QWidget):
                            'border: 0px solid black;\n'
                            'color: white;\n')
             self.openedNotf = False
+        
+        if (flag2 is not None and flag2 == True):
+            self.stopTimer = True
 
     # NOTE:
     # getter function to get element text
@@ -323,14 +341,17 @@ class Sidebar(QWidget):
 # NOTE:
 # LoggedInWindow is the main window with sidebar and dynamic content
 class LoggedInWidget(QWidget):
-    def __init__(self):
+    def __init__(self, parent):
         super(LoggedInWidget, self).__init__()
+
+        self.parent = parent
 
         self.setStyleSheet('background: rgba(40, 40, 40, 1)')
         self.account = ''
         self.accountEmail = ''
         self.price_saved = None
         self.start_time = None
+        self.t1 = None
 
         # NOTE:
         # class state variables
@@ -406,6 +427,8 @@ class LoggedInWidget(QWidget):
                 for i in range(len(newNumberOfReqsR)) :
                     if (numberOfReqsR[i][4] != newNumberOfReqsR[i][4]):
                         self.sidebar.dashboard.notify(True)
+                        if (newNumberOfReqsR[i][4] == 'f' and numberOfReqsR[i][4] == 'x'):
+                            self.sidebar.dashboard.notify(True, True)
                         numberOfReqsR = newNumberOfReqsR
                         break
 
@@ -415,7 +438,7 @@ class LoggedInWidget(QWidget):
             if (len(numberOfReqsL) != len(newNumberOfReqsL)):
                 self.sidebar.dashboard.notify(True)
                 numberOfReqsL = newNumberOfReqsL
-            time.sleep(1)
+            time.sleep(5)
 
     def darkTheme(self):
         self.setStyleSheet( 'background: rgb(40, 40, 40);\n'
@@ -436,9 +459,8 @@ class LoggedInWidget(QWidget):
         self.receiver = Receiver(auth_token)
         self.sender = Sender(auth_token)
 
-        t1 = threading.Thread(target=self.sendNotificationDashboard)
-        t1.daemon = True
-        t1.start()
+        self.t1 = CustomThread(target=self.sendNotificationDashboard)
+        self.t1.start()
 
     # NOTE:
     # setter function to change the theme
@@ -459,13 +481,14 @@ class LoggedInWidget(QWidget):
 # NOTE:
 # MainWindow class which will display all the pages inside
 class LoggedInWindow(QMainWindow):
-    def __init__(self, parent=None):
+    def __init__(self, parent = None):
         super(LoggedInWindow, self).__init__(parent)
 
         # NOTE:
         # class configurations
         self.resize(1024, 768)
-        self.widget = LoggedInWidget()
+        self.loginWindow = LoginWindow()
+        self.widget = LoggedInWidget(self.loginWindow)
         self.setWindowTitle('rendt')
         self.setWindowIcon(QtGui.QIcon(
             '../../assets/img/rendt_new_logo_square.png'))
