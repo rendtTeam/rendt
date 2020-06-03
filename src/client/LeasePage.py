@@ -124,8 +124,11 @@ class DockerInfo:
     # Get Docker Stats for Memory Usage percentage
     def getMemUsage(self):
         if (self.exists):
-            self.mem_stats = self.client.containers.get('rendtcont').stats(stream = False).get('memory_stats')
-            return self.mem_stats['usage'] / self.mem_stats['limit'] * 100
+            try: 
+                self.mem_stats = self.client.containers.get('rendtcont').stats(stream = False).get('memory_stats')
+                return self.mem_stats['usage'] / self.mem_stats['limit'] * 100
+            except:
+                return ''
         else:
             return ''
 
@@ -807,18 +810,26 @@ class LeaseExecPage(QWidget):
         starttime=time.time()
         time.sleep(5)
         while self.parent.parent.lease_status == 'executing':
-            self.cpuUsage = str('%.2f' % self.parent.dockerInfo.getCpuUsage())
-            self.cpuUsageLabel.setText('CPU: ' + self.cpuUsage + '%')
-            self.cpuUsageLabel.adjustSize()
+            cu = self.parent.dockerInfo.getCpuUsage()
+            if (cu != ''):
+                self.cpuUsage = str('%.2f' % cu)
+                self.cpuUsageLabel.setText('CPU: ' + self.cpuUsage + '%')
+                self.cpuUsageLabel.adjustSize()
+            else:
+                break
             time.sleep(5)
     
     def getDockerMemUsage(self):
         starttime=time.time()
         time.sleep(5)
         while self.parent.parent.lease_status == 'executing':
-            self.memUsage = str('%.2f' % self.parent.dockerInfo.getMemUsage())
-            self.memUsageLabel.setText('RAM: ' + self.memUsage + '%')
-            self.memUsageLabel.adjustSize()
+            mu = self.parent.dockerInfo.getMemUsage()
+            if (mu != ''):
+                self.memUsage = str('%.2f' % mu)
+                self.memUsageLabel.setText('RAM: ' + self.memUsage + '%')
+                self.memUsageLabel.adjustSize()
+            else:
+                break
             time.sleep(5)
     
     def getElapsedTime(self, dockerInfo, start_time):
