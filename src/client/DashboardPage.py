@@ -624,7 +624,6 @@ class TaskPage(QWidget):
                                             'font-weight: bold;\n')
 
         self.feeLabel = QLabel(self)
-        self.feeLabel.setText('Fee: ' + self.calculateFee())
         self.feeLabel.setFont(QtGui.QFont(self.current_font, int(self.current_sf * 24), 1000))
         self.feeLabel.adjustSize()
         self.feeLabel.setAlignment(QtCore.Qt.AlignLeft)
@@ -698,6 +697,7 @@ class TaskPage(QWidget):
         self.proceedToPaymentBtn.setFixedHeight(105)
         self.proceedToPaymentBtn.setFixedWidth(325)
         self.proceedToPaymentBtn.setGraphicsEffect(self.shadow4)
+        self.proceedToPaymentBtn.clicked.connect(self.proceedToPayment)
 
         self.backBtn = QPushButton(self)
         self.backBtn.setStyleSheet('QPushButton {\n'
@@ -823,10 +823,6 @@ class TaskPage(QWidget):
         if (response is not None):
             db_token, f_size = response
             self.parent.parent.parent.sender.download_output_from_db(fileName, db_token, f_size)
-
-    def calculateFee(self):
-        
-        return ''
 
     def darkTheme(self):
         self.widget.setStyleSheet( 'background: rgb(69, 69, 69);\n'
