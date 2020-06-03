@@ -199,65 +199,67 @@ class LeasingRequest(QWidget):
         self.parent.parent.parent.sidebar.selectPage(self.parent.parent.parent.sidebar.dashboard, 'Dashboard')
 
     def startExec(self, dockerInfo, receiver, orderId, jobId):
-            if (not dockerInfo.imageExists()):
-                receiver.build_docker('.')
-            response = receiver.accept_order(orderId)
+        if (not dockerInfo.imageExists()):
+            receiver.build_docker('.')
+        response = receiver.accept_order(orderId)
+
+        if (platform.system() == 'Windows'):
+            home_dir = os.system("(echo %" + "cd%)>pwd.txt")
+
+            f = open("pwd.txt", "r")
+            x = f.readline()
+            x = x.split("\\")        
+            y = x[0] + '\\' + x[1] + "\\" + x[2] + "\\rendt"
+            f.close()
+            home_dir = os.system("mkdir " + y)
+            home_dir = os.system("DEL pwd.txt")
+        else:
+            home_dir = os.system("pwd>pwd.txt")
+
+            f = open("pwd.txt", "r")
+            x = f.readline()
+            x = x.split("/")        
+            y = "/" + x[1] + "/" + x[2] + "/rendt"
+            f.close()
+            home_dir = os.system("rm pwd.txt")
+            home_dir = os.system("mkdir " + y)
+        if (response is not None):
+            db_token = response[0]
+            f_size = response[1]
+
+            path_to_executable = y + '/files.zip'
+            path_to_output = y + '/output.zip'
 
             if (platform.system() == 'Windows'):
-                home_dir = os.system("(echo %" + "cd%)>pwd.txt")
+                path_to_executable = y + '\\files.zip'
+                path_to_output = y + '\\output.zip'
 
-                f = open("pwd.txt", "r")
-                x = f.readline()
-                x = x.split("\\")        
-                y = x[0] + '\\' + x[1] + "\\" + x[2] + "\\rendt"
-                f.close()
-                home_dir = os.system("mkdir " + y)
-                home_dir = os.system("DEL pwd.txt")
+            print('Path to executable: ' + path_to_executable)
+            print('Path to output: ' + path_to_output)
+            print('1------------------------------------------------------------------------------------------')
+
+            receiver.download_file_from_db(path_to_executable, db_token, f_size)
+            print('2------------------------------------------------------------------------------------------')
+
+            receiver.execute_job(path_to_executable, path_to_output)
+            print('3------------------------------------------------------------------------------------------')
+
+            db_token = receiver.get_permission_to_upload_output(jobId, path_to_output)
+            print('4------------------------------------------------------------------------------------------')
+
+            receiver.upload_output_to_db(path_to_output, jobId, db_token)
+            print('5------------------------------------------------------------------------------------------')
+
+            # execPage.finishExecuting()
+
+            if (platform.system() == 'Windows'):
+                home_dir = os.system("DEL " + path_to_executable)
+                home_dir = os.system("DEL " + path_to_output)
             else:
-                home_dir = os.system("pwd>pwd.txt")
-
-                f = open("pwd.txt", "r")
-                x = f.readline()
-                x = x.split("/")        
-                y = "/" + x[1] + "/" + x[2] + "/rendt"
-                f.close()
-                home_dir = os.system("rm pwd.txt")
-                home_dir = os.system("mkdir " + y)
-            if (response is not None):
-                db_token = response[0]
-                f_size = response[1]
-
-                path_to_executable = y + '/files.zip'
-                path_to_output = y + '/output.zip'
-
-                if (platform.system() == 'Windows'):
-                    path_to_executable = y + '\\files.zip'
-                    path_to_output = y + '\\output.zip'
-
-                print('Path to executable: ' + path_to_executable)
-                print('Path to output: ' + path_to_output)
-                print('1------------------------------------------------------------------------------------------')
-
-                receiver.download_file_from_db(path_to_executable, db_token, f_size)
-                print('2------------------------------------------------------------------------------------------')
-
-                receiver.execute_job(path_to_executable, path_to_output)
-                print('3------------------------------------------------------------------------------------------')
-
-                db_token = receiver.get_permission_to_upload_output(jobId, path_to_output)
-                print('4------------------------------------------------------------------------------------------')
-
-                receiver.upload_output_to_db(path_to_output, jobId, db_token)
-                print('5------------------------------------------------------------------------------------------')
-
-                # execPage.finishExecuting()
-
-                if (platform.system() == 'Windows'):
-                    home_dir = os.system("DEL " + path_to_executable)
-                    home_dir = os.system("DEL " + path_to_output)
-                else:
-                    home_dir = os.system("rm -R " + path_to_executable)
-                    home_dir = os.system("rm -R " + path_to_output)
+                home_dir = os.system("rm -R " + path_to_executable)
+                home_dir = os.system("rm -R " + path_to_output)
+        
+        return 0
 
     def rejectReq(self, e):
         response = self.parent.parent.parent.receiver.decline_order(self.orderId)
@@ -433,7 +435,6 @@ class RentingRequest(QWidget):
                                             '   background: rgba(0, 75, 10, 0.7);\n'
                                             '}\n')
             self.taskPage = TaskPage(self.parent, self.jobInfo[0], 'Executing', self.jobInfo[7], self.jobInfo[5], None)
-            # TODO: Set function to be linked to the button
         elif (e == 'd'):
             self.requestBtn.setText('Rejected')
             self.requestBtn.setStyleSheet(  'QPushButton {\n'
@@ -448,7 +449,6 @@ class RentingRequest(QWidget):
                                             '   background: rgba(120, 42, 40, 0.7);\n'
                                             '}\n')
             self.taskPage = TaskPage(self.parent, self.jobInfo[0], 'Rejected', self.jobInfo[7], None, None)
-            # TODO: Set function to be linked to the button
         elif (e == 'f'):
             self.requestBtn.setText('Finished')
             self.requestBtn.setStyleSheet(  'QPushButton {\n'
@@ -463,7 +463,6 @@ class RentingRequest(QWidget):
                                             '   background: rgba(93, 30, 100, 0.7);\n'
                                             '}\n')
             self.taskPage = TaskPage(self.parent, self.jobInfo[0], 'Finished', self.jobInfo[7], self.jobInfo[5], self.jobInfo[6])
-            # TODO: Set function to be linked to the button
 
 class EmptyRequest(QWidget):
     def __init__(self, parent):
@@ -819,7 +818,7 @@ class TaskPage(QWidget):
         return utc_datetime + offset
 
     def getElapsedTime(self):
-        while (self.parent.parent.parent.sidebar.dashboard.stopTimer == False):
+        while (self.parent.parent.parent.sidebar.dashboard.stopTimer == False and self.parent.parent.parent.sidebar.dashboard.isSelected):
             self.elapsedTimeLabel.setText('ET: ' + str(datetime.now() - self.requestStarted))
             self.elapsedTimeLabel.adjustSize()
 
@@ -903,7 +902,7 @@ class RentingList(QWidget):
         self.requests = []
         
         while (not self.layout.isEmpty()):
-            self.layout.removeWidget()
+            self.layout.removeWidget(self.layout.itemAt(0).widget())
 
         stats = self.parent.parent.sender.get_job_statuses()
 
