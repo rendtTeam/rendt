@@ -114,7 +114,7 @@ def generate_response(intent, order_id, amount):
         # Payment is complete, authentication not required
         # To cancel the payment you will need to issue a Refund (https://stripe.com/docs/api/refunds)
         print("💰 Payment received!")
-        prindb_handler.registerPayment(order_id, amount)
+        db_handler.registerPayment(order_id, amount)
         return jsonify({'clientSecret': intent['client_secret']})
 
 
