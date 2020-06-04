@@ -2,7 +2,7 @@
 
 To use our app you should:
 1. clone this reposotory to your local machine
-2. navigate to src/client and run `ui.py`. For this you should download 3 external libraries, namely, "pyqt5", "pyqt5-tools" and "psutil".
+2. navigate to src/client and run `ui.py`. For this you may need to download some external libraries. To download and install necessary packages call `pip install -r requirements.txt` in the `rendt` directory.
 
 ## Requirement for Renters:
 Renters who wish to submit a job to be executed have to follow a few basic guidelines.
