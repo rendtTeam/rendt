@@ -73,6 +73,9 @@ def send_verification():
         totalAmount, order_id = calculate_order_amount(data['items'][0]['id'])
         db_handler = DBHandler()
         db_handler.registerPayment(order_id, totalAmount)
+        return jsonify({
+          'totalAmount': totalAmount
+        })
     except stripe.error.CardError as e:
         print(e.user_message)
         return jsonify({'error': e.user_message})

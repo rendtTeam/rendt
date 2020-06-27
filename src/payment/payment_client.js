@@ -82,7 +82,6 @@ var payWithCard = function(stripe, card, clientSecret) {
         showError(result.error.message);
       } else {
         // The payment succeeded!
-        alert("payment success")
         fetch("/send-payment-verification", {
           method: "POST",
           headers: {
